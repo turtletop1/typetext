@@ -1,8 +1,19 @@
+/* =========================
+   RESET
+========================= */
+
 * {
     box-sizing: border-box;
+
     margin: 0;
+
     padding: 0;
 }
+
+
+/* =========================
+   BODY
+========================= */
 
 body {
 
@@ -24,11 +35,15 @@ body {
 }
 
 
+/* =========================
+   CONTAINER
+========================= */
+
 .container {
 
     width: 100%;
 
-    max-width: 850px;
+    max-width: 800px;
 
     margin: auto;
 
@@ -39,12 +54,18 @@ body {
     border-radius: 16px;
 
     box-shadow:
-        0 5px 25px
-        rgba(0,0,0,0.08);
+        0 5px 25px rgba(
+            0,
+            0,
+            0,
+            0.08
+        );
 }
 
 
-/* HEADER */
+/* =========================
+   HEADER
+========================= */
 
 header {
 
@@ -53,74 +74,28 @@ header {
     margin-bottom: 25px;
 }
 
+
 header h1 {
 
-    font-size: 30px;
+    font-size: 28px;
 
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
+
 
 header p {
 
     color: #7f8c8d;
+
+    font-size: 15px;
 }
 
 
-/* MODE */
+/* =========================
+   IMPORT SECTION
+========================= */
 
-.mode-section {
-
-    margin-bottom: 20px;
-}
-
-.mode-section h2 {
-
-    margin-bottom: 12px;
-}
-
-
-.mode-buttons {
-
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 10px;
-}
-
-
-.mode-btn {
-
-    padding: 15px;
-
-    border: 2px solid #dfe6e9;
-
-    background: white;
-
-    border-radius: 10px;
-
-    cursor: pointer;
-
-    font-size: 16px;
-
-    font-weight: bold;
-}
-
-
-.mode-btn.active {
-
-    background: #3498db;
-
-    color: white;
-
-    border-color: #3498db;
-}
-
-
-/* PANELS */
-
-.mode-panel {
+.import-section {
 
     background: #f8f9fa;
 
@@ -131,13 +106,16 @@ header p {
     margin-bottom: 20px;
 }
 
-.hidden {
 
-    display: none;
+.import-section h2 {
+
+    margin-bottom: 15px;
 }
 
 
-/* PDF */
+/* =========================
+   URL
+========================= */
 
 .url-row {
 
@@ -146,29 +124,54 @@ header p {
     gap: 8px;
 }
 
+
 .url-row input {
 
     flex: 1;
 
     padding: 12px;
 
-    border: 1px solid #dcdfe3;
+    border:
+
+        1px solid #dcdfe3;
 
     border-radius: 8px;
 
     font-size: 15px;
+
+    outline: none;
 }
 
+
+.url-row input:focus {
+
+    border-color: #3498db;
+}
+
+
+/* =========================
+   BUTTON
+========================= */
 
 button {
 
     border: none;
 
-    border-radius: 8px;
-
     cursor: pointer;
 
     font-weight: bold;
+
+    border-radius: 8px;
+
+    transition:
+        background 0.2s,
+        transform 0.1s;
+}
+
+
+button:active {
+
+    transform: scale(0.97);
 }
 
 
@@ -182,25 +185,15 @@ button {
 }
 
 
-.upload-btn {
+.primary-btn:hover {
 
-    display: block;
-
-    text-align: center;
-
-    background: #2ecc71;
-
-    color: white;
-
-    padding: 13px;
-
-    border-radius: 8px;
-
-    cursor: pointer;
-
-    font-weight: bold;
+    background: #2980b9;
 }
 
+
+/* =========================
+   DIVIDER
+========================= */
 
 .divider {
 
@@ -212,59 +205,63 @@ button {
 }
 
 
-/* ARTICLE */
+/* =========================
+   UPLOAD BUTTON
+========================= */
 
-.article-options {
+.upload-btn {
 
-    display: grid;
+    display: block;
 
-    gap: 10px;
-}
-
-.article-options label {
-
-    font-weight: bold;
-}
-
-.article-options select {
-
-    padding: 11px;
-
-    border: 1px solid #dcdfe3;
-
-    border-radius: 8px;
-
-    background: white;
-}
-
-
-.random-btn {
-
-    padding: 14px;
-
-    background: #9b59b6;
-
-    color: white;
-
-    font-size: 16px;
-}
-
-
-/* STATUS */
-
-.status {
+    width: 100%;
 
     text-align: center;
 
-    margin-top: 12px;
+    padding: 13px;
 
-    color: #7f8c8d;
+    background: #2ecc71;
 
-    line-height: 1.5;
+    color: white;
+
+    font-weight: bold;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
 }
 
 
-/* GAME */
+.upload-btn:hover {
+
+    background: #27ae60;
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.status {
+
+    margin-top: 12px;
+
+    text-align: center;
+
+    color: #7f8c8d;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+
+    word-break: break-word;
+}
+
+
+/* =========================
+   GAME
+========================= */
 
 .game-area {
 
@@ -272,7 +269,15 @@ button {
 }
 
 
-/* LEVEL */
+.hidden {
+
+    display: none;
+}
+
+
+/* =========================
+   LEVEL BAR
+========================= */
 
 .level-bar {
 
@@ -284,21 +289,37 @@ button {
 
     gap: 10px;
 
-    padding: 10px;
-
     background: #eef2f5;
 
+    padding: 10px;
+
     border-radius: 10px;
+
+    margin-bottom: 12px;
+}
+
+
+#level-display {
+
+    font-weight: bold;
+
+    text-align: center;
 }
 
 
 .secondary-btn {
 
-    padding: 9px 15px;
-
     background: #ecf0f1;
 
     color: #34495e;
+
+    padding: 9px 15px;
+}
+
+
+.secondary-btn:hover {
+
+    background: #dfe6e9;
 }
 
 
@@ -310,15 +331,11 @@ button {
 }
 
 
-#level-display {
+/* =========================
+   PDF INFO
+========================= */
 
-    font-weight: bold;
-}
-
-
-/* SOURCE */
-
-.source-info {
+.pdf-info {
 
     display: flex;
 
@@ -328,57 +345,46 @@ button {
 
     gap: 10px;
 
-    margin: 12px 0;
-
-    padding: 12px;
-
-    background: #f8f9fa;
-
-    border-radius: 8px;
-}
-
-
-#content-title {
-
-    display: block;
-
-    margin-bottom: 3px;
-}
-
-
-#content-source {
+    margin-bottom: 10px;
 
     color: #7f8c8d;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
-#original-link {
+#pdf-name {
 
-    color: #3498db;
+    color: #34495e;
 
-    text-decoration: none;
+    max-width: 70%;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 
     white-space: nowrap;
 }
 
 
-/* TEXT */
+/* =========================
+   TEXT DISPLAY
+========================= */
 
 .text-display {
 
-    padding: 20px;
-
     background: #f8f9fa;
 
-    border: 1px solid #e5e8eb;
+    border:
+        1px solid #e5e8eb;
 
     border-radius: 10px;
 
-    min-height: 200px;
+    padding: 20px;
 
-    max-height: 380px;
+    min-height: 180px;
+
+    max-height: 350px;
 
     overflow-y: auto;
 
@@ -389,12 +395,20 @@ button {
     white-space: pre-wrap;
 
     word-break: break-word;
+
+    margin-bottom: 15px;
 }
 
 
+/* =========================
+   CHARACTERS
+========================= */
+
 .char {
 
-    transition: 0.05s;
+    transition:
+        background 0.05s,
+        color 0.05s;
 }
 
 
@@ -418,11 +432,14 @@ button {
 
 .char.current {
 
-    border-bottom: 3px solid #3498db;
+    border-bottom:
+        3px solid #3498db;
 }
 
 
-/* INPUT */
+/* =========================
+   TYPING INPUT
+========================= */
 
 .typing-input {
 
@@ -430,23 +447,22 @@ button {
 
     min-height: 110px;
 
-    margin-top: 15px;
+    resize: vertical;
 
     padding: 15px;
 
-    resize: vertical;
-
-    border: 2px solid #dfe6e9;
+    border:
+        2px solid #dfe6e9;
 
     border-radius: 10px;
-
-    font-family: inherit;
 
     font-size: 18px;
 
     line-height: 1.5;
 
     outline: none;
+
+    font-family: inherit;
 }
 
 
@@ -456,14 +472,16 @@ button {
 }
 
 
-/* STATS */
+/* =========================
+   STATS
+========================= */
 
 .stats {
 
     display: grid;
 
     grid-template-columns:
-        repeat(3,1fr);
+        repeat(3, 1fr);
 
     gap: 10px;
 
@@ -471,37 +489,43 @@ button {
 }
 
 
-.stats div {
-
-    padding: 12px;
+.stat-card {
 
     background: #f8f9fa;
+
+    padding: 12px;
 
     border-radius: 8px;
 
     text-align: center;
+
+    font-size: 14px;
 }
 
 
-.stats strong {
+.stat-card strong {
 
     display: block;
 
+    margin-top: 5px;
+
     font-size: 20px;
 
-    margin-top: 5px;
+    color: #2c3e50;
 }
 
 
-/* RESTART */
+/* =========================
+   RESTART
+========================= */
 
 .restart-btn {
 
     width: 100%;
 
-    padding: 12px;
-
     margin-top: 15px;
+
+    padding: 12px;
 
     background: #34495e;
 
@@ -509,51 +533,81 @@ button {
 }
 
 
-/* MOBILE */
+.restart-btn:hover {
 
-@media(max-width:600px) {
+    background: #2c3e50;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (
+    max-width: 600px
+) {
 
     body {
+
         padding: 10px;
     }
 
+
     .container {
+
         padding: 15px;
     }
 
-    .mode-buttons {
-        grid-template-columns: 1fr;
+
+    header h1 {
+
+        font-size: 23px;
     }
 
+
     .url-row {
+
         flex-direction: column;
     }
 
+
     .level-bar {
+
         flex-wrap: wrap;
 
         justify-content: center;
     }
 
-    #level-display {
-        width: 100%;
 
-        text-align: center;
+    #level-display {
 
         order: -1;
+
+        width: 100%;
+
+        margin-bottom: 5px;
     }
+
 
     .text-display {
+
         font-size: 18px;
+
+        padding: 15px;
+
+        min-height: 150px;
     }
 
+
+    .typing-input {
+
+        font-size: 17px;
+    }
+
+
     .stats {
+
         grid-template-columns: 1fr;
     }
 
-    .source-info {
-        flex-direction: column;
-
-        align-items: flex-start;
-    }
 }
