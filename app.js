@@ -943,7 +943,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 /* =====================================================
    CHECK JAVASCRIPT
 ===================================================== */
-alert("okok");
+
 console.log(
     "✅ app.js loaded successfully!"
 );
