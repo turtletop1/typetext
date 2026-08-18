@@ -35,7 +35,43 @@ const accuracyDisplay = document.getElementById("accuracy");
 const wpmDisplay = document.getElementById("wpm");
 const progressDisplay = document.getElementById("progress");
 
+/* =====================================================
+   DICTIONARY ELEMENTS
+===================================================== */
 
+const dictionaryPopup =
+    document.getElementById(
+        "dictionary-popup"
+    );
+
+const dictionaryWord =
+    document.getElementById(
+        "dictionary-word"
+    );
+
+const dictionaryPhonetic =
+    document.getElementById(
+        "dictionary-phonetic"
+    );
+
+const dictionaryAudio =
+    document.getElementById(
+        "dictionary-audio"
+    );
+
+const dictionaryContent =
+    document.getElementById(
+        "dictionary-content"
+    );
+
+const dictionaryClose =
+    document.getElementById(
+        "dictionary-close"
+    );
+
+
+let currentAudio = null;
+ 
 /* =====================================================
    MODE SWITCHING
 ===================================================== */
@@ -1876,6 +1912,22 @@ function renderText(text) {
             text[i];
 
 
+        /*
+            Click word
+        */
+
+        if (
+            /[A-Za-z]/.test(
+                text[i]
+            )
+        ) {
+
+            span.classList.add(
+                "clickable-word"
+            );
+        }
+
+
         if (
             i === 0
         ) {
@@ -1890,6 +1942,13 @@ function renderText(text) {
             span
         );
     }
+
+
+    /*
+        Detect complete words
+    */
+
+    makeWordsClickable();
 }
 
 
@@ -2365,4 +2424,413 @@ gameArea.classList.add(
 
 console.log(
     "✅ PDF Typing Game ready!"
+);
+
+function makeWordsClickable() {
+
+    const chars =
+        textDisplay.querySelectorAll(
+            ".char"
+        );
+
+
+    let i = 0;
+
+
+    while (
+        i < chars.length
+    ) {
+
+        /*
+            Find English word
+        */
+
+        if (
+            /^[A-Za-z]$/.test(
+                chars[i].textContent
+            )
+        ) {
+
+            const start = i;
+
+
+            let word = "";
+
+
+            while (
+                i < chars.length &&
+                /^[A-Za-z]$/.test(
+                    chars[i].textContent
+                )
+            ) {
+
+                word +=
+                    chars[i].textContent;
+
+                i++;
+            }
+
+
+            const end =
+                i - 1;
+
+
+            /*
+                Click any character
+                inside this word
+            */
+
+            for (
+                let j = start;
+                j <= end;
+                j++
+            ) {
+
+                chars[j].classList.add(
+                    "clickable-word"
+                );
+
+
+                chars[j].addEventListener(
+                    "click",
+                    function () {
+
+                        lookupWord(
+                            word
+                        );
+
+                    }
+                );
+            }
+
+        } else {
+
+            i++;
+        }
+    }
+}
+
+
+/* =====================================================
+   LOOKUP WORD
+===================================================== */
+
+async function lookupWord(
+    word
+) {
+
+    word =
+        word.toLowerCase();
+
+
+    dictionaryPopup.classList.remove(
+        "hidden"
+    );
+
+
+    dictionaryWord.textContent =
+        word;
+
+
+    dictionaryPhonetic.textContent =
+        "";
+
+
+    dictionaryContent.innerHTML =
+        "🔎 正在查字典...";
+
+
+    dictionaryAudio.disabled =
+        true;
+
+
+    currentAudio = null;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "https://api.dictionaryapi.dev/api/v2/entries/en/" +
+                encodeURIComponent(word)
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "Word not found"
+            );
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const entry =
+            data[0];
+
+
+        /*
+            Phonetic
+        */
+
+        const phonetic =
+            entry.phonetic ||
+            (
+                entry.phonetics &&
+                entry.phonetics.find(
+                    p => p.text
+                )?.text
+            );
+
+
+        dictionaryPhonetic.textContent =
+            phonetic ||
+            "No phonetic available";
+
+
+        /*
+            Audio
+        */
+
+        const audioData =
+            entry.phonetics?.find(
+                p =>
+                    p.audio &&
+                    p.audio.length > 0
+            );
+
+
+        if (
+            audioData
+        ) {
+
+            currentAudio =
+                new Audio(
+                    audioData.audio
+                );
+
+
+            dictionaryAudio.disabled =
+                false;
+        }
+
+
+        /*
+            Definitions
+        */
+
+        dictionaryContent.innerHTML =
+            "";
+
+
+        entry.meanings.forEach(
+            function (
+                meaning
+            ) {
+
+                const section =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                section.className =
+                    "dictionary-definition";
+
+
+                const part =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                part.className =
+                    "dictionary-part";
+
+
+                part.textContent =
+                    meaning.partOfSpeech;
+
+
+                section.appendChild(
+                    part
+                );
+
+
+                /*
+                    Show first 3 definitions
+                */
+
+                meaning.definitions
+                    .slice(0, 3)
+                    .forEach(
+                        function (
+                            definition,
+                            index
+                        ) {
+
+                            const div =
+                                document.createElement(
+                                    "div"
+                                );
+
+
+                            div.textContent =
+                                `${index + 1}. ${
+                                    definition.definition
+                                }`;
+
+
+                            section.appendChild(
+                                div
+                            );
+
+
+                            if (
+                                definition.example
+                            ) {
+
+                                const example =
+                                    document.createElement(
+                                        "div"
+                                    );
+
+
+                                example.className =
+                                    "dictionary-example";
+
+
+                                example.textContent =
+                                    `Example: "${definition.example}"`;
+
+
+                                section.appendChild(
+                                    example
+                                );
+                            }
+
+                        }
+                    );
+
+
+                dictionaryContent.appendChild(
+                    section
+                );
+
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Dictionary error:",
+            error
+        );
+
+
+        dictionaryContent.innerHTML =
+            `
+            <p>
+                ❌ 找不到這個單字。
+            </p>
+            `;
+
+
+        dictionaryPhonetic.textContent =
+            "";
+    }
+}
+
+
+/* =====================================================
+   DICTIONARY AUDIO
+===================================================== */
+
+dictionaryAudio.addEventListener(
+    "click",
+    function () {
+
+        if (
+            currentAudio
+        ) {
+
+            currentAudio.currentTime =
+                0;
+
+            currentAudio.play();
+
+        } else {
+
+            /*
+                Browser TTS fallback
+            */
+
+            const word =
+                dictionaryWord.textContent;
+
+
+            const speech =
+                new SpeechSynthesisUtterance(
+                    word
+                );
+
+
+            speech.lang =
+                "en-US";
+
+
+            speech.rate =
+                0.8;
+
+
+            speechSynthesis.speak(
+                speech
+            );
+        }
+
+    }
+);
+
+
+/* =====================================================
+   CLOSE DICTIONARY
+===================================================== */
+
+dictionaryClose.addEventListener(
+    "click",
+    function () {
+
+        dictionaryPopup.classList.add(
+            "hidden"
+        );
+
+    }
+);
+
+
+/*
+    Click outside popup to close
+*/
+
+dictionaryPopup.addEventListener(
+    "click",
+    function (event) {
+
+        if (
+            event.target ===
+            dictionaryPopup
+        ) {
+
+            dictionaryPopup.classList.add(
+                "hidden"
+            );
+        }
+
+    }
 );
