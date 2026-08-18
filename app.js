@@ -432,12 +432,14 @@ function getFileNameFromURL(url) {
     }
 }
 
-
 /* =====================================================
    DICTIONARY LOGIC & CLICKABLE WORDS
 ===================================================== */
 
-// 1. 建立通用的 SpeechSynthesis TTS 工具函式
+// 全域紀錄當前查詢的單字
+let currentLookupWord = "";
+
+// 1. Web Speech API 語音合成 Function
 function speakText(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel(); // 停止目前播放中的聲音
@@ -484,13 +486,15 @@ async function lookupWord(word) {
     word = word.trim().toLowerCase();
     if (!word || !dictionaryPopup || !dictionaryWord || !dictionaryContent) return;
 
+    currentLookupWord = word; // 保存當前單字
+
     dictionaryPopup.classList.remove("hidden");
     dictionaryWord.textContent = word;
 
     if (dictionaryPhonetic) dictionaryPhonetic.textContent = "Loading...";
     dictionaryContent.innerHTML = "🔎 正在查字典...";
 
-    // 預設發音方式：使用內建 TTS（確保永遠可以點擊發音）
+    // 預設發音物件：直接使用原生 TTS
     if (dictionaryAudio) dictionaryAudio.disabled = false;
     currentAudio = {
         play: () => Promise.resolve(speakText(word))
@@ -509,16 +513,21 @@ async function lookupWord(word) {
         const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text && p.text.trim())?.text;
         if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "";
 
-        // Audio: 優先嘗試播放原音檔，若是無效/失聯自動切換 fallback 至 TTS
+        // Audio 處理
         const audioData = entry.phonetics?.find(p => p.audio && p.audio.trim().length > 0);
         if (audioData && audioData.audio) {
             let audioUrl = audioData.audio;
             if (audioUrl.startsWith("//")) {
                 audioUrl = "https:" + audioUrl;
             }
+            
+            // 建立 Audio 物件，若播放成功就用 MP3，被阻擋/失敗則 fallback 到 TTS
             const audioObj = new Audio(audioUrl);
             currentAudio = {
-                play: () => audioObj.play().catch(() => speakText(word))
+                play: () => audioObj.play().catch(() => {
+                    // MP3 載入或播放被 ORB 阻擋時，自動轉用 SpeechSynthesis
+                    speakText(word);
+                })
             };
         }
 
@@ -559,7 +568,7 @@ async function lookupWord(word) {
 
     } catch (error) {
         if (dictionaryPhonetic) dictionaryPhonetic.textContent = "";
-        dictionaryContent.innerHTML = "<p>⚠️ 字典 API 連線失敗，但你仍可點擊按鈕收聽語音朗讀。</p>";
+        dictionaryContent.innerHTML = "<p>⚠️ 字典 API 暫時無法連線，仍可點擊按鈕收聽發音。</p>";
     }
 }
 
@@ -572,8 +581,13 @@ if (dictionaryClose) {
 
 if (dictionaryAudio) {
     dictionaryAudio.addEventListener("click", () => {
-        if (currentAudio) {
-            currentAudio.play();
+        if (currentAudio && typeof currentAudio.play === "function") {
+            currentAudio.play().catch(() => {
+                // 萬一 currentAudio.play() 拋出未捕捉異常，最後防線直接念當前單字
+                if (currentLookupWord) speakText(currentLookupWord);
+            });
+        } else if (currentLookupWord) {
+            speakText(currentLookupWord);
         }
     });
 }
