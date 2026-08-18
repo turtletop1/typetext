@@ -107,17 +107,14 @@
 
         <!-- Level -->
         <!-- 在 HTML 找到 prev-btn / next-btn 的位置，新增 select 元素 -->
-<div class="level-controls">
-    <button id="prev-btn" disabled>上一關</button>
-    
-    <!-- 新增 Level 選擇選單 -->
-    <select id="level-select" class="level-select" disabled>
+        <div class="level-bar">
+             <select id="level-select" class="level-select" disabled>
         <option value="">選擇 Level</option>
     </select>
-
-    <button id="next-btn" disabled>下一關</button>
-    <button id="restart-btn">重新開始</button>
-</div>
+            <button id="prev-btn" class="secondary-btn">⬅ Previous</button>
+            <div id="level-display">Level 1 / 1</div>
+            <button id="next-btn" class="secondary-btn">Next ➡</button>
+        </div>
 
         <!-- Source -->
         <div class="source-info">
