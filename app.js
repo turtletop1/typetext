@@ -34,6 +34,7 @@ const gameArea = document.getElementById("game-area");
 const textDisplay = document.getElementById("text-display");
 const typingInput = document.getElementById("typing-input");
 const levelDisplay = document.getElementById("level-display");
+const levelSelect = document.getElementById("level-select"); // 新增 Level 選單元素
 const prevBtn = document.getElementById("prev-btn");
 const nextBtn = document.getElementById("next-btn");
 const restartBtn = document.getElementById("restart-btn");
@@ -193,6 +194,18 @@ async function processPDF(pdf) {
         return;
     }
 
+    // 動態構建 Level 下拉選單選項
+    if (levelSelect) {
+        levelSelect.innerHTML = "";
+        levels.forEach((_, index) => {
+            const option = document.createElement("option");
+            option.value = index;
+            option.textContent = `Level ${index + 1} / ${levels.length}`;
+            levelSelect.appendChild(option);
+        });
+        levelSelect.disabled = false;
+    }
+
     currentLevel = 0;
     if (gameArea) gameArea.classList.remove("hidden");
     showLevel();
@@ -288,6 +301,7 @@ function showLevel() {
     const text = levels[currentLevel];
 
     if (levelDisplay) levelDisplay.textContent = `Level ${currentLevel + 1} / ${levels.length}`;
+    if (levelSelect) levelSelect.value = currentLevel;
 
     renderText(text);
 
@@ -422,6 +436,16 @@ if (nextBtn) nextBtn.addEventListener("click", () => { if (currentLevel < levels
 if (prevBtn) prevBtn.addEventListener("click", () => { if (currentLevel > 0) { currentLevel--; showLevel(); } });
 if (restartBtn) restartBtn.addEventListener("click", () => showLevel());
 
+if (levelSelect) {
+    levelSelect.addEventListener("change", (e) => {
+        const selectedLevel = parseInt(e.target.value, 10);
+        if (!isNaN(selectedLevel) && selectedLevel >= 0 && selectedLevel < levels.length) {
+            currentLevel = selectedLevel;
+            showLevel();
+        }
+    });
+}
+
 function setStatus(message) { if (statusText) statusText.textContent = message; }
 function getFileNameFromURL(url) {
     try {
@@ -431,6 +455,7 @@ function getFileNameFromURL(url) {
         return "PDF Document";
     }
 }
+
 /* =====================================================
    DICTIONARY LOGIC & CLICKABLE WORDS
 ===================================================== */
@@ -440,13 +465,24 @@ let currentLookupWord = "";
 // 1. Web Speech API 語音合成 Function (作為 100% 穩定的備援機制)
 function speakText(text) {
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // 停止目前播放中的聲音
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "en-US";
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
     } else {
         console.warn("SpeechSynthesis API not supported on this browser.");
+    }
+}
+
+// 2. 免費 MyMemory 翻譯 API 轉繁體中文
+async function translateToZh(text) {
+    try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh-TW`);
+        const transData = await res.json();
+        return transData.responseData?.translatedText || "";
+    } catch {
+        return "";
     }
 }
 
@@ -490,7 +526,7 @@ async function lookupWord(word) {
     dictionaryWord.textContent = word;
 
     if (dictionaryPhonetic) dictionaryPhonetic.textContent = "Loading...";
-    dictionaryContent.innerHTML = "🔎 正在查字典...";
+    dictionaryContent.innerHTML = "🔎 正在查字典與翻譯...";
 
     if (dictionaryAudio) dictionaryAudio.disabled = false;
     
@@ -512,7 +548,7 @@ async function lookupWord(word) {
         const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text && p.text.trim())?.text;
         if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "";
 
-        // Audio 處理：使用 fetch 檢查音檔是否有效，避免 Audio 物件噴出 DOMException
+        // Audio 處理：使用 fetch + Blob 預下載音檔，避免 ORB 阻擋觸發 DOMException
         const audioData = entry.phonetics?.find(p => p.audio && p.audio.trim().length > 0);
         if (audioData && audioData.audio) {
             let audioUrl = audioData.audio;
@@ -520,7 +556,6 @@ async function lookupWord(word) {
                 audioUrl = "https:" + audioUrl;
             }
 
-            // 異步驗證並下載音檔
             fetch(audioUrl)
                 .then(res => {
                     if (!res.ok) throw new Error("Audio fetch failed");
@@ -534,21 +569,20 @@ async function lookupWord(word) {
                     };
                 })
                 .catch(() => {
-                    // 若音檔被 ORB 阻擋或下載失敗，保持使用 TTS 發音，不拋出任何 Console Error
                     currentAudio = {
                         play: () => speakText(word)
                     };
                 });
         }
 
-        // Definitions
+        // Definitions & Chinese Translation
         dictionaryContent.innerHTML = "";
         if (!entry.meanings || entry.meanings.length === 0) {
             dictionaryContent.innerHTML = "<p>❌ 沒有找到解釋。</p>";
             return;
         }
 
-        entry.meanings.forEach(meaning => {
+        for (const meaning of entry.meanings) {
             const section = document.createElement("div");
             section.className = "dictionary-definition";
 
@@ -558,10 +592,17 @@ async function lookupWord(word) {
             section.appendChild(part);
 
             if (meaning.definitions) {
-                meaning.definitions.slice(0, 3).forEach((def, index) => {
+                const defs = meaning.definitions.slice(0, 3);
+                for (let index = 0; index < defs.length; index++) {
+                    const def = defs[index];
                     const div = document.createElement("div");
                     div.className = "dictionary-definition-text";
-                    div.textContent = `${index + 1}. ${def.definition}`;
+
+                    // 取得繁體中文翻譯
+                    const zhText = await translateToZh(def.definition);
+                    const zhDisplay = zhText ? `<br><span style="color: #2b6cb0; font-size: 0.9em;">🇹🇼 ${zhText}</span>` : "";
+
+                    div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}${zhDisplay}`;
                     section.appendChild(div);
 
                     if (def.example) {
@@ -570,11 +611,11 @@ async function lookupWord(word) {
                         example.textContent = `Example: "${def.example}"`;
                         section.appendChild(example);
                     }
-                });
+                }
             }
 
             dictionaryContent.appendChild(section);
-        });
+        }
 
     } catch (error) {
         if (dictionaryPhonetic) dictionaryPhonetic.textContent = "";
