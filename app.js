@@ -1,5 +1,5 @@
 /* =====================================================
-   PDF.JS CONFIGURATION
+   PDF.JS
 ===================================================== */
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -7,60 +7,136 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 
 /* =====================================================
-   DOM
+   CHECK JAVASCRIPT
 ===================================================== */
 
-const pdfUpload =
-    document.getElementById("pdf-upload");
-
-const pdfUrl =
-    document.getElementById("pdf-url");
-
-const loadUrlBtn =
-    document.getElementById("load-url-btn");
-
-const statusText =
-    document.getElementById("status");
-
-const gameArea =
-    document.getElementById("game-area");
-
-const textDisplay =
-    document.getElementById("text-display");
-
-const typingInput =
-    document.getElementById("typing-input");
-
-const levelDisplay =
-    document.getElementById("level-display");
-
-const prevBtn =
-    document.getElementById("prev-btn");
-
-const nextBtn =
-    document.getElementById("next-btn");
-
-const restartBtn =
-    document.getElementById("restart-btn");
-
-const pdfName =
-    document.getElementById("pdf-name");
-
-const pdfPages =
-    document.getElementById("pdf-pages");
-
-const accuracyDisplay =
-    document.getElementById("accuracy");
-
-const wpmDisplay =
-    document.getElementById("wpm");
-
-const progressDisplay =
-    document.getElementById("progress");
+console.log(
+    "✅ app.js loaded successfully!"
+);
 
 
 /* =====================================================
-   GAME STATE
+   DOM ELEMENTS
+===================================================== */
+
+const pdfUpload =
+    document.getElementById(
+        "pdf-upload"
+    );
+
+
+const pdfUrl =
+    document.getElementById(
+        "pdf-url"
+    );
+
+
+const loadUrlBtn =
+    document.getElementById(
+        "load-url-btn"
+    );
+
+
+const statusText =
+    document.getElementById(
+        "pdf-status"
+    );
+
+
+const gameArea =
+    document.getElementById(
+        "game-area"
+    );
+
+
+const textDisplay =
+    document.getElementById(
+        "text-display"
+    );
+
+
+const typingInput =
+    document.getElementById(
+        "typing-input"
+    );
+
+
+const levelDisplay =
+    document.getElementById(
+        "level-display"
+    );
+
+
+const prevBtn =
+    document.getElementById(
+        "prev-btn"
+    );
+
+
+const nextBtn =
+    document.getElementById(
+        "next-btn"
+    );
+
+
+const restartBtn =
+    document.getElementById(
+        "restart-btn"
+    );
+
+
+const pdfName =
+    document.getElementById(
+        "pdf-name"
+    );
+
+
+const pdfPages =
+    document.getElementById(
+        "pdf-pages"
+    );
+
+
+const accuracyDisplay =
+    document.getElementById(
+        "accuracy"
+    );
+
+
+const wpmDisplay =
+    document.getElementById(
+        "wpm"
+    );
+
+
+const progressDisplay =
+    document.getElementById(
+        "progress"
+    );
+
+
+/* =====================================================
+   CHECK DOM
+===================================================== */
+
+console.log(
+    "PDF Upload:",
+    pdfUpload
+);
+
+console.log(
+    "URL Button:",
+    loadUrlBtn
+);
+
+console.log(
+    "Typing Input:",
+    typingInput
+);
+
+
+/* =====================================================
+   GAME VARIABLES
 ===================================================== */
 
 let pdfText = "";
@@ -75,13 +151,14 @@ let gameFinished = false;
 
 
 /*
-    每關大約幾多 characters
+    每關大約 500 characters
 */
+
 const CHARS_PER_LEVEL = 500;
 
 
 /* =====================================================
-   LOCAL PDF
+   LOCAL PDF UPLOAD
 ===================================================== */
 
 pdfUpload.addEventListener(
@@ -91,11 +168,23 @@ pdfUpload.addEventListener(
         const file =
             event.target.files[0];
 
+
         if (!file) {
+
             return;
         }
 
-        if (file.type !== "application/pdf") {
+
+        console.log(
+            "Selected PDF:",
+            file.name
+        );
+
+
+        if (
+            file.type !==
+            "application/pdf"
+        ) {
 
             setStatus(
                 "❌ 請選擇 PDF 檔案"
@@ -104,23 +193,36 @@ pdfUpload.addEventListener(
             return;
         }
 
+
         try {
 
             setStatus(
                 "📖 正在讀取 PDF..."
             );
 
+
             const arrayBuffer =
                 await file.arrayBuffer();
 
+
             const pdf =
-                await pdfjsLib.getDocument({
-                    data: arrayBuffer
-                }).promise;
+                await pdfjsLib
+                    .getDocument({
+                        data: arrayBuffer
+                    })
+                    .promise;
+
+
+            console.log(
+                "PDF loaded:",
+                pdf.numPages,
+                "pages"
+            );
 
 
             pdfName.textContent =
                 file.name;
+
 
             pdfPages.textContent =
                 `${pdf.numPages} pages`;
@@ -128,9 +230,14 @@ pdfUpload.addEventListener(
 
             await processPDF(pdf);
 
+
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "PDF Error:",
+                error
+            );
+
 
             setStatus(
                 "❌ PDF 讀取失敗：" +
@@ -152,6 +259,7 @@ loadUrlBtn.addEventListener(
 
         const url =
             pdfUrl.value.trim();
+
 
         if (!url) {
 
@@ -180,20 +288,36 @@ loadUrlBtn.addEventListener(
         try {
 
             setStatus(
-                "🌐 正在載入 PDF URL..."
+                "🌐 正在載入 PDF..."
             );
+
+
+            console.log(
+                "Loading PDF URL:",
+                url
+            );
+
 
             const loadingTask =
                 pdfjsLib.getDocument({
                     url: url
                 });
 
+
             const pdf =
                 await loadingTask.promise;
 
 
+            console.log(
+                "URL PDF loaded:",
+                pdf.numPages,
+                "pages"
+            );
+
+
             pdfName.textContent =
                 getFileNameFromURL(url);
+
 
             pdfPages.textContent =
                 `${pdf.numPages} pages`;
@@ -201,12 +325,17 @@ loadUrlBtn.addEventListener(
 
             await processPDF(pdf);
 
+
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "URL PDF Error:",
+                error
+            );
+
 
             setStatus(
-                "❌ 無法載入 PDF URL。可能是 CORS 限制。"
+                "❌ 無法載入 PDF。可能是 PDF 網站的 CORS 限制。"
             );
         }
 
@@ -240,19 +369,19 @@ async function processPDF(pdf) {
 
 
         const page =
-            await pdf.getPage(pageNumber);
+            await pdf.getPage(
+                pageNumber
+            );
 
 
         const textContent =
             await page.getTextContent();
 
 
-        /*
-            PDF.js 將文字分成很多 items
-        */
-
         const pageText =
-            extractPageText(textContent);
+            extractPageText(
+                textContent
+            );
 
 
         allText +=
@@ -260,7 +389,15 @@ async function processPDF(pdf) {
     }
 
 
-    /* Clean */
+    console.log(
+        "Raw PDF text:",
+        allText
+    );
+
+
+    /* =========================
+       CLEAN TEXT
+    ========================== */
 
     setStatus(
         "🧹 正在清理 PDF 文字..."
@@ -268,20 +405,38 @@ async function processPDF(pdf) {
 
 
     pdfText =
-        cleanPDFText(allText);
+        cleanPDFText(
+            allText
+        );
 
 
-    if (!pdfText || pdfText.length < 20) {
+    console.log(
+        "Clean text:",
+        pdfText
+    );
+
+
+    if (
+        !pdfText ||
+        pdfText.length < 20
+    ) {
 
         setStatus(
-            "❌ PDF 裡面搵唔到足夠文字。可能係掃描圖片 PDF。"
+            "❌ PDF 裡面搵唔到足夠文字。這可能是掃描圖片 PDF。"
         );
 
         return;
     }
 
 
-    /* Create levels */
+    /* =========================
+       CREATE LEVELS
+    ========================== */
+
+    setStatus(
+        "🎮 正在建立遊戲關卡..."
+    );
+
 
     levels =
         createLevels(
@@ -290,7 +445,15 @@ async function processPDF(pdf) {
         );
 
 
-    if (levels.length === 0) {
+    console.log(
+        "Levels:",
+        levels
+    );
+
+
+    if (
+        levels.length === 0
+    ) {
 
         setStatus(
             "❌ 無法建立遊戲關卡"
@@ -321,7 +484,9 @@ async function processPDF(pdf) {
    EXTRACT PAGE TEXT
 ===================================================== */
 
-function extractPageText(textContent) {
+function extractPageText(
+    textContent
+) {
 
     let result = "";
 
@@ -337,15 +502,10 @@ function extractPageText(textContent) {
 
 
         if (!text) {
+
             continue;
         }
 
-
-        /*
-            PDF.js 每個 item 有 transform
-
-            transform[5] = Y position
-        */
 
         const currentY =
             item.transform
@@ -354,14 +514,16 @@ function extractPageText(textContent) {
 
 
         /*
-            如果 Y 座標改變，
-            通常代表換行
+            Detect new line
         */
 
         if (
             previousY !== null &&
             currentY !== null &&
-            Math.abs(currentY - previousY) > 5
+            Math.abs(
+                currentY -
+                previousY
+            ) > 5
         ) {
 
             result += "\n";
@@ -369,7 +531,6 @@ function extractPageText(textContent) {
         } else {
 
             result += " ";
-
         }
 
 
@@ -395,22 +556,25 @@ function cleanPDFText(text) {
 
 
     /*
-        Normalize line endings
+        Normalize line breaks
     */
 
     cleaned =
-        cleaned.replace(/\r\n/g, "\n");
+        cleaned.replace(
+            /\r\n/g,
+            "\n"
+        );
+
 
     cleaned =
-        cleaned.replace(/\r/g, "\n");
+        cleaned.replace(
+            /\r/g,
+            "\n"
+        );
 
 
     /*
-        Remove common page numbers
-
-        1
-        2
-        123
+        Remove standalone page numbers
     */
 
     cleaned =
@@ -421,7 +585,7 @@ function cleanPDFText(text) {
 
 
     /*
-        Remove "Page 1", "Page 2"
+        Remove "Page 1"
     */
 
     cleaned =
@@ -432,13 +596,43 @@ function cleanPDFText(text) {
 
 
     /*
-        Remove "- 1 -" style
+        Remove "- 1 -"
     */
 
     cleaned =
         cleaned.replace(
             /^\s*[-–—]\s*\d+\s*[-–—]\s*$/gm,
             ""
+        );
+
+
+    /*
+        Fix hyphenated line breaks
+
+        comput-
+        er
+
+        →
+
+        computer
+    */
+
+    cleaned =
+        cleaned.replace(
+            /([A-Za-z])-\s*\n\s*([A-Za-z])/g,
+            "$1$2"
+        );
+
+
+    /*
+        Replace line breaks
+        inside sentences
+    */
+
+    cleaned =
+        cleaned.replace(
+            /([a-zA-Z0-9,.;:!?])\n(?=[a-zA-Z0-9])/g,
+            "$1 "
         );
 
 
@@ -454,38 +648,7 @@ function cleanPDFText(text) {
 
 
     /*
-        Fix words broken by newline
-
-        example:
-
-        comput
-        er
-
-        becomes:
-
-        computer
-    */
-
-    cleaned =
-        cleaned.replace(
-            /([A-Za-z])-\s*\n\s*([A-Za-z])/g,
-            "$1$2"
-        );
-
-
-    /*
-        Replace newline inside sentence
-    */
-
-    cleaned =
-        cleaned.replace(
-            /([a-zA-Z0-9,.;:!?])\n(?=[a-zA-Z0-9])/g,
-            "$1 "
-        );
-
-
-    /*
-        Multiple newlines
+        Remove excessive newlines
     */
 
     cleaned =
@@ -507,7 +670,7 @@ function cleanPDFText(text) {
 
 
     /*
-        Remove spaces around brackets
+        Brackets
     */
 
     cleaned =
@@ -515,6 +678,7 @@ function cleanPDFText(text) {
             /\(\s+/g,
             "("
         );
+
 
     cleaned =
         cleaned.replace(
@@ -524,17 +688,19 @@ function cleanPDFText(text) {
 
 
     /*
-        Trim every line
+        Trim each line
     */
 
     cleaned =
         cleaned
             .split("\n")
             .map(
-                line => line.trim()
+                line =>
+                    line.trim()
             )
             .filter(
-                line => line.length > 0
+                line =>
+                    line.length > 0
             )
             .join("\n");
 
@@ -556,15 +722,17 @@ function createLevels(
 
 
     /*
-        Convert newlines to spaces
-        for typing game
+        Convert all whitespace
+        into normal spaces
     */
 
     text =
-        text.replace(
-            /\s+/g,
-            " "
-        ).trim();
+        text
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim();
 
 
     let start = 0;
@@ -576,24 +744,48 @@ function createLevels(
 
         let end =
             Math.min(
-                start + charsPerLevel,
+                start +
+                charsPerLevel,
                 text.length
             );
 
 
         /*
-            Try to end level
-            at a sentence or space
+            Try to finish at
+            sentence end
         */
 
         if (
-            end < text.length
+            end <
+            text.length
         ) {
 
             const sentenceEnd =
                 text.lastIndexOf(
                     ".",
                     end
+                );
+
+
+            const questionEnd =
+                text.lastIndexOf(
+                    "?",
+                    end
+                );
+
+
+            const exclamationEnd =
+                text.lastIndexOf(
+                    "!",
+                    end
+                );
+
+
+            const bestSentenceEnd =
+                Math.max(
+                    sentenceEnd,
+                    questionEnd,
+                    exclamationEnd
                 );
 
 
@@ -605,14 +797,16 @@ function createLevels(
 
 
             if (
-                sentenceEnd > start + 300
+                bestSentenceEnd >
+                start + 300
             ) {
 
                 end =
-                    sentenceEnd + 1;
+                    bestSentenceEnd + 1;
 
             } else if (
-                spaceEnd > start + 300
+                spaceEnd >
+                start + 300
             ) {
 
                 end =
@@ -623,11 +817,16 @@ function createLevels(
 
         const levelText =
             text
-                .slice(start, end)
+                .slice(
+                    start,
+                    end
+                )
                 .trim();
 
 
-        if (levelText.length > 0) {
+        if (
+            levelText.length > 0
+        ) {
 
             result.push(
                 levelText
@@ -649,7 +848,10 @@ function createLevels(
 
 function showLevel() {
 
-    if (!levels.length) {
+    if (
+        !levels.length
+    ) {
+
         return;
     }
 
@@ -659,7 +861,11 @@ function showLevel() {
 
 
     levelDisplay.textContent =
-        `Level ${currentLevel + 1} / ${levels.length}`;
+        `Level ${
+            currentLevel + 1
+        } / ${
+            levels.length
+        }`;
 
 
     renderText(text);
@@ -667,11 +873,17 @@ function showLevel() {
 
     typingInput.value = "";
 
-    typingInput.disabled = false;
 
-    gameFinished = false;
+    typingInput.disabled =
+        false;
 
-    startTime = null;
+
+    gameFinished =
+        false;
+
+
+    startTime =
+        null;
 
 
     updateStats();
@@ -682,15 +894,20 @@ function showLevel() {
 
 
     nextBtn.disabled =
-        currentLevel === levels.length - 1;
+        currentLevel ===
+        levels.length - 1;
 
 
     /*
-        Focus input
+        Focus typing box
     */
 
     setTimeout(
-        () => typingInput.focus(),
+        function () {
+
+            typingInput.focus();
+
+        },
         100
     );
 }
@@ -712,7 +929,9 @@ function renderText(text) {
     ) {
 
         const span =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
 
 
         span.className =
@@ -723,7 +942,9 @@ function renderText(text) {
             text[i];
 
 
-        if (i === 0) {
+        if (
+            i === 0
+        ) {
 
             span.classList.add(
                 "current"
@@ -739,14 +960,17 @@ function renderText(text) {
 
 
 /* =====================================================
-   TYPING
+   TYPING INPUT
 ===================================================== */
 
 typingInput.addEventListener(
     "input",
     function () {
 
-        if (gameFinished) {
+        if (
+            gameFinished
+        ) {
+
             return;
         }
 
@@ -773,21 +997,30 @@ typingInput.addEventListener(
         }
 
 
+        /*
+            Update character colours
+        */
+
         updateCharacterDisplay(
             typed,
             target
         );
 
 
+        /*
+            Update statistics
+        */
+
         updateStats();
 
 
         /*
-            Completed
+            Check completed
         */
 
         if (
-            typed.length >= target.length &&
+            typed.length >=
+            target.length &&
             typed === target
         ) {
 
@@ -799,7 +1032,7 @@ typingInput.addEventListener(
 
 
 /* =====================================================
-   CHARACTER DISPLAY
+   UPDATE CHARACTER DISPLAY
 ===================================================== */
 
 function updateCharacterDisplay(
@@ -814,7 +1047,10 @@ function updateCharacterDisplay(
 
 
     chars.forEach(
-        (char, index) => {
+        function (
+            char,
+            index
+        ) {
 
             char.classList.remove(
                 "correct",
@@ -823,8 +1059,13 @@ function updateCharacterDisplay(
             );
 
 
+            /*
+                Already typed
+            */
+
             if (
-                index < typed.length
+                index <
+                typed.length
             ) {
 
                 if (
@@ -842,7 +1083,6 @@ function updateCharacterDisplay(
                         "incorrect"
                     );
                 }
-
             }
 
 
@@ -851,7 +1091,8 @@ function updateCharacterDisplay(
             */
 
             if (
-                index === typed.length
+                index ===
+                typed.length
             ) {
 
                 char.classList.add(
@@ -885,7 +1126,7 @@ function updateCharacterDisplay(
 
 
 /* =====================================================
-   STATISTICS
+   UPDATE STATS
 ===================================================== */
 
 function updateStats() {
@@ -895,11 +1136,12 @@ function updateStats() {
 
 
     const target =
-        levels[currentLevel] || "";
+        levels[currentLevel] ||
+        "";
 
 
     /*
-        Correct characters
+        Count correct
     */
 
     let correct = 0;
@@ -929,10 +1171,15 @@ function updateStats() {
     let accuracy = 100;
 
 
-    if (typed.length > 0) {
+    if (
+        typed.length > 0
+    ) {
 
         accuracy =
-            (correct / typed.length) *
+            (
+                correct /
+                typed.length
+            ) *
             100;
     }
 
@@ -948,11 +1195,16 @@ function updateStats() {
     let progress = 0;
 
 
-    if (target.length > 0) {
+    if (
+        target.length > 0
+    ) {
 
         progress =
             Math.min(
-                (typed.length / target.length) *
+                (
+                    typed.length /
+                    target.length
+                ) *
                 100,
                 100
             );
@@ -966,7 +1218,6 @@ function updateStats() {
     /*
         WPM
 
-        Standard:
         5 characters = 1 word
     */
 
@@ -978,17 +1229,24 @@ function updateStats() {
         typed.length > 0
     ) {
 
-        const elapsed =
-            (Date.now() - startTime) /
+        const elapsedMinutes =
+            (
+                Date.now() -
+                startTime
+            ) /
             1000 /
             60;
 
 
-        if (elapsed > 0) {
+        if (
+            elapsedMinutes > 0
+        ) {
 
             wpm =
-                (correct / 5) /
-                elapsed;
+                (
+                    correct / 5
+                ) /
+                elapsedMinutes;
         }
     }
 
@@ -1004,9 +1262,12 @@ function updateStats() {
 
 function finishLevel() {
 
-    gameFinished = true;
+    gameFinished =
+        true;
 
-    typingInput.disabled = true;
+
+    typingInput.disabled =
+        true;
 
 
     updateStats();
@@ -1014,6 +1275,7 @@ function finishLevel() {
 
     const accuracy =
         accuracyDisplay.textContent;
+
 
     const wpm =
         wpmDisplay.textContent;
@@ -1025,17 +1287,23 @@ function finishLevel() {
     ) {
 
         setStatus(
-            `🎉 Level ${currentLevel + 1} 完成！ ` +
-            `Accuracy: ${accuracy} | ` +
-            `WPM: ${wpm}`
+            `🎉 Level ${
+                currentLevel + 1
+            } 完成！ Accuracy: ${
+                accuracy
+            } | WPM: ${
+                wpm
+            }`
         );
 
     } else {
 
         setStatus(
-            `🏆 全部完成！ ` +
-            `Accuracy: ${accuracy} | ` +
-            `WPM: ${wpm}`
+            `🏆 全部完成！ Accuracy: ${
+                accuracy
+            } | WPM: ${
+                wpm
+            }`
         );
     }
 }
@@ -1099,17 +1367,25 @@ restartBtn.addEventListener(
 
 
 /* =====================================================
-   HELPERS
+   STATUS
 ===================================================== */
 
-function setStatus(message) {
+function setStatus(
+    message
+) {
 
     statusText.textContent =
         message;
 }
 
 
-function getFileNameFromURL(url) {
+/* =====================================================
+   GET FILE NAME FROM URL
+===================================================== */
+
+function getFileNameFromURL(
+    url
+) {
 
     try {
 
@@ -1127,11 +1403,32 @@ function getFileNameFromURL(url) {
                 .pop();
 
 
-        return filename ||
-            "PDF Document";
+        if (
+            filename
+        ) {
+
+            return filename;
+        }
+
+
+        return "PDF Document";
 
     } catch {
 
         return "PDF Document";
     }
 }
+
+
+/* =====================================================
+   INITIAL STATE
+===================================================== */
+
+gameArea.classList.add(
+    "hidden"
+);
+
+
+console.log(
+    "✅ PDF Typing Game ready!"
+);
