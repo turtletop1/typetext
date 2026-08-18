@@ -2,7 +2,6 @@
 <html lang="zh-Hant">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -10,69 +9,51 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>PDF & Article Typing Game</title>
+    <title>PDF Typing Game</title>
 
     <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="app.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+    </script>
 
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 </head>
+
 
 <body>
 
 <div class="container">
 
-    <!-- ================= HEADER ================= -->
+    <!-- =========================
+         HEADER
+    ========================== -->
 
     <header>
 
-        <h1>🎮 Typing Game</h1>
+        <h1>
+            📄 PDF Typing Game
+        </h1>
 
         <p>
-            PDF & Online Article Typing Practice
+            將 PDF 變成打字遊戲
         </p>
 
     </header>
 
 
-    <!-- ================= MODE SELECT ================= -->
+    <!-- =========================
+         IMPORT SECTION
+    ========================== -->
 
-    <section class="mode-section">
+    <section class="import-section">
 
-        <h2>Choose Game Mode</h2>
-
-        <div class="mode-buttons">
-
-            <button
-                id="pdf-mode-btn"
-                class="mode-btn active"
-            >
-                📄 PDF Mode
-            </button>
-
-            <button
-                id="article-mode-btn"
-                class="mode-btn"
-            >
-                🌐 Article Mode
-            </button>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         PDF MODE
-    ================================================== -->
-
-    <section
-        id="pdf-mode"
-        class="mode-panel"
-    >
-
-        <h2>📄 Import PDF</h2>
+        <h2>
+            📥 Import PDF
+        </h2>
 
 
         <!-- PDF URL -->
@@ -80,23 +61,23 @@
         <div class="url-row">
 
             <input
-                id="pdf-url"
                 type="url"
-                placeholder="Paste PDF URL..."
+                id="pdf-url"
+                placeholder="貼上 PDF URL，例如 https://example.com/file.pdf"
             >
 
             <button
                 id="load-url-btn"
                 class="primary-btn"
             >
-                Load
+                載入
             </button>
 
         </div>
 
 
         <div class="divider">
-            OR
+            <span>或</span>
         </div>
 
 
@@ -106,118 +87,40 @@
             for="pdf-upload"
             class="upload-btn"
         >
-            📂 Upload PDF
+            📂 選擇 PDF
         </label>
 
         <input
-            id="pdf-upload"
             type="file"
+            id="pdf-upload"
             accept="application/pdf"
             hidden
         >
 
 
-        <p id="pdf-status" class="status">
-            Upload a PDF or enter a PDF URL.
-        </p>
-
-    </section>
-
-
-    <!-- =================================================
-         ARTICLE MODE
-    ================================================== -->
-
-    <section
-        id="article-mode"
-        class="mode-panel hidden"
-    >
-
-        <h2>🌐 Online Article</h2>
-
-
-        <div class="article-options">
-
-            <label>
-                Source
-            </label>
-
-            <select id="article-source">
-
-                <option value="hk-gov">
-                    Hong Kong Government News
-                </option>
-
-            </select>
-
-
-            <label>
-                Category
-            </label>
-
-            <select id="article-category">
-
-                <option value="all">
-                    All
-                </option>
-
-                <option value="news">
-                    News
-                </option>
-
-                <option value="policy">
-                    Policy
-                </option>
-
-                <option value="economy">
-                    Economy
-                </option>
-
-                <option value="environment">
-                    Environment
-                </option>
-
-                <option value="technology">
-                    Technology
-                </option>
-
-                <option value="education">
-                    Education
-                </option>
-
-            </select>
-
-
-            <button
-                id="random-article-btn"
-                class="random-btn"
-            >
-                🎲 Random Article
-            </button>
-
-        </div>
-
+        <!-- Status -->
 
         <p
-            id="article-status"
+            id="pdf-status"
             class="status"
         >
-            Choose a source and get a random article.
+            請上傳 PDF 或輸入 PDF 網址
         </p>
 
     </section>
 
 
-    <!-- =================================================
-         GAME
-    ================================================== -->
+    <!-- =========================
+         GAME AREA
+    ========================== -->
 
     <section
         id="game-area"
         class="game-area hidden"
     >
 
-        <!-- Level -->
+
+        <!-- LEVEL BAR -->
 
         <div class="level-bar">
 
@@ -225,11 +128,13 @@
                 id="prev-btn"
                 class="secondary-btn"
             >
-                ⬅ Previous
+                ⬅ 上一關
             </button>
 
 
-            <div id="level-display">
+            <div
+                id="level-display"
+            >
                 Level 1 / 1
             </div>
 
@@ -238,112 +143,126 @@
                 id="next-btn"
                 class="secondary-btn"
             >
-                Next ➡
+                下一關 ➡
             </button>
 
         </div>
 
 
-        <!-- Source -->
+        <!-- PDF INFORMATION -->
 
-        <div class="source-info">
+        <div class="pdf-info">
 
-            <div>
-
-                <strong id="content-title">
-                    Content
-                </strong>
-
-                <span id="content-source">
-                    Source
-                </span>
-
-            </div>
-
-
-            <a
-                id="original-link"
-                href="#"
-                target="_blank"
-                rel="noopener noreferrer"
+            <strong
+                id="pdf-name"
             >
-                View Original
-            </a>
+                PDF
+            </strong>
+
+
+            <span
+                id="pdf-pages"
+            >
+                0 pages
+            </span>
 
         </div>
 
 
-        <!-- Text -->
+        <!-- TEXT DISPLAY -->
 
         <div
             id="text-display"
             class="text-display"
-        ></div>
+        >
+        </div>
 
 
-        <!-- Typing Input -->
+        <!-- TYPING INPUT -->
 
         <textarea
             id="typing-input"
             class="typing-input"
-            placeholder="Start typing here..."
+            placeholder="在這裡開始打字..."
             spellcheck="false"
+            autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
-            autocapitalize="none"
         ></textarea>
 
 
-        <!-- Statistics -->
+        <!-- STATISTICS -->
 
         <div class="stats">
 
-            <div>
 
-                🎯 Accuracy
+            <div class="stat-card">
 
-                <strong id="accuracy">
+                <span>
+                    🎯 Accuracy
+                </span>
+
+                <strong
+                    id="accuracy"
+                >
                     100%
                 </strong>
 
             </div>
 
 
-            <div>
+            <div class="stat-card">
 
-                ⚡ WPM
+                <span>
+                    ⚡ WPM
+                </span>
 
-                <strong id="wpm">
+                <strong
+                    id="wpm"
+                >
                     0
                 </strong>
 
             </div>
 
 
-            <div>
+            <div class="stat-card">
 
-                📝 Progress
+                <span>
+                    📝 Progress
+                </span>
 
-                <strong id="progress">
+                <strong
+                    id="progress"
+                >
                     0%
                 </strong>
 
             </div>
 
+
         </div>
 
+
+        <!-- RESTART -->
 
         <button
             id="restart-btn"
             class="restart-btn"
         >
-            🔄 Restart Level
+            🔄 重新開始本關
         </button>
+
 
     </section>
 
 </div>
 
+
+<!-- =========================
+     JAVASCRIPT
+     必須放在 body 最尾
+========================== -->
 
 <script src="app.js"></script>
 
