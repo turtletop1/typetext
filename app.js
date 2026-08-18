@@ -437,6 +437,19 @@ function getFileNameFromURL(url) {
    DICTIONARY LOGIC & CLICKABLE WORDS
 ===================================================== */
 
+// 1. 建立通用的 SpeechSynthesis TTS 工具函式
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // 停止目前播放中的聲音
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en-US";
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    } else {
+        console.warn("SpeechSynthesis API not supported on this browser.");
+    }
+}
+
 function makeWordsClickable() {
     if (!textDisplay) return;
     const chars = textDisplay.querySelectorAll(".char");
@@ -455,8 +468,8 @@ function makeWordsClickable() {
             const end = i - 1;
 
             for (let j = start; j <= end; j++) {
-                chars[ j ].classList.add("clickable-word");
-                chars[ j ].onclick = (event) => {
+                chars[j].classList.add("clickable-word");
+                chars[j].onclick = (event) => {
                     event.stopPropagation();
                     lookupWord(word);
                 };
@@ -476,9 +489,12 @@ async function lookupWord(word) {
 
     if (dictionaryPhonetic) dictionaryPhonetic.textContent = "Loading...";
     dictionaryContent.innerHTML = "🔎 正在查字典...";
-    if (dictionaryAudio) dictionaryAudio.disabled = true;
 
-    currentAudio = null;
+    // 預設發音方式：使用內建 TTS（確保永遠可以點擊發音）
+    if (dictionaryAudio) dictionaryAudio.disabled = false;
+    currentAudio = {
+        play: () => Promise.resolve(speakText(word))
+    };
 
     try {
         const response = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(word));
@@ -491,30 +507,21 @@ async function lookupWord(word) {
 
         // Phonetic
         const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text && p.text.trim())?.text;
-        if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "No phonetic available";
+        if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "";
 
-        // Audio
-        const audioData = entry.phonetics?.find(p => p.audio && p.audio.length > 0);
-
-if (audioData && audioData.audio) {
-    let audioUrl = audioData.audio.startsWith("//") ? "https:" + audioData.audio : audioData.audio;
-    currentAudio = new Audio(audioUrl);
-} else {
-    // 備用方案：使用瀏覽器內建英文發音
-    currentAudio = {
-        play: () => {
-            return new Promise((resolve) => {
-                const utterance = new SpeechSynthesisUtterance(word);
-                utterance.lang = "en-US";
-                window.speechSynthesis.speak(utterance);
-                resolve();
-            });
+        // Audio: 優先嘗試播放原音檔，若是無效/失聯自動切換 fallback 至 TTS
+        const audioData = entry.phonetics?.find(p => p.audio && p.audio.trim().length > 0);
+        if (audioData && audioData.audio) {
+            let audioUrl = audioData.audio;
+            if (audioUrl.startsWith("//")) {
+                audioUrl = "https:" + audioUrl;
+            }
+            const audioObj = new Audio(audioUrl);
+            currentAudio = {
+                play: () => audioObj.play().catch(() => speakText(word))
+            };
         }
-    };
-}
 
-// 只要成功查到單字，發音按鈕就可以點擊
-if (dictionaryAudio) dictionaryAudio.disabled = false;
         // Definitions
         dictionaryContent.innerHTML = "";
         if (!entry.meanings || entry.meanings.length === 0) {
@@ -552,7 +559,7 @@ if (dictionaryAudio) dictionaryAudio.disabled = false;
 
     } catch (error) {
         if (dictionaryPhonetic) dictionaryPhonetic.textContent = "";
-        dictionaryContent.innerHTML = "<p>❌ 找不到該單字的解釋。</p>";
+        dictionaryContent.innerHTML = "<p>⚠️ 字典 API 連線失敗，但你仍可點擊按鈕收聽語音朗讀。</p>";
     }
 }
 
@@ -566,7 +573,7 @@ if (dictionaryClose) {
 if (dictionaryAudio) {
     dictionaryAudio.addEventListener("click", () => {
         if (currentAudio) {
-            currentAudio.play().catch(e => console.error("Audio playback error:", e));
+            currentAudio.play();
         }
     });
 }
