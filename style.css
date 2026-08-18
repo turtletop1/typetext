@@ -748,11 +748,11 @@ button {
     .level-select {
         grid-column: span 2;
         order: -1; /* 手機端將選單移至最上方 */
-        width: 100%;
+        width: 70%;
         background: lightblue;
         padding:5px;
         border-radius: 6px;
-         border: none;
+        border: none;
     }
 
     #restart-btn {
