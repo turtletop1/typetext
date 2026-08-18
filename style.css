@@ -690,3 +690,97 @@ button {
 
     background: #fff3cd;
 }
+
+/* LEVEL CONTROLS CONTAINER */
+.level-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 15px;
+    background: #eef2f5;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+/* BUTTONS IN LEVEL CONTROLS */
+.level-controls button {
+    padding: 9px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s, transform 0.1s;
+}
+
+/* PREV / NEXT BUTTONS */
+#prev-btn, 
+#next-btn {
+    background: #ecf0f1;
+    color: #34495e;
+}
+
+#prev-btn:hover:not(:disabled), 
+#next-btn:hover:not(:disabled) {
+    background: #bdc3c7;
+}
+
+/* RESTART BUTTON */
+#restart-btn {
+    background: #e74c3c;
+    color: white;
+}
+
+#restart-btn:hover {
+    background: #c0392b;
+}
+
+
+/* LEVEL SELECT DROPDOWN */
+.level-select {
+    flex: 1;
+    min-width: 130px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c3e50;
+    background: white;
+    border: 1px solid #dcdfe3;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: center;
+}
+
+.level-select:focus {
+    border-color: #3498db;
+}
+
+.level-select:disabled {
+    background: #f8f9fa;
+    color: #b2bec3;
+    cursor: not-allowed;
+    border-color: #e5e8eb;
+}
+
+/* MOBILE RESPONSIVE LAYOUT */
+@media (max-width: 600px) {
+    .level-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .level-select {
+        grid-column: span 2;
+        order: -1; /* 手機端將選單移至最上方 */
+        width: 100%;
+    }
+
+    #restart-btn {
+        grid-column: span 2; /* 重新開始按鈕在手機端拉寬佔滿整行 */
+    }
+}
