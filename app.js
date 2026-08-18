@@ -495,11 +495,26 @@ async function lookupWord(word) {
 
         // Audio
         const audioData = entry.phonetics?.find(p => p.audio && p.audio.length > 0);
-        if (audioData && audioData.audio) {
-            currentAudio = new Audio(audioData.audio);
-            if (dictionaryAudio) dictionaryAudio.disabled = false;
-        }
 
+if (audioData && audioData.audio) {
+    let audioUrl = audioData.audio.startsWith("//") ? "https:" + audioData.audio : audioData.audio;
+    currentAudio = new Audio(audioUrl);
+} else {
+    // 備用方案：使用瀏覽器內建英文發音
+    currentAudio = {
+        play: () => {
+            return new Promise((resolve) => {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = "en-US";
+                window.speechSynthesis.speak(utterance);
+                resolve();
+            });
+        }
+    };
+}
+
+// 只要成功查到單字，發音按鈕就可以點擊
+if (dictionaryAudio) dictionaryAudio.disabled = false;
         // Definitions
         dictionaryContent.innerHTML = "";
         if (!entry.meanings || entry.meanings.length === 0) {
