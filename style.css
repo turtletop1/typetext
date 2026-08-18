@@ -737,7 +737,7 @@ button {
 }
 
 .level-select:disabled {
-    background: #f8f9fa;
+    background: lightblue;
     color: #b2bec3;
     cursor: not-allowed;
     border-color: #e5e8eb;
@@ -749,6 +749,10 @@ button {
         grid-column: span 2;
         order: -1; /* 手機端將選單移至最上方 */
         width: 100%;
+        background: lightblue;
+        padding:5px;
+        border-radius: 6px;
+         border: none;
     }
 
     #restart-btn {
