@@ -557,3 +557,132 @@ button {
         align-items: flex-start;
     }
 }
+
+.dictionary-popup {
+
+    position: fixed;
+
+    left: 50%;
+
+    top: 50%;
+
+    transform: translate(
+        -50%,
+        -50%
+    );
+
+    width: min(
+        90%,
+        450px
+    );
+
+    max-height: 80vh;
+
+    overflow-y: auto;
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 10px 40px
+        rgba(0, 0, 0, 0.25);
+
+    z-index: 1000;
+}
+
+
+.dictionary-popup h2 {
+
+    font-size: 28px;
+
+    margin-bottom: 5px;
+}
+
+
+.dictionary-close {
+
+    position: absolute;
+
+    right: 12px;
+
+    top: 12px;
+
+    background: none;
+
+    font-size: 20px;
+
+    color: #777;
+}
+
+
+#dictionary-phonetic {
+
+    color: #7f8c8d;
+
+    margin-bottom: 12px;
+}
+
+
+.audio-btn {
+
+    background: #3498db;
+
+    color: white;
+
+    padding: 9px 15px;
+
+    margin-bottom: 15px;
+}
+
+
+.dictionary-definition {
+
+    margin-bottom: 15px;
+
+    line-height: 1.6;
+}
+
+
+.dictionary-part {
+
+    font-weight: bold;
+
+    color: #3498db;
+
+    margin-bottom: 5px;
+}
+
+
+.dictionary-example {
+
+    color: #7f8c8d;
+
+    font-style: italic;
+
+    margin-top: 5px;
+}
+
+
+/* 避免 Dictionary popup 被 hidden class 覆蓋 */
+
+.dictionary-popup.hidden {
+
+    display: none;
+}
+
+
+/* =========================
+   CLICKABLE WORD
+========================= */
+
+.clickable-word {
+
+    cursor: pointer;
+
+    border-radius: 4px;
+
+    transition: background 0.15s;
+}
