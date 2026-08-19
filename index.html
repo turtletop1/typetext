@@ -33,6 +33,15 @@
             <button id="article-mode-btn" class="mode-btn">🌐 Article Mode</button>
         </div>
     </section>
+    <div class="article-selector">
+  <label for="articleSelect">Choose an article:</label>
+  <select id="articleSelect">
+    <option value="">-- Select an article --</option>
+  </select>
+</div>
+
+<!-- 顯示文章內容的容器 -->
+<div id="articleContainer"></div>
 
     <div class="add-article-container" style="border: 1px solid #ccc; padding: 15px; margin-top: 20px;">
       <h3>➕ 新增文章並匯出 JSON</h3>
@@ -114,15 +123,7 @@
         </p>
     </section>
     
-<div class="article-selector">
-  <label for="articleSelect">Choose an article:</label>
-  <select id="articleSelect">
-    <option value="">-- Select an article --</option>
-  </select>
-</div>
 
-<!-- 顯示文章內容的容器 -->
-<div id="articleContainer"></div>
     <!-- =================================================
          GAME
     ================================================== -->
