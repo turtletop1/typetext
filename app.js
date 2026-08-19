@@ -762,3 +762,56 @@ if (startCustomTextBtn && customTextInput) {
         gameArea.scrollIntoView({ behavior: "smooth" });
     });
 }
+
+// 頁面載入完成後自動讀取 Git 倉庫中的 articles.json
+document.addEventListener("DOMContentLoaded", () => {
+    loadArticlesFromGit();
+});
+
+async function loadArticlesFromGit() {
+    const articleSelect = document.getElementById("articleSelect");
+    const articleContainer = document.getElementById("articleContainer");
+
+    try {
+        // 從相對路徑讀取與 index.html 同目錄的 articles.json
+        const response = await fetch("./articles.json");
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const articles = await response.json();
+
+        // 動態生成下拉選單選項
+        articles.forEach(article => {
+            const option = document.createElement("option");
+            option.value = article.id;
+            option.textContent = article.title;
+            articleSelect.appendChild(option);
+        });
+
+        // 當使用者切換選項時更新顯示內容
+        articleSelect.addEventListener("change", (e) => {
+            const selectedId = e.target.value;
+            const selectedArticle = articles.find(a => a.id === selectedId);
+
+            if (selectedArticle) {
+                // 如果你的打字練習器需要更新文字，可以將文字帶入打字區域：
+                // example: textToTypeContainer.innerText = selectedArticle.content;
+                if (articleContainer) {
+                    articleContainer.innerHTML = `
+                        <h3>${selectedArticle.title}</h3>
+                        <p>${selectedArticle.content}</p>
+                    `;
+                }
+            } else {
+                if (articleContainer) articleContainer.innerHTML = "";
+            }
+        });
+
+    } catch (error) {
+        console.error("Failed to load articles.json:", error);
+        if (articleContainer) {
+            articleContainer.innerHTML = "<p>⚠️ 無法載入文章選單，請檢查 articles.json 檔案路徑。</p>";
+        }
+    }
+}
