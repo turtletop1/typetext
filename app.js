@@ -16,6 +16,14 @@ console.log("✅ app.js loaded successfully!");
 /* =====================================================
    DOM ELEMENTS
 ===================================================== */
+// 新增 PDF 頁數控制 DOM
+const pdfStartPageInput = document.getElementById("pdf-start-page");
+const pdfEndPageInput = document.getElementById("pdf-end-page");
+const applyPageRangeBtn = document.getElementById("apply-page-range-btn");
+const pageRangeContainer = document.getElementById("page-range-container");
+
+// 全域變數：暫存載入的 PDF Document 物件
+let loadedPdfDoc = null;
 
 // Mode buttons
 const pdfModeBtn = document.getElementById("pdf-mode-btn");
@@ -117,12 +125,16 @@ if (pdfUpload) {
         try {
             setStatus("📖 正在讀取 PDF...");
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            loadedPdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
             if (pdfName) pdfName.textContent = file.name;
-            if (pdfPages) pdfPages.textContent = `${pdf.numPages} pages`;
+            if (pdfPages) pdfPages.textContent = `(共 ${loadedPdfDoc.numPages} 頁)`;
 
-            await processPDF(pdf);
+            // 初始化頁數輸入框範圍
+            setupPageRangeUI(loadedPdfDoc.numPages);
+
+            // 預設讀取全部頁數
+            await processPDF(loadedPdfDoc, 1, loadedPdfDoc.numPages);
         } catch (error) {
             console.error("PDF Error:", error);
             setStatus("❌ PDF 讀取失敗：" + error.message);
@@ -130,6 +142,47 @@ if (pdfUpload) {
     });
 }
 
+// 設定頁數輸入框範圍與顯示
+function setupPageRangeUI(totalPages) {
+    if (pdfStartPageInput && pdfEndPageInput && pageRangeContainer) {
+        pdfStartPageInput.min = 1;
+        pdfStartPageInput.max = totalPages;
+        pdfStartPageInput.value = 1;
+
+        pdfEndPageInput.min = 1;
+        pdfEndPageInput.max = totalPages;
+        pdfEndPageInput.value = totalPages;
+
+        pageRangeContainer.classList.remove("hidden");
+    }
+}
+
+// 點擊「套用頁數」按鈕時重新擷取文字
+if (applyPageRangeBtn) {
+    applyPageRangeBtn.addEventListener("click", async function () {
+        if (!loadedPdfDoc) {
+            setStatus("⚠️ 請先載入 PDF 檔案！");
+            return;
+        }
+
+        let start = parseInt(pdfStartPageInput.value, 10);
+        let end = parseInt(pdfEndPageInput.value, 10);
+        const total = loadedPdfDoc.numPages;
+
+        // 頁數邊界檢查
+        if (isNaN(start) || start < 1) start = 1;
+        if (isNaN(end) || end > total) end = total;
+        if (start > end) {
+            setStatus("⚠️ 起始頁數不能大於結束頁數！");
+            return;
+        }
+
+        pdfStartPageInput.value = start;
+        pdfEndPageInput.value = end;
+
+        await processPDF(loadedPdfDoc, start, end);
+    });
+}
 
 /* =====================================================
    PDF URL
@@ -153,12 +206,16 @@ if (loadUrlBtn) {
         try {
             setStatus("🌐 正在載入 PDF...");
             const loadingTask = pdfjsLib.getDocument({ url: url });
-            const pdf = await loadingTask.promise;
+            loadedPdfDoc = await loadingTask.promise;
 
             if (pdfName) pdfName.textContent = getFileNameFromURL(url);
-            if (pdfPages) pdfPages.textContent = `${pdf.numPages} pages`;
+            if (pdfPages) pdfPages.textContent = `(共 ${loadedPdfDoc.numPages} 頁)`;
 
-            await processPDF(pdf);
+            // 初始化頁數輸入框範圍
+            setupPageRangeUI(loadedPdfDoc.numPages);
+
+            // 預設讀取全部頁數
+            await processPDF(loadedPdfDoc, 1, loadedPdfDoc.numPages);
         } catch (error) {
             console.error("URL PDF Error:", error);
             setStatus("❌ 無法載入 PDF。可能是 PDF 網站的 CORS 限制。");
@@ -166,17 +223,21 @@ if (loadUrlBtn) {
     });
 }
 
-
 /* =====================================================
-   PROCESS PDF
+   PROCESS PDF (支援指定頁數範圍)
 ===================================================== */
 
-async function processPDF(pdf) {
-    setStatus("🔎 正在提取 PDF 文字...");
+async function processPDF(pdf, startPage = 1, endPage = null) {
+    const maxPages = pdf.numPages;
+    if (!endPage || endPage > maxPages) endPage = maxPages;
+    if (startPage < 1) startPage = 1;
+
+    setStatus(`🔎 正在提取 PDF 文字 (第 ${startPage} 至 ${endPage} 頁)...`);
     let allText = "";
 
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-        setStatus(`🔎 正在讀取第 ${pageNumber} / ${pdf.numPages} 頁...`);
+    // 只讀取指定範圍內的頁數
+    for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
+        setStatus(`🔎 正在讀取第 ${pageNumber} / ${endPage} 頁...`);
         const page = await pdf.getPage(pageNumber);
         const textContent = await page.getTextContent();
         const pageText = extractPageText(textContent);
@@ -187,7 +248,7 @@ async function processPDF(pdf) {
     pdfText = cleanPDFText(allText);
 
     if (!pdfText || pdfText.length < 20) {
-        setStatus("❌ PDF 裡面搵唔到足夠文字。這可能是掃描圖片 PDF。");
+        setStatus("❌ 所選頁數內搵唔到足夠文字。這可能是掃描圖片或空白頁。");
         return;
     }
 
@@ -214,9 +275,8 @@ async function processPDF(pdf) {
     currentLevel = 0;
     if (gameArea) gameArea.classList.remove("hidden");
     showLevel();
-    setStatus(`✅ PDF 載入成功！共 ${levels.length} 個關卡`);
+    setStatus(`✅ 已載入第 ${startPage}-${endPage} 頁！共 ${levels.length} 個關卡`);
 }
-
 
 /* =====================================================
    EXTRACT & CLEAN PDF TEXT
