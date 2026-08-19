@@ -34,6 +34,19 @@
         </div>
     </section>
 
+    <div class="add-article-container" style="border: 1px solid #ccc; padding: 15px; margin-top: 20px;">
+      <h3>➕ 新增文章並匯出 JSON</h3>
+      
+      <label for="newTitle">文章標題：</label><br>
+      <input type="text" id="newTitle" placeholder="例如: Exercise Benefits" style="width: 100%; margin-bottom: 10px;"><br>
+    
+      <label for="newContent">文章內容：</label><br>
+      <textarea id="newContent" rows="5" placeholder="輸入文章內文..." style="width: 100%; margin-bottom: 10px;"></textarea><br>
+    
+      <button id="addAndDownloadBtn" style="padding: 8px 16px; cursor: pointer;">
+        📥 新增並下載最新 articles.json
+      </button>
+    </div>
 
    <!-- =================================================
          PDF MODE
@@ -100,7 +113,7 @@
             貼上文章後點擊「開始打字練習」即可生成關卡。
         </p>
     </section>
-
+    
 <div class="article-selector">
   <label for="articleSelect">Choose an article:</label>
   <select id="articleSelect">
