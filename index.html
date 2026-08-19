@@ -70,31 +70,23 @@
          ARTICLE MODE
     ================================================== -->
 
-    <section id="article-mode" class="mode-panel hidden">
-        <h2>🌐 Online Article</h2>
+   <section id="article-mode" class="mode-panel hidden">
+        <h2>🌐 Custom Text Mode</h2>
 
-        <div class="article-options">
-            <label for="article-source">Source</label>
-            <select id="article-source">
-                <option value="hk-gov">Hong Kong Government News</option>
-            </select>
+        <div class="custom-text-container" style="display: flex; flex-direction: column; gap: 10px;">
+            <label for="custom-text-input">貼上或輸入你想要練習打字的文章：</label>
+            <textarea 
+                id="custom-text-input" 
+                rows="6" 
+                placeholder="在此貼上任何英文文章或段落..."
+                style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; resize: vertical;"
+            ></textarea>
 
-            <label for="article-category">Category</label>
-            <select id="article-category">
-                <option value="all">All</option>
-                <option value="news">News</option>
-                <option value="policy">Policy</option>
-                <option value="economy">Economy</option>
-                <option value="environment">Environment</option>
-                <option value="technology">Technology</option>
-                <option value="education">Education</option>
-            </select>
-
-            <button id="random-article-btn" class="random-btn">🎲 Random Article</button>
+            <button id="start-custom-text-btn" class="primary-btn" style="align-self: flex-end;">🚀 開始打字練習</button>
         </div>
 
         <p id="article-status" class="status">
-            Choose a source and get a random article.
+            貼上文章後點擊「開始打字練習」即可生成關卡。
         </p>
     </section>
 
