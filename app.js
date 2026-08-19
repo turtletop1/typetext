@@ -881,3 +881,24 @@ function downloadJsonFile(data, filename) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. 設定顯示 / 隱藏表單按鈕邏輯
+    const toggleBtn = document.getElementById("toggleFormBtn");
+    const container = document.getElementById("addArticleContainer");
+
+    if (toggleBtn && container) {
+        toggleBtn.addEventListener("click", () => {
+            const isHidden = container.style.display === "none";
+            // 切換 display 狀態
+            container.style.display = isHidden ? "block" : "none";
+            // 動態更換按鈕文字
+            toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";
+        });
+    }
+
+    // 2. 下載 JSON 按鈕監聽
+    const downloadBtn = document.getElementById("addAndDownloadBtn");
+    if (downloadBtn) {
+        downloadBtn.addEventListener("click", handleAddAndDownload);
+    }
+});
