@@ -35,7 +35,7 @@
     </section>
 
 
-    <!-- =================================================
+   <!-- =================================================
          PDF MODE
     ================================================== -->
 
@@ -54,10 +54,21 @@
         <label for="pdf-upload" class="upload-btn">📂 Upload PDF</label>
         <input id="pdf-upload" type="file" accept="application/pdf" hidden>
 
-        <!-- Added missing elements for PDF metadata display -->
-        <div class="pdf-info" style="margin-top: 10px;">
-            <strong id="pdf-name"></strong>
-            <span id="pdf-pages"></span>
+        <!-- PDF Metadata & Page Selection -->
+        <div class="pdf-info" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+            <div>
+                <strong id="pdf-name"></strong>
+                <span id="pdf-pages" style="color: #666; margin-left: 8px;"></span>
+            </div>
+
+            <!-- 新增：頁數選擇區域 -->
+            <div id="page-range-container" class="hidden" style="display: flex; align-items: center; gap: 8px; font-size: 0.95em;">
+                <label>頁數範圍：</label>
+                <input type="number" id="pdf-start-page" min="1" value="1" style="width: 65px; padding: 4px; text-align: center;">
+                <span>至</span>
+                <input type="number" id="pdf-end-page" min="1" value="1" style="width: 65px; padding: 4px; text-align: center;">
+                <button id="apply-page-range-btn" class="secondary-btn" style="padding: 4px 10px;">套用頁數</button>
+            </div>
         </div>
 
         <p id="pdf-status" class="status">
