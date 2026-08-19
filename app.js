@@ -815,3 +815,69 @@ async function loadArticlesFromGit() {
         }
     }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const downloadBtn = document.getElementById("addAndDownloadBtn");
+    if (downloadBtn) {
+        downloadBtn.addEventListener("click", handleAddAndDownload);
+    }
+});
+
+async function handleAddAndDownload() {
+    const titleInput = document.getElementById("newTitle");
+    const contentInput = document.getElementById("newContent");
+
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+
+    if (!title || !content) {
+        alert("⚠️ 請填寫標題同埋內容！");
+        return;
+    }
+
+    let articlesList = [];
+
+    // 1. 嘗試讀取現有的 articles.json（如果有的話）
+    try {
+        const response = await fetch("./articles.json");
+        if (response.ok) {
+            articlesList = await response.json();
+        }
+    } catch (err) {
+        console.warn("未找到現有 articles.json 或讀取失敗，將建立全新 JSON 陣列。");
+    }
+
+    // 2. 建立新文章物件並加進陣列
+    const newArticle = {
+        id: "article-" + Date.now(),
+        title: title,
+        content: content
+    };
+    articlesList.push(newArticle);
+
+    // 3. 觸發瀏覽器下載 articles.json
+    downloadJsonFile(articlesList, "articles.json");
+
+    // 4. 清空輸入框
+    titleInput.value = "";
+    contentInput.value = "";
+    alert("✅ 已成功下載 articles.json！請將檔案覆蓋專案目錄並 git push。");
+}
+
+// 輔助函式：將 JS 物件轉成 JSON 檔案並下載
+function downloadJsonFile(data, filename) {
+    const jsonStr = JSON.stringify(data, null, 2); // 保持格式排版
+    const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+    
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    // 清理 DOM 與 URL 物件
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
