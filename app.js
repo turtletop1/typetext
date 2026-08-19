@@ -48,6 +48,11 @@ const accuracyDisplay = document.getElementById("accuracy");
 const wpmDisplay = document.getElementById("wpm");
 const progressDisplay = document.getElementById("progress");
 
+// Custom Article Mode
+const customTextInput = document.getElementById("custom-text-input");
+const startCustomTextBtn = document.getElementById("start-custom-text-btn");
+const articleStatusText = document.getElementById("article-status");
+
 /* =====================================================
    DICTIONARY ELEMENTS
 ===================================================== */
@@ -637,5 +642,63 @@ if (dictionaryAudio) {
         } else if (currentLookupWord) {
             speakText(currentLookupWord);
         }
+    });
+}
+
+/* =====================================================
+   CUSTOM TEXT / ARTICLE MODE LOGIC
+===================================================== */
+
+if (startCustomTextBtn && customTextInput) {
+    startCustomTextBtn.addEventListener("click", function () {
+        const rawText = customTextInput.value.trim();
+
+        if (!rawText) {
+            if (articleStatusText) articleStatusText.textContent = "⚠️ 請先輸入或貼上文字！";
+            return;
+        }
+
+        // 清理文字格式
+        const cleanedText = cleanPDFText(rawText);
+
+        if (cleanedText.length < 5) {
+            if (articleStatusText) articleStatusText.textContent = "❌ 輸入的內容過短，請輸入更多內容。";
+            return;
+        }
+
+        // 切割成關卡 (每關約 500 字元)
+        levels = createLevels(cleanedText, CHARS_PER_LEVEL);
+
+        if (levels.length === 0) {
+            if (articleStatusText) articleStatusText.textContent = "❌ 無法生成關卡。";
+            return;
+        }
+
+        // 更新 Level 下拉選單
+        if (levelSelect) {
+            levelSelect.innerHTML = "";
+            levels.forEach((_, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = `Level ${index + 1} / ${levels.length}`;
+                levelSelect.appendChild(option);
+            });
+            levelSelect.disabled = false;
+        }
+
+        // 設置文章來源標題
+        const contentTitle = document.getElementById("content-title");
+        const contentSource = document.getElementById("content-source");
+        if (contentTitle) contentTitle.textContent = "Custom Text";
+        if (contentSource) contentSource.textContent = `Total Length: ${cleanedText.length} chars`;
+
+        currentLevel = 0;
+        if (gameArea) gameArea.classList.remove("hidden");
+        showLevel();
+
+        if (articleStatusText) articleStatusText.textContent = `✅ 成功載入文章！共 ${levels.length} 個關卡`;
+        
+        // 自動平滑捲動到遊戲區域
+        gameArea.scrollIntoView({ behavior: "smooth" });
     });
 }
