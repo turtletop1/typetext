@@ -960,28 +960,27 @@ async function loadArticlesFromGit() {
         
         // 監聽選項變化
         articleSelect.addEventListener("change", (e) => {
-            const selectedId = e.target.value;
-            const selectedArticle = articles.find(a => a.id === selectedId);
-            
-            if (selectedArticle) {
-                if (articleContainer) {
-                    articleContainer.innerHTML = `
-                        <h3>${selectedArticle.title}</h3>
-                        <p>${selectedArticle.content}</p>
-                    `;
-                }
-            } else {
-                if (articleContainer) articleContainer.innerHTML = "";
-            }
-        });
-        
-    } catch (error) {
-        console.error("Failed to load articles.json:", error);
+    const selectedId = e.target.value;
+    const selectedArticle = articles.find(a => a.id === selectedId);
+    const customTextInput = document.getElementById("custom-text-input");
+
+    if (selectedArticle) {
         if (articleContainer) {
-            articleContainer.innerHTML = "<p>⚠️ 無法載入文章選單，請檢查 articles.json 檔案路徑。</p>";
+            articleContainer.innerHTML = `
+                <h3>${selectedArticle.title}</h3>
+                <p>${selectedArticle.content}</p>
+            `;
         }
+        // Populate the textarea with the article's content
+        if (customTextInput) {
+            customTextInput.value = selectedArticle.content;
+        }
+    } else {
+        if (articleContainer) articleContainer.innerHTML = "";
+        // Clear the textarea if the default blank option is selected
+        if (customTextInput) customTextInput.value = "";
     }
-}
+});
 
 // =====================================================
 // 1️⃣2️⃣ 事件處理函數
