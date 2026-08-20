@@ -40,25 +40,7 @@
   </select>
 </div>
 
-     <button id="toggleFormBtn" style="padding: 8px 16px; margin-bottom: 10px; cursor: pointer;">
-  ➕ 新增文章
-</button>
-    <div id="addArticleContainer" class="add-article-container" style="display: none; border: 1px solid #ccc; padding: 15px; margin-top: 10px;">
-      <h3>➕ 新增文章並匯出 JSON</h3>
-      
-      <label for="newTitle">文章標題：</label><br>
-      <input type="text" id="newTitle" placeholder="例如: Exercise Benefits" style="width: 100%; margin-bottom: 10px;"><br>
-    
-      <label for="newContent">文章內容：</label><br>
-      <textarea id="newContent" rows="5" placeholder="輸入文章內文..." style="width: 100%; margin-bottom: 10px;"></textarea><br>
-    
-      <button id="addAndDownloadBtn" style="padding: 8px 16px; cursor: pointer;">
-        📥 新增並下載最新 articles.json
-      </button>
-    </div>
-    
-<!-- 顯示文章內容的容器 -->
-<div id="articleContainer"></div>
+     
 
 
 
@@ -109,6 +91,27 @@
     ================================================== -->
 
    <section id="article-mode" class="mode-panel hidden">
+
+       <button id="toggleFormBtn" style="padding: 8px 16px; margin-bottom: 10px; cursor: pointer;">
+  ➕ 新增文章
+</button>
+    <div id="addArticleContainer" class="add-article-container" style="display: none; border: 1px solid #ccc; padding: 15px; margin-top: 10px;">
+      <h3>➕ 新增文章並匯出 JSON</h3>
+      
+      <label for="newTitle">文章標題：</label><br>
+      <input type="text" id="newTitle" placeholder="例如: Exercise Benefits" style="width: 100%; margin-bottom: 10px;"><br>
+    
+      <label for="newContent">文章內容：</label><br>
+      <textarea id="newContent" rows="5" placeholder="輸入文章內文..." style="width: 100%; margin-bottom: 10px;"></textarea><br>
+    
+      <button id="addAndDownloadBtn" style="padding: 8px 16px; cursor: pointer;">
+        📥 新增並下載最新 articles.json
+      </button>
+    </div>
+    
+<!-- 顯示文章內容的容器 -->
+<div id="articleContainer"></div>
+       
         <h2>🌐 Custom Text Mode</h2>
 
         <div class="custom-text-container" style="display: flex; flex-direction: column; gap: 10px;">
