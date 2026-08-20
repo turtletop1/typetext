@@ -823,13 +823,23 @@ function handleStartCustomText() {
         return;
     }
     
+    // Reset and initialize levels
     GameState.reset();
     GameState.pdfText = input;
     GameState.createLevels(input, CONFIG.CHARS_PER_LEVEL);
     
+    // Update the UI
     updateLevelSelect();
     const gameArea = DOM.gameArea();
     if (gameArea) gameArea.classList.remove("hidden");
+
+   
+    const articlePanel = DOM.articleModePanel();
+    if (articlePanel) {
+        articlePanel.classList.add("hidden");
+        // Alternative inline style fallback if .hidden is not using display: none
+        // articlePanel.style.display = "none";
+    }
     
     showLevel();
     setStatus(`✅ 已載入自訂文章！共 ${GameState.getTotalLevels()} 個關卡`);
