@@ -388,12 +388,42 @@ function createLevels(text, charsPerLevel) {
 function showLevel() {
     if (!GameState.getTotalLevels()) return;
     const text = GameState.getCurrentText();
-    
+// 4. 更新烏龜位置
+const turtle = DOM.turtleDisplay();
+const track = DOM.turtleTrack();
+
+if (turtle && track) {
+
+    // 取得賽道實際寬度
+    const trackWidth = track.clientWidth;
+
+    // 取得烏龜實際寬度
+    const turtleWidth = turtle.offsetWidth;
+
+    // 左右保留少少空間
+    const padding = 8;
+
+    // 烏龜最多可以移動到的位置
+    const maxLeft = trackWidth - turtleWidth - padding;
+
+    // 根據進度計算位置
+    const currentLeft =
+        (progress / 100) * maxLeft;
+
+    // 確保永遠不會超出賽道
+    const safeLeft = Math.max(
+        padding,
+        Math.min(currentLeft, maxLeft)
+    );
+
+    turtle.style.left = `${safeLeft}px`;
+}
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
-        levelDisplay.textContent = Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()};
+        levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
     }
-      const levelSelect = DOM.levelSelect();
+    
+    const levelSelect = DOM.levelSelect();
     if (levelSelect) levelSelect.value = GameState.currentLevel.toString();
     
     renderText(text);
