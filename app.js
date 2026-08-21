@@ -988,3 +988,39 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeFormToggle();
     loadArticlesFromGit();
 });
+// 1. 取得 DOM 元素
+const typingInput = document.getElementById('typing-input');
+const turtleDisplay = document.getElementById('turtle-display');
+const textDisplay = document.getElementById('text-display');
+
+// 2. 更新烏龜位置的函式（根據打字字數比例）
+function updateTurtlePosition() {
+    const targetText = textDisplay.innerText || "";
+    const typedText = typingInput.value;
+
+    if (!targetText.length) return;
+
+    // 計算打字進度百分比 (0 ~ 100)
+    let progressPercent = (typedText.length / targetText.length) * 100;
+    if (progressPercent > 100) progressPercent = 100;
+
+    // 保留右側邊界 (93%) 避免烏龜超出視窗
+    const maxLeft = 93; 
+    const currentLeft = (progressPercent / 100) * maxLeft;
+
+    // 設定烏龜 CSS left 屬性
+    turtleDisplay.style.left = `${currentLeft}%`;
+}
+
+// 3. 監聽打字框的 input 事件（按任意鍵或刪除鍵都會觸發）
+typingInput.addEventListener('input', updateTurtlePosition);
+
+// 4. 當重置關卡時重置烏龜位置
+function resetTurtle() {
+    turtleDisplay.style.left = '0%';
+}
+
+// 綁定到重置按鈕
+document.getElementById('restart-btn')?.addEventListener('click', () => {
+    resetTurtle();
+});
