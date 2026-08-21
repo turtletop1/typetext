@@ -470,47 +470,61 @@ function updateCharacterDisplay(typed, target) {
 function updateStats() {
     const typingInput = DOM.typingInput();
     if (!typingInput) return;
-    
+
     const typed = typingInput.value;
-    const target = GameState.getCurrentText();
-    
+    const target = GameState.getCurrentText() || "";
+    const typedLength = typed.length;
+    const targetLength = target.length;
+
     let correct = 0;
-    for (let i = 0; i < typed.length && i < target.length; i++) {
+    for (let i = 0; i < typedLength && i < targetLength; i++) {
         if (typed[i] === target[i]) correct++;
     }
-    
-    const accuracy = typed.length > 0 ? (correct / typed.length) * 100 : 100;
+
+    // 2. 計算準確率 Accuracy (%)
+    const accuracy = typedLength > 0 ? (correct / typedLength) * 100 : 100;
     const accuracyDisplay = DOM.accuracyDisplay();
-    if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
-    
-    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;
+    if (accuracyDisplay) {
+        accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
+    }
+    // 3. 計算進度 Progress (%)
+    const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
     const progressDisplay = DOM.progressDisplay();
-    if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(0)}%`;
+    if (progressDisplay) {
+        progressDisplay.textContent = `${Math.round(progress)}%`;
+    }
+    // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
     const turtle = DOM.turtleDisplay();
-    if (turtle) {         // 預留約 10% 空間避免烏龜完全重疊旗仔
-        const maxPercent = 90; 
+    if (turtle) {
+        const maxPercent = 88; 
         const currentLeft = (progress / 100) * maxPercent;
         turtle.style.left = `calc(${currentLeft}% + 10px)`;
     }
     let wpm = 0;
-    if (GameState.startTime !== null && typed.length > 0) {
-        const elapsedMinutes = (Date.now() - GameState.startTime) / 1000 / 60;
-        if (elapsedMinutes > 0) wpm = (correct / 5) / elapsedMinutes;
+    if (GameState.startTime && typedLength > 0) {
+        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000; // 1000ms * 60s
+        if (elapsedMinutes > 0.016) { 
+            wpm = (correct / 5) / elapsedMinutes;
+        }
     }
     const wpmDisplay = DOM.wpmDisplay();
-    if (wpmDisplay) wpmDisplay.textContent = Math.round(wpm);
+    if (wpmDisplay) {
+        wpmDisplay.textContent = Math.round(wpm);
+    }
+    if (targetLength > 0 && typedLength >= targetLength && progress === 100) {
+        if (typeof checkLevelCompletion === "function") {
+            checkLevelCompletion();
+        }
+    }
 }
 
 function finishLevel() {
     GameState.gameFinished = true;
     const typingInput = DOM.typingInput();
     if (typingInput) typingInput.disabled = true;
-    
     updateStats();
-    
     const accuracy = DOM.accuracyDisplay()?.textContent || "0%";
     const wpm = DOM.wpmDisplay()?.textContent || "0";
-    
     if (GameState.currentLevel < GameState.getTotalLevels() - 1) {
         setStatus(`🎉 Level ${GameState.currentLevel + 1} 完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);
     } else {
