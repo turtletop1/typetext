@@ -749,30 +749,81 @@ button {
     }
 }
 
-/* 烏龜軌道容器 */
+/* =====================================================
+   TURTLE TRACK
+===================================================== */
+
 .turtle-track {
     position: relative;
-    width: 100%;             /* 限制在父容器（白色卡片）寬度內 */
-    height: 40px;
-    background-color: #f7fafc;/* 輕微底色或透明 */
-    border-radius: 20px;
+
+    width: 100%;
+    height: 55px;
+
     margin: 15px 0;
-    overflow: hidden;        /* 避免烏龜超出容器邊界 */
+
+    padding: 0;
+
+    background: linear-gradient(
+        180deg,
+        #e2e8f0 0%,
+        #cbd5e1 100%
+    );
+
+    border: 2px solid #94a3b8;
+    border-radius: 28px;
+
+    /* 最重要：所有內容限制在框內 */
+    overflow: hidden;
+
+    display: block;
 }
-/* 烏龜圖示 */
-.turtle {
+
+
+/* =====================================================
+   TURTLE
+===================================================== */
+
+.turtle-emoji {
     position: absolute;
-    left: 10px;
+
+    /* 龜永遠由框內左邊開始 */
+    left: 50px;
+
+    /* 垂直置中 */
     top: 50%;
     transform: translateY(-50%);
-    font-size: 24px;
-    transition: left 0.2s ease; /* 讓烏龜移動時有平滑動畫 */
+
+    font-size: 30px;
+
+    line-height: 1;
+
+    user-select: none;
+
+    z-index: 2;
+
+    /* 龜移動動畫 */
+    transition: left 0.12s ease-out;
 }
-/* 終點旗子 */
-.finish-flag {
+
+
+/* =====================================================
+   FINISH FLAG
+===================================================== */
+
+.flag-emoji {
     position: absolute;
-    right: 15px;
+
+    /* 永遠保持在 track 裏面 */
+    right: 8px;
+
     top: 50%;
     transform: translateY(-50%);
-    font-size: 24px;
+
+    font-size: 28px;
+
+    line-height: 1;
+
+    user-select: none;
+
+    z-index: 2;
 }
