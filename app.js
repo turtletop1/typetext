@@ -416,7 +416,7 @@ if (turtle && track) {
         Math.min(currentLeft, maxLeft)
     );
 
-    turtle.style.left = `${safeLeft}px`;
+    turtle.style.left = `${1200}px`;
 }
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
