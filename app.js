@@ -1,11 +1,3 @@
-/* =====================================================
-   Typing Game - Complete Optimized Code v2.0
-   ===================================================== */
-
-// =====================================================
-// 1️⃣ Global Configuration
-// =====================================================
-
 const CONFIG = {
     PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
     PDF_LINE_HEIGHT_THRESHOLD: 5,
@@ -22,10 +14,6 @@ const CONFIG = {
     DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",
     TRANSLATION_API: "https://api.mymemory.translated.net/get",
 };
-
-// =====================================================
-// 2️⃣ Game State Management
-// =====================================================
 
 const GameState = {
     pdfText: "",
@@ -67,10 +55,6 @@ const GameState = {
         return this.levels.length;
     },
 };
-
-// =====================================================
-// 3️⃣ DOM Element Selectors
-// =====================================================
 
 const DOM = {
     pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
@@ -122,11 +106,9 @@ const DOM = {
     newTitle: () => document.getElementById("newTitle"),
     newContent: () => document.getElementById("newContent"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
+   turtleDisplay: () => document.getElementById("turtle-display"),
+    turtleTrack: () => document.getElementById("turtle-track"),
 };
-
-// =====================================================
-// 4️⃣ Translation Cache System
-// =====================================================
 
 const TranslationCache = (() => {
     const cache = new Map();
@@ -155,10 +137,6 @@ const TranslationCache = (() => {
     };
 })();
 
-// =====================================================
-// 5️⃣ Audio Management System
-// =====================================================
-
 const AudioManager = {
     currentAudio: null,
     
@@ -176,7 +154,6 @@ const AudioManager = {
             }
         };
     },
-    
     speak(text) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
@@ -188,7 +165,6 @@ const AudioManager = {
             console.warn("Browser does not support SpeechSynthesis API");
         }
     },
-    
     play() {
         if (this.currentAudio?.play) {
             this.currentAudio.play();
@@ -196,7 +172,6 @@ const AudioManager = {
             this.speak(GameState.currentLookupWord);
         }
     },
-    
     stopCurrent() {
         if (this.currentAudio?.element) {
             this.currentAudio.element.pause();
@@ -205,7 +180,6 @@ const AudioManager = {
         }
         this.currentAudio = null;
     },
-    
     destroy() {
         this.stopCurrent();
         if ('speechSynthesis' in window) {
@@ -214,25 +188,18 @@ const AudioManager = {
     }
 };
 
-// =====================================================
-// 6️⃣ Event Manager
-// =====================================================
-
 const EventManager = {
     listeners: [],
-    
     attach(element, event, handler) {
         if (!element) return;
         element.addEventListener(event, handler);
         this.listeners.push({ element, event, handler });
     },
-    
     attachAll(config) {
         config.forEach(([element, event, handler]) => {
             this.attach(element, event, handler);
         });
     },
-    
     removeAll() {
         this.listeners.forEach(({ element, event, handler }) => {
             if (element) element.removeEventListener(event, handler);
@@ -240,10 +207,6 @@ const EventManager = {
         this.listeners = [];
     }
 };
-
-// =====================================================
-// 7️⃣ Initialization
-// =====================================================
 
 function initializeEventListeners() {
     EventManager.attachAll([
@@ -267,66 +230,48 @@ function initializeEventListeners() {
 function initializeWordClickDelegation() {
     const textDisplay = DOM.textDisplay();
     if (!textDisplay) return;
-    
     textDisplay.addEventListener("click", (e) => {
         if (!e.target.classList.contains("char")) return;
-        
         const clickedChar = e.target;
         let word = "";
         let current = clickedChar;
-        
         while (current && /^[A-Za-z]$/.test(current.textContent)) {
             word = current.textContent + word;
             current = current.previousElementSibling;
         }
-        
         current = clickedChar;
         while (current && /^[A-Za-z]$/.test(current.textContent)) {
             if (current !== clickedChar) word += current.textContent;
             current = current.nextElementSibling;
         }
-        
         if (word) {
             lookupWord(word.toLowerCase().trim());
         }
     });
 }
-
 function initializeFormToggle() {
     const toggleBtn = DOM.toggleFormBtn();
     const container = DOM.addArticleContainer();
-    
     if (!toggleBtn || !container) return;
-    
     toggleBtn.addEventListener("click", () => {
         const isHidden = container.style.display === "none";
         container.style.display = isHidden ? "block" : "none";
         toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";
     });
 }
-
-// =====================================================
-// 8️⃣ PDF Processing
-// =====================================================
-
 function setupPageRangeUI(totalPages) {
     const startInput = DOM.pdfStartPageInput();
     const endInput = DOM.pdfEndPageInput();
     const container = DOM.pageRangeContainer();
-    
     if (!startInput || !endInput) return;
-    
     startInput.min = "1";
     startInput.max = totalPages.toString();
     startInput.value = "1";
-    
     endInput.min = "1";
     endInput.max = totalPages.toString();
     endInput.value = totalPages.toString();
-    
     if (container) container.classList.remove("hidden");
 }
-
 function extractPageText(textContent) {
     let result = "";
     let previousY = null;
@@ -347,10 +292,8 @@ function extractPageText(textContent) {
         result += text;
         previousY = currentY;
     }
-    
     return result;
 }
-
 function cleanPDFText(text) {
     return text
         .replace(/\r\n/g, "\n")
@@ -380,7 +323,6 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
     
     GameState.setLoading("loading");
     setStatus("🔎 正在提取 PDF 文字...");
-    
     try {
         const maxPages = pdf.numPages;
         if (!endPage || endPage > maxPages) endPage = maxPages;
@@ -395,7 +337,6 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
             const pageText = extractPageText(textContent);
             allText += pageText + "\n\n";
         }
-        
         setStatus("🧹 正在清理 PDF 文字...");
         GameState.pdfText = cleanPDFText(allText);
         
@@ -404,7 +345,6 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
             GameState.setLoading("loaded");
             return;
         }
-        
         setStatus("🎮 正在建立遊戲關卡...");
         GameState.createLevels(GameState.pdfText, CONFIG.CHARS_PER_LEVEL);
         
@@ -413,62 +353,51 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
             GameState.setLoading("loaded");
             return;
         }
-        
         updateLevelSelect();
         GameState.currentLevel = 0;
         const gameArea = DOM.gameArea();
         if (gameArea) gameArea.classList.remove("hidden");
         showLevel();
-        
         setStatus(`✅ 已載入第 ${startPage}-${endPage} 頁！共 ${GameState.getTotalLevels()} 個關卡`);
         GameState.setLoading("loaded");
-        
     } catch (error) {
         console.error("PDF Error:", error);
         setStatus("❌ PDF 處理失敗：" + error.message);
         GameState.setLoading("loaded");
     }
 }
-
-// =====================================================
-// 9️⃣ Game Core Logic
-// =====================================================
-
 function createLevels(text, charsPerLevel) {
     const result = [];
     text = text.replace(/\s+/g, " ").trim();
     let start = 0;
-    
     while (start < text.length) {
         let end = Math.min(start + charsPerLevel, text.length);
-        
         if (end < text.length) {
             const sentenceEnd = text.lastIndexOf(".", end);
             const questionEnd = text.lastIndexOf("?", end);
             const exclamationEnd = text.lastIndexOf("!", end);
             const bestSentenceEnd = Math.max(sentenceEnd, questionEnd, exclamationEnd);
             const spaceEnd = text.lastIndexOf(" ", end);
-            
             if (bestSentenceEnd > start + 300) {
                 end = bestSentenceEnd + 1;
             } else if (spaceEnd > start + 300) {
                 end = spaceEnd;
             }
         }
-        
         const levelText = text.slice(start, end).trim();
         if (levelText.length > 0) result.push(levelText);
         start = end;
     }
-    
     return result;
 }
 
 function showLevel() {
     if (!GameState.getTotalLevels()) return;
-    
     const text = GameState.getCurrentText();
-    
+   const turtle = DOM.turtleDisplay();
+    if (turtle) {
+        turtle.style.left = "10px";
+    }  
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
@@ -557,7 +486,12 @@ function updateStats() {
     const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;
     const progressDisplay = DOM.progressDisplay();
     if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(0)}%`;
-    
+    const turtle = DOM.turtleDisplay();
+    if (turtle) {         // 預留約 10% 空間避免烏龜完全重疊旗仔
+        const maxPercent = 90; 
+        const currentLeft = (progress / 100) * maxPercent;
+        turtle.style.left = `calc(${currentLeft}% + 10px)`;
+    }
     let wpm = 0;
     if (GameState.startTime !== null && typed.length > 0) {
         const elapsedMinutes = (Date.now() - GameState.startTime) / 1000 / 60;
