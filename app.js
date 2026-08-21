@@ -394,10 +394,24 @@ function createLevels(text, charsPerLevel) {
 function showLevel() {
     if (!GameState.getTotalLevels()) return;
     const text = GameState.getCurrentText();
-   const turtle = DOM.turtleDisplay();
-    if (turtle) {
-        turtle.style.left = "10px";
-    }  
+   // 4. 更新烏龜位置
+const turtle = DOM.turtleDisplay();
+const track = DOM.turtleTrack();
+
+if (turtle && track) {
+    const trackWidth = track.clientWidth;
+    const turtleWidth = turtle.offsetWidth;
+    const padding = 8;
+    const maxLeft = trackWidth - turtleWidth - padding;
+    const currentLeft =
+        (progress / 100) * maxLeft;
+    const safeLeft = Math.max(
+        padding,
+        Math.min(currentLeft, maxLeft)
+    );
+
+    turtle.style.left = `${safeLeft}px`;
+} 
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
