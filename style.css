@@ -754,7 +754,7 @@ button {
 ===================================================== */
 .turtle-track {
     position: relative;
-    width: 100%;
+    width: 500px;
     height: 55px;
     margin: 15px 0;
     padding: 0;
