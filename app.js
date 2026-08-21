@@ -1,429 +1,1024 @@
-// ==========================================
-// 1. 全域變數與 State
-// ==========================================
-let pdfDoc = null;
-let currentLevels = [];      // 儲存當前拆分好的段落/關卡陣列
-let currentLevelIndex = 0;   // 當前關卡索引
-let startTime = null;
-let timerInterval = null;
-
-// ==========================================
-// 2. DOM 元素取得
-// ==========================================
-// Mode Buttons & Panels
-const pdfModeBtn = document.getElementById('pdf-mode-btn');
-const articleModeBtn = document.getElementById('article-mode-btn');
-const pdfModePanel = document.getElementById('pdf-mode');
-const articleModePanel = document.getElementById('article-mode');
-
-// PDF Elements
-const pdfUrlInput = document.getElementById('pdf-url');
-const loadUrlBtn = document.getElementById('load-url-btn');
-const pdfUploadInput = document.getElementById('pdf-upload');
-const pdfNameDisplay = document.getElementById('pdf-name');
-const pdfPagesDisplay = document.getElementById('pdf-pages');
-const pageRangeContainer = document.getElementById('page-range-container');
-const pdfStartPageInput = document.getElementById('pdf-start-page');
-const pdfEndPageInput = document.getElementById('pdf-end-page');
-const applyPageRangeBtn = document.getElementById('apply-page-range-btn');
-const pdfStatus = document.getElementById('pdf-status');
-
-// Article / Custom Text Elements
-const articleSelect = document.getElementById('articleSelect');
-const customTextInput = document.getElementById('custom-text-input');
-const startCustomTextBtn = document.getElementById('start-custom-text-btn');
-const toggleFormBtn = document.getElementById('toggleFormBtn');
-const addArticleContainer = document.getElementById('addArticleContainer');
-const addAndDownloadBtn = document.getElementById('addAndDownloadBtn');
-
-// Game Elements
-const gameArea = document.getElementById('game-area');
-const turtleDisplay = document.getElementById('turtle-display');
-const turtleTrack = document.getElementById('turtle-track');
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
-const levelSelect = document.getElementById('level-select');
-const levelDisplay = document.getElementById('level-display');
-const contentTitle = document.getElementById('content-title');
-const contentSource = document.getElementById('content-source');
-const originalLink = document.getElementById('original-link');
-const textDisplay = document.getElementById('text-display');
-const typingInput = document.getElementById('typing-input');
-const accuracyDisplay = document.getElementById('accuracy');
-const wpmDisplay = document.getElementById('wpm');
-const progressDisplay = document.getElementById('progress');
-const restartBtn = document.getElementById('restart-btn');
-
-// Dictionary Elements
-const dictionaryPopup = document.getElementById('dictionary-popup');
-const dictionaryClose = document.getElementById('dictionary-close');
-const dictionaryWord = document.getElementById('dictionary-word');
-const dictionaryPhonetic = document.getElementById('dictionary-phonetic');
-const dictionaryAudio = document.getElementById('dictionary-audio');
-const dictionaryContent = document.getElementById('dictionary-content');
-
-// ==========================================
-// 3. 初始化與模式切換
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    initModeSwitching();
-    initArticleSection();
-    initPDFEvents();
-    initTypingEngine();
-    initDictionary();
-});
-
-function initModeSwitching() {
-    pdfModeBtn.addEventListener('click', () => {
-        pdfModeBtn.classList.add('active');
-        articleModeBtn.classList.remove('active');
-        pdfModePanel.classList.remove('hidden');
-        articleModePanel.classList.add('hidden');
-    });
-
-    articleModeBtn.addEventListener('click', () => {
-        articleModeBtn.classList.add('active');
-        pdfModeBtn.classList.remove('active');
-        articleModePanel.classList.remove('hidden');
-        pdfModePanel.classList.add('hidden');
-    });
-}
-
-// ==========================================
-// 4. 烏龜移動與進度更新核心邏輯
-// ==========================================
-function updateGameStats() {
-    const targetText = currentLevels[currentLevelIndex] || "";
-    const typedText = typingInput.value;
-
-    // A. 計算打字進度 (Progress)
-    const totalLen = targetText.length;
-    const typedLen = typedText.length;
-    let progressPercent = totalLen > 0 ? Math.min(100, (typedLen / totalLen) * 100) : 0;
-    progressDisplay.innerText = `${Math.round(progressPercent)}%`;
-
-    // B. 更新烏龜位置 (0% ~ 95% left)
-    const maxLeftPosition = 95; // 避免烏龜超出右側軌道邊界
-    const currentLeft = (progressPercent / 100) * maxLeftPosition;
-    turtleDisplay.style.left = `${currentLeft}%`;
-
-    // C. 計算正確率 (Accuracy)
-    let correctChars = 0;
-    for (let i = 0; i < typedLen; i++) {
-        if (typedText[i] === targetText[i]) {
-            correctChars++;
-        }
-    }
-    const accuracy = typedLen > 0 ? (correctChars / typedLen) * 100 : 100;
-    accuracyDisplay.innerText = `${Math.round(accuracy)}%`;
-
-    // D. 計算 WPM (Words Per Minute)
-    if (!startTime && typedLen > 0) {
-        startTime = new Date();
-    }
-    if (startTime && typedLen > 0) {
-        const timeElapsedMin = (new Date() - startTime) / 60000;
-        const wordsTyped = correctChars / 5; // 標準英打 5 字元算 1 word
-        const wpm = timeElapsedMin > 0 ? Math.round(wordsTyped / timeElapsedMin) : 0;
-        wpmDisplay.innerText = wpm;
-    }
-
-    // E. 即時渲染高亮文字 (正確綠色 / 錯誤紅色)
-    renderTextComparison(targetText, typedText);
-}
-
-function renderTextComparison(target, typed) {
-    let html = '';
-    for (let i = 0; i < target.length; i++) {
-        const char = target[i];
-        if (i < typed.length) {
-            if (typed[i] === char) {
-                html += `<span class="correct" style="color: #2e7d32; background-color: #e8f5e9;">${escapeHTML(char)}</span>`;
-            } else {
-                html += `<span class="incorrect" style="color: #c62828; background-color: #ffebee;">${escapeHTML(char)}</span>`;
-            }
-        } else if (i === typed.length) {
-            html += `<span class="current" style="border-bottom: 2px solid #2196f3; background-color: #e3f2fd;">${escapeHTML(char)}</span>`;
-        } else {
-            html += `<span>${escapeHTML(char)}</span>`;
-        }
-    }
-    textDisplay.innerHTML = html;
-}
-
-function escapeHTML(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function resetLevelStats() {
-    typingInput.value = '';
-    startTime = null;
-    accuracyDisplay.innerText = '100%';
-    wpmDisplay.innerText = '0';
-    progressDisplay.innerText = '0%';
-    turtleDisplay.style.left = '0%';
+const CONFIG = {
+    PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+    PDF_LINE_HEIGHT_THRESHOLD: 5,
+    CHARS_PER_LEVEL: 500,
+    MIN_TEXT_LENGTH: 20,
+    MIN_CUSTOM_TEXT_LENGTH: 5,
+    SPEECH_RATE: 0.9,
+    SPEECH_LANG: "en-US",
+    TRANSLATION_CACHE_SIZE: 100,
+    DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",
+    TRANSLATION_API: "https://api.mymemory.translated.net/get",
+};
+const GameState = {
+    pdfText: "",
+    levels: [],
+    currentLevel: 0,
+    startTime: null,
+    gameFinished: false,
     
-    if (currentLevels.length > 0) {
-        renderTextComparison(currentLevels[currentLevelIndex], '');
+    currentAudio: null,
+    currentLookupWord: "",
+    
+    loadingState: "idle", // "idle" | "loading" | "loaded"
+    loadedPdfDoc: null,
+    
+    reset() {
+        this.pdfText = "";
+        this.levels = [];
+        this.currentLevel = 0;
+        this.startTime = null;
+        this.gameFinished = false;
+        this.currentLookupWord = "";
+        this.loadingState = "idle";
+    },
+    
+    setLoading(state) {
+        this.loadingState = state;
+    },
+    
+    createLevels(text, charsPerLevel) {
+        this.levels = createLevels(text, charsPerLevel);
+        return this.levels;
+    },
+    
+    getCurrentText() {
+        return this.levels[this.currentLevel] || "";
+    },
+    
+    getTotalLevels() {
+        return this.levels.length;
+    },
+};
+const DOM = {
+    pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
+    articleModeBtn: () => document.getElementById("article-mode-btn"),
+    pdfModePanel: () => document.getElementById("pdf-mode"),
+    articleModePanel: () => document.getElementById("article-mode"),
+    
+    pdfUpload: () => document.getElementById("pdf-upload"),
+    pdfUrl: () => document.getElementById("pdf-url"),
+    loadUrlBtn: () => document.getElementById("load-url-btn"),
+    pdfStatus: () => document.getElementById("pdf-status"),
+    pdfName: () => document.getElementById("pdf-name"),
+    pdfPages: () => document.getElementById("pdf-pages"),
+    
+    pdfStartPageInput: () => document.getElementById("pdf-start-page"),
+    pdfEndPageInput: () => document.getElementById("pdf-end-page"),
+    applyPageRangeBtn: () => document.getElementById("apply-page-range-btn"),
+    pageRangeContainer: () => document.getElementById("page-range-container"),
+    
+    gameArea: () => document.getElementById("game-area"),
+    textDisplay: () => document.getElementById("text-display"),
+    typingInput: () => document.getElementById("typing-input"),
+    levelDisplay: () => document.getElementById("level-display"),
+    levelSelect: () => document.getElementById("level-select"),
+    prevBtn: () => document.getElementById("prev-btn"),
+    nextBtn: () => document.getElementById("next-btn"),
+    restartBtn: () => document.getElementById("restart-btn"),
+    
+    accuracyDisplay: () => document.getElementById("accuracy"),
+    wpmDisplay: () => document.getElementById("wpm"),
+    progressDisplay: () => document.getElementById("progress"),
+    
+    dictionaryPopup: () => document.getElementById("dictionary-popup"),
+    dictionaryWord: () => document.getElementById("dictionary-word"),
+    dictionaryPhonetic: () => document.getElementById("dictionary-phonetic"),
+    dictionaryAudio: () => document.getElementById("dictionary-audio"),
+    dictionaryContent: () => document.getElementById("dictionary-content"),
+    dictionaryClose: () => document.getElementById("dictionary-close"),
+    
+    customTextInput: () => document.getElementById("custom-text-input"),
+    startCustomTextBtn: () => document.getElementById("start-custom-text-btn"),
+    articleStatus: () => document.getElementById("article-status"),
+    
+    articleSelect: () => document.getElementById("articleSelect"),
+    articleContainer: () => document.getElementById("articleContainer"),
+    
+    toggleFormBtn: () => document.getElementById("toggleFormBtn"),
+    addArticleContainer: () => document.getElementById("addArticleContainer"),
+    newTitle: () => document.getElementById("newTitle"),
+    newContent: () => document.getElementById("newContent"),
+    addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
+   turtleDisplay: () => document.getElementById("turtle-display"),
+    turtleTrack: () => document.getElementById("turtle-track"),
+};
+
+const TranslationCache = (() => {
+    const cache = new Map();
+    const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;
+    
+    return {
+        get(text) {
+            return cache.get(text);
+        },
+        set(text, translation) {
+            if (cache.size >= MAX_SIZE) {
+                const firstKey = cache.keys().next().value;
+                cache.delete(firstKey);
+            }
+            cache.set(text, translation);
+        },
+        has(text) {
+            return cache.has(text);
+        },
+        clear() {
+            cache.clear();
+        },
+        size() {
+            return cache.size;
+        },
+    };
+})();
+
+const AudioManager = {
+    currentAudio: null,
+    
+    setAudio(audioUrl, fallbackWord) {
+        this.stopCurrent();
+        
+        const audioObj = new Audio(audioUrl);
+        this.currentAudio = {
+            element: audioObj,
+            play: () => {
+                audioObj.play().catch(() => {
+                    console.warn("Audio play failed, falling back to Web Speech API");
+                    this.speak(fallbackWord);
+                });
+            }
+        };
+    },
+    speak(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = CONFIG.SPEECH_LANG;
+            utterance.rate = CONFIG.SPEECH_RATE;
+            window.speechSynthesis.speak(utterance);
+        } else {
+            console.warn("Browser does not support SpeechSynthesis API");
+        }
+    },
+    play() {
+        if (this.currentAudio?.play) {
+            this.currentAudio.play();
+        } else if (GameState.currentLookupWord) {
+            this.speak(GameState.currentLookupWord);
+        }
+    },
+    stopCurrent() {
+        if (this.currentAudio?.element) {
+            this.currentAudio.element.pause();
+            this.currentAudio.element.currentTime = 0;
+            this.currentAudio.element.src = "";
+        }
+        this.currentAudio = null;
+    },
+    destroy() {
+        this.stopCurrent();
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+    }
+};
+
+const EventManager = {
+    listeners: [],
+    attach(element, event, handler) {
+        if (!element) return;
+        element.addEventListener(event, handler);
+        this.listeners.push({ element, event, handler });
+    },
+    attachAll(config) {
+        config.forEach(([element, event, handler]) => {
+            this.attach(element, event, handler);
+        });
+    },
+    removeAll() {
+        this.listeners.forEach(({ element, event, handler }) => {
+            if (element) element.removeEventListener(event, handler);
+        });
+        this.listeners = [];
+    }
+};
+
+function initializeEventListeners() {
+    EventManager.attachAll([
+        [DOM.pdfUpload(), "change", handlePDFUpload],
+        [DOM.loadUrlBtn(), "click", handleLoadURL],
+        [DOM.applyPageRangeBtn(), "click", handleApplyPageRange],
+        [DOM.nextBtn(), "click", () => navigateLevel(1)],
+        [DOM.prevBtn(), "click", () => navigateLevel(-1)],
+        [DOM.restartBtn(), "click", () => showLevel()],
+        [DOM.typingInput(), "input", handleTyping],
+        [DOM.levelSelect(), "change", handleLevelSelect],
+        [DOM.startCustomTextBtn(), "click", handleStartCustomText],
+        [DOM.dictionaryClose(), "click", closeDictionary],
+        [DOM.dictionaryAudio(), "click", playCurrentAudio],
+        [DOM.pdfModeBtn(), "click", () => switchMode("pdf")],
+        [DOM.articleModeBtn(), "click", () => switchMode("article")],
+        [DOM.addAndDownloadBtn(), "click", handleAddAndDownload],
+    ]);
+}
+
+function initializeWordClickDelegation() {
+    const textDisplay = DOM.textDisplay();
+    if (!textDisplay) return;
+    textDisplay.addEventListener("click", (e) => {
+        if (!e.target.classList.contains("char")) return;
+        const clickedChar = e.target;
+        let word = "";
+        let current = clickedChar;
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {
+            word = current.textContent + word;
+            current = current.previousElementSibling;
+        }
+        current = clickedChar;
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {
+            if (current !== clickedChar) word += current.textContent;
+            current = current.nextElementSibling;
+        }
+        if (word) {
+            lookupWord(word.toLowerCase().trim());
+        }
+    });
+}
+function initializeFormToggle() {
+    const toggleBtn = DOM.toggleFormBtn();
+    const container = DOM.addArticleContainer();
+    if (!toggleBtn || !container) return;
+    toggleBtn.addEventListener("click", () => {
+        const isHidden = container.style.display === "none";
+        container.style.display = isHidden ? "block" : "none";
+        toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";
+    });
+}
+function setupPageRangeUI(totalPages) {
+    const startInput = DOM.pdfStartPageInput();
+    const endInput = DOM.pdfEndPageInput();
+    const container = DOM.pageRangeContainer();
+    if (!startInput || !endInput) return;
+    startInput.min = "1";
+    startInput.max = totalPages.toString();
+    startInput.value = "1";
+    endInput.min = "1";
+    endInput.max = totalPages.toString();
+    endInput.value = totalPages.toString();
+    if (container) container.classList.remove("hidden");
+}
+function extractPageText(textContent) {
+    let result = "";
+    let previousY = null;
+    
+    for (const item of textContent.items) {
+        const text = item.str.trim();
+        if (!text) continue;
+        
+        const currentY = item.transform ? item.transform[5] : null;
+        
+        if (previousY !== null && currentY !== null && 
+            Math.abs(currentY - previousY) > CONFIG.PDF_LINE_HEIGHT_THRESHOLD) {
+            result += "\n";
+        } else {
+            result += " ";
+        }
+        
+        result += text;
+        previousY = currentY;
+    }
+    return result;
+}
+function cleanPDFText(text) {
+    return text
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .replace(/^\s*\d+\s*$/gm, "")
+        .replace(/^\s*Page\s+\d+\s*$/gim, "")
+        .replace(/^\s*[-–—]\s*\d+\s*[-–—]\s*$/gm, "")
+        .replace(/([A-Za-z])-\s*\n\s*([A-Za-z])/g, "$1$2")
+        .replace(/([a-zA-Z0-9,.;:!?])\n(?=[a-zA-Z0-9])/g, "$1 ")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{2,}/g, "\n")
+        .replace(/\s+([,.!?;:])/g, "$1")
+        .replace(/\(\s+/g, "(")
+        .replace(/\s+\)/g, ")")
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join("\n")
+        .trim();
+}
+
+async function processPDF(pdf, startPage = 1, endPage = null) {
+    if (GameState.loadingState === "loading") {
+        setStatus("⚠️ PDF 正在加載中，請稍候...");
+        return;
+    }
+    
+    GameState.setLoading("loading");
+    setStatus("🔎 正在提取 PDF 文字...");
+    try {
+        const maxPages = pdf.numPages;
+        if (!endPage || endPage > maxPages) endPage = maxPages;
+        if (startPage < 1) startPage = 1;
+        
+        let allText = "";
+        
+        for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
+            setStatus(`🔎 正在讀取第 ${pageNumber} / ${endPage} 頁...`);
+            const page = await pdf.getPage(pageNumber);
+            const textContent = await page.getTextContent();
+            const pageText = extractPageText(textContent);
+            allText += pageText + "\n\n";
+        }
+        setStatus("🧹 正在清理 PDF 文字...");
+        GameState.pdfText = cleanPDFText(allText);
+        
+        if (!GameState.pdfText || GameState.pdfText.length < CONFIG.MIN_TEXT_LENGTH) {
+            setStatus("❌ 所選頁數內搵唔到足夠文字。");
+            GameState.setLoading("loaded");
+            return;
+        }
+        setStatus("🎮 正在建立遊戲關卡...");
+        GameState.createLevels(GameState.pdfText, CONFIG.CHARS_PER_LEVEL);
+        
+        if (GameState.getTotalLevels() === 0) {
+            setStatus("❌ 無法建立遊戲關卡");
+            GameState.setLoading("loaded");
+            return;
+        }
+        updateLevelSelect();
+        GameState.currentLevel = 0;
+        const gameArea = DOM.gameArea();
+        if (gameArea) gameArea.classList.remove("hidden");
+        showLevel();
+        setStatus(`✅ 已載入第 ${startPage}-${endPage} 頁！共 ${GameState.getTotalLevels()} 個關卡`);
+        GameState.setLoading("loaded");
+    } catch (error) {
+        console.error("PDF Error:", error);
+        setStatus("❌ PDF 處理失敗：" + error.message);
+        GameState.setLoading("loaded");
+    }
+}
+function createLevels(text, charsPerLevel) {
+    const result = [];
+    text = text.replace(/\s+/g, " ").trim();
+    let start = 0;
+    while (start < text.length) {
+        let end = Math.min(start + charsPerLevel, text.length);
+        if (end < text.length) {
+            const sentenceEnd = text.lastIndexOf(".", end);
+            const questionEnd = text.lastIndexOf("?", end);
+            const exclamationEnd = text.lastIndexOf("!", end);
+            const bestSentenceEnd = Math.max(sentenceEnd, questionEnd, exclamationEnd);
+            const spaceEnd = text.lastIndexOf(" ", end);
+            if (bestSentenceEnd > start + 300) {
+                end = bestSentenceEnd + 1;
+            } else if (spaceEnd > start + 300) {
+                end = spaceEnd;
+            }
+        }
+        const levelText = text.slice(start, end).trim();
+        if (levelText.length > 0) result.push(levelText);
+        start = end;
+    }
+    return result;
+}
+
+function showLevel() {
+    if (!GameState.getTotalLevels()) return;
+    const text = GameState.getCurrentText();
+// 4. 更新烏龜位置
+const turtle = DOM.turtleDisplay();
+const track = DOM.turtleTrack();
+
+if (turtle && track) {
+
+    // 取得賽道實際寬度
+    const trackWidth = track.clientWidth;
+
+    // 取得烏龜實際寬度
+    const turtleWidth = turtle.offsetWidth;
+
+    // 左右保留少少空間
+    const padding = 8;
+
+    // 烏龜最多可以移動到的位置
+    const maxLeft = trackWidth - turtleWidth - padding;
+
+    // 根據進度計算位置
+    const currentLeft =
+        (progress / 100) * maxLeft;
+
+    // 確保永遠不會超出賽道
+    const safeLeft = Math.max(
+        padding,
+        Math.min(currentLeft, maxLeft)
+    );
+
+    turtle.style.left = `${safeLeft}px`;
+}
+    const levelDisplay = DOM.levelDisplay();
+    if (levelDisplay) {
+        levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
+    }
+    
+    const levelSelect = DOM.levelSelect();
+    if (levelSelect) levelSelect.value = GameState.currentLevel.toString();
+    
+    renderText(text);
+    
+    const typingInput = DOM.typingInput();
+    if (typingInput) {
+        typingInput.value = "";
+        typingInput.disabled = false;
+    }
+    
+    GameState.gameFinished = false;
+    GameState.startTime = null;
+    
+    updateStats();
+    updateNavigationButtons();
+    
+    setTimeout(() => { 
+        if (typingInput) typingInput.focus(); 
+    }, 100);
+}
+
+function renderText(text) {
+    const textDisplay = DOM.textDisplay();
+    if (!textDisplay) return;
+    
+    textDisplay.innerHTML = "";
+    
+    for (let i = 0; i < text.length; i++) {
+        const span = document.createElement("span");
+        span.className = "char";
+        span.textContent = text[i];
+        
+        if (i === 0) span.classList.add("current");
+        if (/^[A-Za-z]$/.test(text[i])) span.classList.add("clickable-word");
+        
+        textDisplay.appendChild(span);
     }
 }
 
-// ==========================================
-// 5. 打字區域與關卡控制事件
-// ==========================================
-function initTypingEngine() {
-    // 監聽輸入框按鍵 input 事件
-    typingInput.addEventListener('input', () => {
-        updateGameStats();
-    });
-
-    // 重來按鈕
-    restartBtn.addEventListener('click', () => {
-        resetLevelStats();
-        typingInput.focus();
-    });
-
-    // 關卡切換事件
-    prevBtn.addEventListener('click', () => {
-        if (currentLevelIndex > 0) {
-            loadLevel(currentLevelIndex - 1);
+function updateCharacterDisplay(typed, target) {
+    const textDisplay = DOM.textDisplay();
+    if (!textDisplay) return;
+    
+    const chars = textDisplay.querySelectorAll(".char");
+    
+    chars.forEach((char, index) => {
+        char.classList.remove("correct", "incorrect", "current");
+        
+        if (index < typed.length) {
+            char.classList.add(typed[index] === target[index] ? "correct" : "incorrect");
+        }
+        
+        if (index === typed.length) {
+            char.classList.add("current");
         }
     });
-
-    nextBtn.addEventListener('click', () => {
-        if (currentLevelIndex < currentLevels.length - 1) {
-            loadLevel(currentLevelIndex + 1);
-        }
-    });
-
-    levelSelect.addEventListener('change', (e) => {
-        loadLevel(parseInt(e.target.value, 10));
-    });
+    
+    const current = textDisplay.querySelector(".current");
+    if (current) {
+        current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 }
 
-function setupGameLevels(textArray, title = "Custom Text", source = "User Input") {
-    currentLevels = textArray.filter(text => text.trim().length > 0);
-    if (currentLevels.length === 0) return;
+function updateStats() {
+    const typingInput = DOM.typingInput();
+    if (!typingInput) return;
 
-    currentLevelIndex = 0;
-    contentTitle.innerText = title;
-    contentSource.innerText = source;
+    const typed = typingInput.value;
+    const target = GameState.getCurrentText() || "";
+    const typedLength = typed.length;
+    const targetLength = target.length;
 
-    // 下拉選單更新
-    levelSelect.innerHTML = '';
-    currentLevels.forEach((_, idx) => {
-        const option = document.createElement('option');
-        option.value = idx;
-        option.innerText = `Level ${idx + 1}`;
+    let correct = 0;
+    for (let i = 0; i < typedLength && i < targetLength; i++) {
+        if (typed[i] === target[i]) correct++;
+    }
+
+    // 2. 計算準確率 Accuracy (%)
+    const accuracy = typedLength > 0 ? (correct / typedLength) * 100 : 100;
+    const accuracyDisplay = DOM.accuracyDisplay();
+    if (accuracyDisplay) {
+        accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
+    }
+    // 3. 計算進度 Progress (%)
+    const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
+    const progressDisplay = DOM.progressDisplay();
+    if (progressDisplay) {
+        progressDisplay.textContent = `${Math.round(progress)}%`;
+    }
+    // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
+   const turtle = DOM.turtleDisplay();
+    if (turtle) {
+        const maxPercent = 88; // 最大移動範圍 %
+        const currentLeft = (progress / 100) * maxPercent;
+        turtle.style.left = `calc(${currentLeft}% + 10px)`;
+    }
+    let wpm = 0;
+    if (GameState.startTime && typedLength > 0) {
+        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000; // 1000ms * 60s
+        if (elapsedMinutes > 0.016) { 
+            wpm = (correct / 5) / elapsedMinutes;
+        }
+    }
+    const wpmDisplay = DOM.wpmDisplay();
+    if (wpmDisplay) {
+        wpmDisplay.textContent = Math.round(wpm);
+    }
+    if (targetLength > 0 && typedLength >= targetLength && progress === 100) {
+        if (typeof checkLevelCompletion === "function") {
+            checkLevelCompletion();
+        }
+    }
+}
+
+function finishLevel() {
+    GameState.gameFinished = true;
+    const typingInput = DOM.typingInput();
+    if (typingInput) typingInput.disabled = true;
+    updateStats();
+    const accuracy = DOM.accuracyDisplay()?.textContent || "0%";
+    const wpm = DOM.wpmDisplay()?.textContent || "0";
+    if (GameState.currentLevel < GameState.getTotalLevels() - 1) {
+        setStatus(`🎉 Level ${GameState.currentLevel + 1} 完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);
+    } else {
+        setStatus(`🏆 全部完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);
+    }
+}
+
+function navigateLevel(direction) {
+    const newLevel = GameState.currentLevel + direction;
+    if (newLevel >= 0 && newLevel < GameState.getTotalLevels()) {
+        GameState.currentLevel = newLevel;
+        showLevel();
+    }
+}
+
+function updateNavigationButtons() {
+    const prevBtn = DOM.prevBtn();
+    const nextBtn = DOM.nextBtn();
+    
+    if (prevBtn) prevBtn.disabled = GameState.currentLevel === 0;
+    if (nextBtn) nextBtn.disabled = GameState.currentLevel === GameState.getTotalLevels() - 1;
+}
+
+function updateLevelSelect() {
+    const levelSelect = DOM.levelSelect();
+    if (!levelSelect || GameState.getTotalLevels() === 0) return;
+    
+    levelSelect.innerHTML = "";
+    GameState.levels.forEach((_, index) => {
+        const option = document.createElement("option");
+        option.value = index.toString();
+        option.textContent = `Level ${index + 1} / ${GameState.getTotalLevels()}`;
         levelSelect.appendChild(option);
     });
     levelSelect.disabled = false;
-
-    gameArea.classList.remove('hidden');
-    loadLevel(0);
 }
 
-function loadLevel(index) {
-    currentLevelIndex = index;
-    levelSelect.value = index;
-    levelDisplay.innerText = `Level ${index + 1} / ${currentLevels.length}`;
+// =====================================================
+// 🔟 Dictionary & Translation Logic
+// =====================================================
+
+async function translateToZh(text) {
+    if (TranslationCache.has(text)) {
+        return TranslationCache.get(text);
+    }
     
-    prevBtn.disabled = (index === 0);
-    nextBtn.disabled = (index === currentLevels.length - 1);
-
-    resetLevelStats();
-    typingInput.focus();
-}
-
-// ==========================================
-// 6. PDF 解析與載入邏輯
-// ==========================================
-function initPDFEvents() {
-    // 透過 URL 載入 PDF
-    loadUrlBtn.addEventListener('click', () => {
-        const url = pdfUrlInput.value.trim();
-        if (url) loadPDFFromUrl(url);
-    });
-
-    // 透過檔案上傳 PDF
-    pdfUploadInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            pdfNameDisplay.innerText = file.name;
-            const fileReader = new FileReader();
-            fileReader.onload = function () {
-                const typedarray = new Uint8Array(this.result);
-                loadPDFData(typedarray);
-            };
-            fileReader.readAsArrayBuffer(file);
-        }
-    });
-
-    // 套用頁數範圍按鈕
-    applyPageRangeBtn.addEventListener('click', () => {
-        if (!pdfDoc) return;
-        const start = parseInt(pdfStartPageInput.value, 10);
-        const end = parseInt(pdfEndPageInput.value, 10);
-        extractPDFText(start, end);
-    });
-}
-
-async function loadPDFFromUrl(url) {
     try {
-        pdfStatus.innerText = "Loading PDF...";
-        pdfDoc = await pdfjsLib.getDocument(url).promise;
-        onPDFLoaded();
-    } catch (err) {
-        pdfStatus.innerText = "Failed to load PDF: " + err.message;
+        const params = new URLSearchParams({
+            q: text,
+            langpair: "en|zh-TW"
+        });
+        
+        const res = await fetch(`${CONFIG.TRANSLATION_API}?${params}`);
+        const transData = await res.json();
+        const result = transData.responseData?.translatedText || "";
+        
+        TranslationCache.set(text, result);
+        return result;
+    } catch (error) {
+        console.warn("Translation failed:", error);
+        return "";
     }
 }
 
-async function loadPDFData(data) {
+async function lookupWord(word) {
+    word = word.trim().toLowerCase();
+    if (!word) return;
+    
+    GameState.currentLookupWord = word;
+    
+    const dictionaryPopup = DOM.dictionaryPopup();
+    const dictionaryWord = DOM.dictionaryWord();
+    const dictionaryContent = DOM.dictionaryContent();
+    
+    if (!dictionaryPopup || !dictionaryWord || !dictionaryContent) return;
+    
+    dictionaryPopup.classList.remove("hidden");
+    dictionaryWord.textContent = word;
+    
+    const dictionaryPhonetic = DOM.dictionaryPhonetic();
+    if (dictionaryPhonetic) dictionaryPhonetic.textContent = "Loading...";
+    dictionaryContent.innerHTML = "🔎 正在查字典與翻譯...";
+    
+    const dictionaryAudio = DOM.dictionaryAudio();
+    if (dictionaryAudio) dictionaryAudio.disabled = false;
+    
+    AudioManager.speak(word);
+    
     try {
-        pdfStatus.innerText = "Loading PDF...";
-        pdfDoc = await pdfjsLib.getDocument({ data: data }).promise;
-        onPDFLoaded();
-    } catch (err) {
-        pdfStatus.innerText = "Failed to parse PDF: " + err.message;
-    }
-}
-
-function onPDFLoaded() {
-    const numPages = pdfDoc.numPages;
-    pdfPagesDisplay.innerText = `(Total: ${numPages} pages)`;
-    pdfStartPageInput.max = numPages;
-    pdfEndPageInput.max = numPages;
-    pdfStartPageInput.value = 1;
-    pdfEndPageInput.value = Math.min(5, numPages);
-    pageRangeContainer.classList.remove('hidden');
-    pdfStatus.innerText = "PDF loaded. Click 'Apply Page Range' to generate levels.";
-    
-    extractPDFText(1, Math.min(5, numPages));
-}
-
-async function extractPDFText(startPage, endPage) {
-    pdfStatus.innerText = "Extracting text from PDF...";
-    let fullText = '';
-
-    startPage = Math.max(1, startPage);
-    endPage = Math.min(pdfDoc.numPages, endPage);
-
-    for (let i = startPage; i <= endPage; i++) {
-        const page = await pdfDoc.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map(item => item.str).join(' ');
-        fullText += pageText + '\n\n';
-    }
-
-    // 將內文拆分成段落（按雙換行或適當長度）
-    const paragraphs = fullText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 20);
-    
-    if (paragraphs.length > 0) {
-        pdfStatus.innerText = `Successfully extracted ${paragraphs.length} levels!`;
-        setupGameLevels(paragraphs, pdfNameDisplay.innerText || "PDF Article", "PDF File");
-    } else {
-        pdfStatus.innerText = "No readable text found in the selected page range.";
-    }
-}
-
-// ==========================================
-// 7. 文章模式與自訂文本邏輯
-// ==========================================
-function initArticleSection() {
-    // 開始自訂打字練習按鈕
-    startCustomTextBtn.addEventListener('click', () => {
-        const rawText = customTextInput.value.trim();
-        if (!rawText) return;
-
-        // 將輸入文章依據段落拆分為關卡
-        const paragraphs = rawText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
-        setupGameLevels(paragraphs, "Custom Article", "User Input");
-    });
-
-    // 展開/折疊新增文章區塊
-    toggleFormBtn?.addEventListener('click', () => {
-        if (addArticleContainer.style.display === 'none') {
-            addArticleContainer.style.display = 'block';
-        } else {
-            addArticleContainer.style.display = 'none';
+        const response = await fetch(`${CONFIG.DICTIONARY_API}${encodeURIComponent(word)}`);
+        if (!response.ok) throw new Error("Word not found");
+        
+        const data = await response.json();
+        if (!data || !data.length) throw new Error("No dictionary result");
+        
+        const entry = data[0];
+        
+        const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text && p.text.trim())?.text;
+        if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "";
+        
+        const audioData = entry.phonetics?.find(p => p.audio && p.audio.trim().length > 0);
+        if (audioData && audioData.audio) {
+            let audioUrl = audioData.audio;
+            if (audioUrl.startsWith("//")) {
+                audioUrl = "https:" + audioUrl;
+            }
+            
+            fetch(audioUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error("Audio fetch failed");
+                    return res.blob();
+                })
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    AudioManager.setAudio(blobUrl, word);
+                })
+                .catch(() => {
+                    AudioManager.speak(word);
+                });
         }
-    });
-
-    // 下載 articles.json 邏輯
-    addAndDownloadBtn?.addEventListener('click', () => {
-        const title = document.getElementById('newTitle').value.trim();
-        const content = document.getElementById('newContent').value.trim();
-
-        if (!title || !content) {
-            alert('請填寫標題與內容！');
+        
+        dictionaryContent.innerHTML = "";
+        if (!entry.meanings || entry.meanings.length === 0) {
+            dictionaryContent.innerHTML = "<p>❌ 沒有找到解釋。</p>";
             return;
         }
-
-        const newArticle = { id: Date.now(), title, content };
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify([newArticle], null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", "articles.json");
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-    });
-}
-
-// ==========================================
-// 8. 字典彈窗與單字查詢功能
-// ==========================================
-function initDictionary() {
-    // 雙擊文字區域查字典
-    textDisplay.addEventListener('dblclick', () => {
-        const selection = window.getSelection().toString().trim();
-        // 確保選取的是單個英文單字
-        if (selection && /^[a-zA-Z]+$/.test(selection)) {
-            fetchWordDefinition(selection);
+        
+        for (const meaning of entry.meanings) {
+            const section = document.createElement("div");
+            section.className = "dictionary-definition";
+            
+            const part = document.createElement("div");
+            part.className = "dictionary-part";
+            part.textContent = meaning.partOfSpeech || "Definition";
+            section.appendChild(part);
+            
+            if (meaning.definitions) {
+                const defs = meaning.definitions.slice(0, 3);
+                for (let index = 0; index < defs.length; index++) {
+                    const def = defs[index];
+                    const div = document.createElement("div");
+                    div.className = "dictionary-definition-text";
+                    
+                    (async () => {
+                        const zhText = await translateToZh(def.definition);
+                        const zhDisplay = zhText ? `<br><span style="color: #2b6cb0; font-size: 0.9em;">🇹🇼 ${zhText}</span>` : "";
+                        div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}${zhDisplay}`;
+                    })();
+                    
+                    div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}`;
+                    section.appendChild(div);
+                    
+                    if (def.example) {
+                        const example = document.createElement("div");
+                        example.className = "dictionary-example";
+                        example.textContent = `Example: "${def.example}"`;
+                        section.appendChild(example);
+                    }
+                }
+            }
+            
+            dictionaryContent.appendChild(section);
         }
-    });
-
-    dictionaryClose.addEventListener('click', () => {
-        dictionaryPopup.classList.add('hidden');
-    });
-}
-
-async function fetchWordDefinition(word) {
-    dictionaryWord.innerText = word;
-    dictionaryPhonetic.innerText = "查詢中...";
-    dictionaryContent.innerText = "正在載入字典資料...";
-    dictionaryPopup.classList.remove('hidden');
-
-    try {
-        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-        if (!response.ok) throw new Error("Word not found");
-
-        const data = await response.json();
-        const entry = data[0];
-
-        // 讀音
-        const phonetic = entry.phonetic || (entry.phonetics.find(p => p.text)?.text) || '';
-        dictionaryPhonetic.innerText = phonetic;
-
-        // 發音音訊
-        const audioUrl = entry.phonetics.find(p => p.audio && p.audio.length > 0)?.audio;
-        if (audioUrl) {
-            dictionaryAudio.style.display = 'inline-block';
-            dictionaryAudio.onclick = () => new Audio(audioUrl).play();
-        } else {
-            dictionaryAudio.style.display = 'none';
-        }
-
-        // 解釋
-        let meaningsHTML = '';
-        entry.meanings.forEach(m => {
-            meaningsHTML += `<p><strong>[${m.partOfSpeech}]</strong> ${m.definitions[0].definition}</p>`;
-        });
-        dictionaryContent.innerHTML = meaningsHTML;
-
-    } catch (err) {
-        dictionaryPhonetic.innerText = '';
-        dictionaryAudio.style.display = 'none';
-        dictionaryContent.innerText = "找不到該單字的定義。";
+        
+    } catch (error) {
+        console.warn("Dictionary lookup failed:", error);
+        if (dictionaryPhonetic) dictionaryPhonetic.textContent = "";
+        dictionaryContent.innerHTML = "<p>⚠️ 字典 API 連線異常，仍可點擊發音按鈕收聽語音。</p>";
     }
 }
+
+function closeDictionary() {
+    const dictionaryPopup = DOM.dictionaryPopup();
+    if (dictionaryPopup) dictionaryPopup.classList.add("hidden");
+}
+
+function playCurrentAudio() {
+    AudioManager.play();
+}
+
+// =====================================================
+// 1️⃣1️⃣ Article Loader & Custom Text Management
+// =====================================================
+
+async function loadArticlesFromGit() {
+    const articleSelect = DOM.articleSelect();
+    const articleContainer = DOM.articleContainer();
+    const customTextInput = DOM.customTextInput();
+    
+    if (!articleSelect) return;
+    
+    try {
+        const response = await fetch("./articles.json");
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const articles = await response.json();
+        
+        articleSelect.innerHTML = "";
+        
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "-- 選擇一篇文章 --";
+        articleSelect.appendChild(defaultOption);
+        
+        articles.forEach(article => {
+            const option = document.createElement("option");
+            option.value = article.id;
+            option.textContent = article.title;
+            articleSelect.appendChild(option);
+        });
+        
+        articleSelect.addEventListener("change", (e) => {
+            const selectedId = e.target.value;
+            const selectedArticle = articles.find(a => a.id === selectedId);
+            
+            if (selectedArticle) {
+                if (articleContainer) {
+                    articleContainer.innerHTML = `
+                        <h3>${selectedArticle.title}</h3>
+                        <p>${selectedArticle.content}</p>
+                    `;
+                }
+                if (customTextInput) {
+                    customTextInput.value = selectedArticle.content;
+                }
+            } else {
+                if (articleContainer) articleContainer.innerHTML = "";
+                if (customTextInput) customTextInput.value = "";
+            }
+        });
+        
+    } catch (error) {
+        console.error("Failed to load articles.json:", error);
+        if (articleContainer) {
+            articleContainer.innerHTML = "<p>⚠️ 無法載入文章選單，請檢查 articles.json 檔案路徑。</p>";
+        }
+    }
+}
+
+function handleStartCustomText() {
+    const input = DOM.customTextInput()?.value.trim();
+    if (!input || input.length < CONFIG.MIN_CUSTOM_TEXT_LENGTH) {
+        setStatus("⚠️ 請輸入至少 5 個字元的文章內容！");
+        return;
+    }
+    
+    GameState.reset();
+    GameState.pdfText = input;
+    GameState.createLevels(input, CONFIG.CHARS_PER_LEVEL);
+    
+    updateLevelSelect();
+    const gameArea = DOM.gameArea();
+    if (gameArea) gameArea.classList.remove("hidden");
+    
+    showLevel();
+    setStatus(`✅ 已載入自訂文章！共 ${GameState.getTotalLevels()} 個關卡`);
+
+    // Hide the entire article mode section
+    const articleModePanel = DOM.articleModePanel();
+    if (articleModePanel) {
+        articleModePanel.classList.add("hidden"); 
+        // Or use inline style if you don't use CSS classes:
+        // articleModePanel.style.display = "none";
+    }
+}
+
+async function handleAddAndDownload() {
+    const titleInput = DOM.newTitle();
+    const contentInput = DOM.newContent();
+    
+    const title = titleInput?.value.trim();
+    const content = contentInput?.value.trim();
+    
+    if (!title || !content) {
+        alert("請填寫標題與內容！");
+        return;
+    }
+    
+    let articles = [];
+    try {
+        const res = await fetch("./articles.json");
+        if (res.ok) articles = await res.json();
+    } catch (e) {
+        console.warn("Could not load existing articles.json, creating new file.");
+    }
+    
+    const newArticle = {
+        id: "art_" + Date.now(),
+        title: title,
+        content: content
+    };
+    
+    articles.push(newArticle);
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(articles, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "articles.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    
+    if (titleInput) titleInput.value = "";
+    if (contentInput) contentInput.value = "";
+}
+
+// =====================================================
+// 1️⃣2️⃣ Event Handlers & Utility Functions
+// =====================================================
+
+async function handlePDFUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    if (file.type !== "application/pdf") {
+        setStatus("❌ 請選擇 PDF 檔案");
+        return;
+    }
+    
+    try {
+        setStatus("📖 正在讀取 PDF...");
+        const arrayBuffer = await file.arrayBuffer();
+        const loadedPdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+        GameState.loadedPdfDoc = loadedPdfDoc;
+        
+        const pdfName = DOM.pdfName();
+        const pdfPages = DOM.pdfPages();
+        if (pdfName) pdfName.textContent = file.name;
+        if (pdfPages) pdfPages.textContent = `(共 ${loadedPdfDoc.numPages} 頁)`;
+        
+        setupPageRangeUI(loadedPdfDoc.numPages);
+        await processPDF(loadedPdfDoc, 1, loadedPdfDoc.numPages);
+        
+    } catch (error) {
+        console.error("PDF Error:", error);
+        setStatus("❌ PDF 讀取失敗：" + error.message);
+    }
+}
+
+async function handleLoadURL() {
+    const pdfUrl = DOM.pdfUrl();
+    const url = pdfUrl?.value?.trim();
+    
+    if (!url) {
+        setStatus("⚠️ 請輸入 PDF URL");
+        return;
+    }
+    
+    try {
+        new URL(url);
+    } catch {
+        setStatus("❌ URL 格式不正確");
+        return;
+    }
+    
+    try {
+        setStatus("🌐 正在載入 PDF...");
+        const loadedPdfDoc = await pdfjsLib.getDocument({ url }).promise;
+        
+        GameState.loadedPdfDoc = loadedPdfDoc;
+        
+        const pdfName = DOM.pdfName();
+        const pdfPages = DOM.pdfPages();
+        if (pdfName) pdfName.textContent = getFileNameFromURL(url);
+        if (pdfPages) pdfPages.textContent = `(共 ${loadedPdfDoc.numPages} 頁)`;
+        
+        setupPageRangeUI(loadedPdfDoc.numPages);
+        await processPDF(loadedPdfDoc, 1, loadedPdfDoc.numPages);
+        
+    } catch (error) {
+        console.error("URL PDF Error:", error);
+        setStatus("❌ 無法載入 PDF。可能是 CORS 限制。");
+    }
+}
+
+async function handleApplyPageRange() {
+    const startInput = DOM.pdfStartPageInput();
+    const endInput = DOM.pdfEndPageInput();
+    
+    if (!GameState.loadedPdfDoc) {
+        setStatus("⚠️ 請先載入 PDF 檔案！");
+        return;
+    }
+    
+    let start = parseInt(startInput?.value || "1", 10);
+    let end = parseInt(endInput?.value || GameState.loadedPdfDoc.numPages, 10);
+    const total = GameState.loadedPdfDoc.numPages;
+    
+    if (isNaN(start) || start < 1) start = 1;
+    if (isNaN(end) || end > total) end = total;
+    if (start > end) {
+        setStatus("⚠️ 起始頁數不能大於結束頁數！");
+        return;
+    }
+    
+    if (startInput) startInput.value = start.toString();
+    if (endInput) endInput.value = end.toString();
+    
+    await processPDF(GameState.loadedPdfDoc, start, end);
+}
+
+function handleTyping(event) {
+    if (GameState.gameFinished) return;
+    
+    const typed = event.target.value;
+    const target = GameState.getCurrentText();
+    
+    if (GameState.startTime === null && typed.length > 0) {
+        GameState.startTime = Date.now();
+    }
+    
+    updateCharacterDisplay(typed, target);
+    updateStats();
+    
+    if (typed.length >= target.length) {
+        finishLevel();
+    }
+}
+
+function handleLevelSelect(e) {
+    const levelIndex = parseInt(e.target.value, 10);
+    if (!isNaN(levelIndex) && levelIndex >= 0 && levelIndex < GameState.getTotalLevels()) {
+        GameState.currentLevel = levelIndex;
+        showLevel();
+    }
+}
+
+function switchMode(mode) {
+    const pdfPanel = DOM.pdfModePanel();
+    const articlePanel = DOM.articleModePanel();
+    const pdfBtn = DOM.pdfModeBtn();
+    const articleBtn = DOM.articleModeBtn();
+    
+    if (mode === "pdf") {
+        if (pdfPanel) pdfPanel.classList.remove("hidden");
+        if (articlePanel) articlePanel.classList.add("hidden");
+        if (pdfBtn) pdfBtn.classList.add("active");
+        if (articleBtn) articleBtn.classList.remove("active");
+    } else {
+        if (pdfPanel) pdfPanel.classList.add("hidden");
+        if (articlePanel) articlePanel.classList.remove("hidden");
+        if (pdfBtn) pdfBtn.classList.remove("active");
+        if (articleBtn) articleBtn.classList.add("active");
+    }
+}
+
+function setStatus(msg) {
+    const pdfStatus = DOM.pdfStatus();
+    const articleStatus = DOM.articleStatus();
+    if (pdfStatus) pdfStatus.textContent = msg;
+    if (articleStatus) articleStatus.textContent = msg;
+}
+
+function getFileNameFromURL(url) {
+    try {
+        const pathname = new URL(url).pathname;
+        return pathname.substring(pathname.lastIndexOf('/') + 1) || "Document.pdf";
+    } catch {
+        return "Document.pdf";
+    }
+}
+
+// =====================================================
+// 1️⃣3️⃣ App Initialization Trigger
+// =====================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof pdfjsLib !== "undefined") {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
+    }
+    
+    initializeEventListeners();
+    initializeWordClickDelegation();
+    initializeFormToggle();
+    loadArticlesFromGit();
+});
