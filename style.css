@@ -785,23 +785,13 @@ button {
 
 .turtle-emoji {
     position: absolute;
-
-    /* 龜永遠由框內左邊開始 */
-    left: 50px;
-
-    /* 垂直置中 */
+    left: 0;  /* 改成 0，讓 JavaScript 完全控制 */
     top: 50%;
     transform: translateY(-50%);
-
     font-size: 30px;
-
     line-height: 1;
-
     user-select: none;
-
     z-index: 2;
-
-    /* 龜移動動畫 */
     transition: left 0.12s ease-out;
 }
 
