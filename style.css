@@ -749,37 +749,33 @@ button {
     }
 }
 .turtle-track {
-    
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 10px;
-
+    position: relative;
+    width: 100%;
+    height: 48px;
+    background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-radius: 24px;
     margin: 12px 0;
-
-    padding: 12px;
-
-    background: #f8f9fa;
-
-    border-radius: 8px;
-    
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    box-sizing: border-box;
+    border: 2px solid #94a3b8;
+    overflow: hidden;
 }
+
 .turtle-emoji {
     position: absolute;
-    left: 10px;
+    left: 12px;
     font-size: 26px;
-    transition: left 0.15s ease-out; /* 讓移動過程更平滑 */
+    transition: left 0.12s ease-out;
     user-select: none;
     z-index: 2;
 }
+
 .flag-emoji {
     position: absolute;
-    right: 15px;
-    font-size: 26px;
+    right: 16px;
+    font-size: 24px;
     user-select: none;
     z-index: 1;
 }
