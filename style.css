@@ -754,7 +754,7 @@ button {
 
 .turtle-track {
     position: relative;
-    width: 100%;
+    width: 50%;
     height: 48px;
 
     background: linear-gradient(
@@ -771,7 +771,7 @@ button {
 
     padding: 0 16px;
 
-    border: 2px solid #94a3b8;
+    border: 2px px;solid #94a3b8;
 
     /* ⭐ 防止龜走出框架 */
     overflow: hidden;
@@ -780,7 +780,7 @@ button {
 .turtle-emoji {
     position: absolute;
 
-    left: 8px;
+    left: 8
 
     top: 50%;
     transform: translateY(-50%);
