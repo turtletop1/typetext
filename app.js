@@ -1,15 +1,32 @@
+/* =====================================================
+   Typing Game - Complete Optimized Code v2.0
+   ===================================================== */
+
+// =====================================================
+// 1️⃣ Global Configuration
+// =====================================================
+
 const CONFIG = {
     PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
     PDF_LINE_HEIGHT_THRESHOLD: 5,
+    
     CHARS_PER_LEVEL: 500,
     MIN_TEXT_LENGTH: 20,
     MIN_CUSTOM_TEXT_LENGTH: 5,
+    
     SPEECH_RATE: 0.9,
     SPEECH_LANG: "en-US",
+    
     TRANSLATION_CACHE_SIZE: 100,
+    
     DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",
     TRANSLATION_API: "https://api.mymemory.translated.net/get",
 };
+
+// =====================================================
+// 2️⃣ Game State Management
+// =====================================================
+
 const GameState = {
     pdfText: "",
     levels: [],
@@ -50,6 +67,11 @@ const GameState = {
         return this.levels.length;
     },
 };
+
+// =====================================================
+// 3️⃣ DOM Element Selectors
+// =====================================================
+
 const DOM = {
     pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
     articleModeBtn: () => document.getElementById("article-mode-btn"),
@@ -100,9 +122,11 @@ const DOM = {
     newTitle: () => document.getElementById("newTitle"),
     newContent: () => document.getElementById("newContent"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
-   turtleDisplay: () => document.getElementById("turtle-display"),
-    turtleTrack: () => document.getElementById("turtle-track"),
 };
+
+// =====================================================
+// 4️⃣ Translation Cache System
+// =====================================================
 
 const TranslationCache = (() => {
     const cache = new Map();
@@ -131,6 +155,10 @@ const TranslationCache = (() => {
     };
 })();
 
+// =====================================================
+// 5️⃣ Audio Management System
+// =====================================================
+
 const AudioManager = {
     currentAudio: null,
     
@@ -148,6 +176,7 @@ const AudioManager = {
             }
         };
     },
+    
     speak(text) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
@@ -159,6 +188,7 @@ const AudioManager = {
             console.warn("Browser does not support SpeechSynthesis API");
         }
     },
+    
     play() {
         if (this.currentAudio?.play) {
             this.currentAudio.play();
@@ -166,6 +196,7 @@ const AudioManager = {
             this.speak(GameState.currentLookupWord);
         }
     },
+    
     stopCurrent() {
         if (this.currentAudio?.element) {
             this.currentAudio.element.pause();
@@ -174,6 +205,7 @@ const AudioManager = {
         }
         this.currentAudio = null;
     },
+    
     destroy() {
         this.stopCurrent();
         if ('speechSynthesis' in window) {
@@ -182,18 +214,25 @@ const AudioManager = {
     }
 };
 
+// =====================================================
+// 6️⃣ Event Manager
+// =====================================================
+
 const EventManager = {
     listeners: [],
+    
     attach(element, event, handler) {
         if (!element) return;
         element.addEventListener(event, handler);
         this.listeners.push({ element, event, handler });
     },
+    
     attachAll(config) {
         config.forEach(([element, event, handler]) => {
             this.attach(element, event, handler);
         });
     },
+    
     removeAll() {
         this.listeners.forEach(({ element, event, handler }) => {
             if (element) element.removeEventListener(event, handler);
@@ -201,6 +240,10 @@ const EventManager = {
         this.listeners = [];
     }
 };
+
+// =====================================================
+// 7️⃣ Initialization
+// =====================================================
 
 function initializeEventListeners() {
     EventManager.attachAll([
@@ -224,48 +267,66 @@ function initializeEventListeners() {
 function initializeWordClickDelegation() {
     const textDisplay = DOM.textDisplay();
     if (!textDisplay) return;
+    
     textDisplay.addEventListener("click", (e) => {
         if (!e.target.classList.contains("char")) return;
+        
         const clickedChar = e.target;
         let word = "";
         let current = clickedChar;
+        
         while (current && /^[A-Za-z]$/.test(current.textContent)) {
             word = current.textContent + word;
             current = current.previousElementSibling;
         }
+        
         current = clickedChar;
         while (current && /^[A-Za-z]$/.test(current.textContent)) {
             if (current !== clickedChar) word += current.textContent;
             current = current.nextElementSibling;
         }
+        
         if (word) {
             lookupWord(word.toLowerCase().trim());
         }
     });
 }
+
 function initializeFormToggle() {
     const toggleBtn = DOM.toggleFormBtn();
     const container = DOM.addArticleContainer();
+    
     if (!toggleBtn || !container) return;
+    
     toggleBtn.addEventListener("click", () => {
         const isHidden = container.style.display === "none";
         container.style.display = isHidden ? "block" : "none";
         toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";
     });
 }
+
+// =====================================================
+// 8️⃣ PDF Processing
+// =====================================================
+
 function setupPageRangeUI(totalPages) {
     const startInput = DOM.pdfStartPageInput();
     const endInput = DOM.pdfEndPageInput();
     const container = DOM.pageRangeContainer();
+    
     if (!startInput || !endInput) return;
+    
     startInput.min = "1";
     startInput.max = totalPages.toString();
     startInput.value = "1";
+    
     endInput.min = "1";
     endInput.max = totalPages.toString();
     endInput.value = totalPages.toString();
+    
     if (container) container.classList.remove("hidden");
 }
+
 function extractPageText(textContent) {
     let result = "";
     let previousY = null;
@@ -286,8 +347,10 @@ function extractPageText(textContent) {
         result += text;
         previousY = currentY;
     }
+    
     return result;
 }
+
 function cleanPDFText(text) {
     return text
         .replace(/\r\n/g, "\n")
@@ -317,6 +380,7 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
     
     GameState.setLoading("loading");
     setStatus("🔎 正在提取 PDF 文字...");
+    
     try {
         const maxPages = pdf.numPages;
         if (!endPage || endPage > maxPages) endPage = maxPages;
@@ -331,6 +395,7 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
             const pageText = extractPageText(textContent);
             allText += pageText + "\n\n";
         }
+        
         setStatus("🧹 正在清理 PDF 文字...");
         GameState.pdfText = cleanPDFText(allText);
         
@@ -339,6 +404,7 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
             GameState.setLoading("loaded");
             return;
         }
+        
         setStatus("🎮 正在建立遊戲關卡...");
         GameState.createLevels(GameState.pdfText, CONFIG.CHARS_PER_LEVEL);
         
@@ -347,77 +413,62 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
             GameState.setLoading("loaded");
             return;
         }
+        
         updateLevelSelect();
         GameState.currentLevel = 0;
         const gameArea = DOM.gameArea();
         if (gameArea) gameArea.classList.remove("hidden");
         showLevel();
+        
         setStatus(`✅ 已載入第 ${startPage}-${endPage} 頁！共 ${GameState.getTotalLevels()} 個關卡`);
         GameState.setLoading("loaded");
+        
     } catch (error) {
         console.error("PDF Error:", error);
         setStatus("❌ PDF 處理失敗：" + error.message);
         GameState.setLoading("loaded");
     }
 }
+
+// =====================================================
+// 9️⃣ Game Core Logic
+// =====================================================
+
 function createLevels(text, charsPerLevel) {
     const result = [];
     text = text.replace(/\s+/g, " ").trim();
     let start = 0;
+    
     while (start < text.length) {
         let end = Math.min(start + charsPerLevel, text.length);
+        
         if (end < text.length) {
             const sentenceEnd = text.lastIndexOf(".", end);
             const questionEnd = text.lastIndexOf("?", end);
             const exclamationEnd = text.lastIndexOf("!", end);
             const bestSentenceEnd = Math.max(sentenceEnd, questionEnd, exclamationEnd);
             const spaceEnd = text.lastIndexOf(" ", end);
+            
             if (bestSentenceEnd > start + 300) {
                 end = bestSentenceEnd + 1;
             } else if (spaceEnd > start + 300) {
                 end = spaceEnd;
             }
         }
+        
         const levelText = text.slice(start, end).trim();
         if (levelText.length > 0) result.push(levelText);
         start = end;
     }
+    
     return result;
 }
 
 function showLevel() {
     if (!GameState.getTotalLevels()) return;
+    
     const text = GameState.getCurrentText();
-// 4. 更新烏龜位置
-const turtle = DOM.turtleDisplay();
-const track = DOM.turtleTrack();
-
-if (turtle && track) {
-
-    // 取得賽道實際寬度
-    const trackWidth = track.clientWidth;
-
-    // 取得烏龜實際寬度
-    const turtleWidth = turtle.offsetWidth;
-
-    // 左右保留少少空間
-    const padding = 8;
-
-    // 烏龜最多可以移動到的位置
-    const maxLeft = trackWidth - turtleWidth - padding;
-
-    // 根據進度計算位置
-    const currentLeft =
-        (progress / 100) * maxLeft;
-
-    // 確保永遠不會超出賽道
-    const safeLeft = Math.max(
-        padding,
-        Math.min(currentLeft, maxLeft)
-    );
-
-    turtle.style.left = `${safeLeft}px`;
-}
+    
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
@@ -490,61 +541,42 @@ function updateCharacterDisplay(typed, target) {
 function updateStats() {
     const typingInput = DOM.typingInput();
     if (!typingInput) return;
-
+    
     const typed = typingInput.value;
-    const target = GameState.getCurrentText() || "";
-    const typedLength = typed.length;
-    const targetLength = target.length;
-
+    const target = GameState.getCurrentText();
+    
     let correct = 0;
-    for (let i = 0; i < typedLength && i < targetLength; i++) {
+    for (let i = 0; i < typed.length && i < target.length; i++) {
         if (typed[i] === target[i]) correct++;
     }
-
-    // 2. 計算準確率 Accuracy (%)
-    const accuracy = typedLength > 0 ? (correct / typedLength) * 100 : 100;
+    
+    const accuracy = typed.length > 0 ? (correct / typed.length) * 100 : 100;
     const accuracyDisplay = DOM.accuracyDisplay();
-    if (accuracyDisplay) {
-        accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
-    }
-    // 3. 計算進度 Progress (%)
-    const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
+    if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
+    
+    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;
     const progressDisplay = DOM.progressDisplay();
-    if (progressDisplay) {
-        progressDisplay.textContent = `${Math.round(progress)}%`;
-    }
-    // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
-   const turtle = DOM.turtleDisplay();
-    if (turtle) {
-        const maxPercent = 88; // 最大移動範圍 %
-        const currentLeft = (progress / 100) * maxPercent;
-        turtle.style.left = `calc(${currentLeft}% + 10px)`;
-    }
+    if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(0)}%`;
+    
     let wpm = 0;
-    if (GameState.startTime && typedLength > 0) {
-        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000; // 1000ms * 60s
-        if (elapsedMinutes > 0.016) { 
-            wpm = (correct / 5) / elapsedMinutes;
-        }
+    if (GameState.startTime !== null && typed.length > 0) {
+        const elapsedMinutes = (Date.now() - GameState.startTime) / 1000 / 60;
+        if (elapsedMinutes > 0) wpm = (correct / 5) / elapsedMinutes;
     }
     const wpmDisplay = DOM.wpmDisplay();
-    if (wpmDisplay) {
-        wpmDisplay.textContent = Math.round(wpm);
-    }
-    if (targetLength > 0 && typedLength >= targetLength && progress === 100) {
-        if (typeof checkLevelCompletion === "function") {
-            checkLevelCompletion();
-        }
-    }
+    if (wpmDisplay) wpmDisplay.textContent = Math.round(wpm);
 }
 
 function finishLevel() {
     GameState.gameFinished = true;
     const typingInput = DOM.typingInput();
     if (typingInput) typingInput.disabled = true;
+    
     updateStats();
+    
     const accuracy = DOM.accuracyDisplay()?.textContent || "0%";
     const wpm = DOM.wpmDisplay()?.textContent || "0";
+    
     if (GameState.currentLevel < GameState.getTotalLevels() - 1) {
         setStatus(`🎉 Level ${GameState.currentLevel + 1} 完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);
     } else {
