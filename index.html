@@ -127,82 +127,68 @@
          GAME
     ================================================== -->
 
-    <section id="game-area" class="game-area hidden">
+  <section id="game-area" class="game-area hidden">
 
-        <!-- Level -->
-        <!-- 在 HTML 找到 prev-btn / next-btn 的位置，新增 select 元素 -->
-        <div class="level-bar">
-            <button id="prev-btn" class="secondary-btn">⬅ Previous</button>
-            <select id="level-select" class="level-select" disabled>
-                <option value=""> Level</option>
-            </select>
-            <div id="level-display">Level 1 / 1</div>
-            <button id="next-btn" class="secondary-btn">Next ➡</button>
-        </div>
-        <!-- 烏龜賽道 -->
-        
-        <!-- Source -->
-        <div class="source-info">
-            <div id="turtle-track" class="turtle-track">
-            <div id="turtle-display" class="turtle-emoji">🐢</div>
-            <div class="flag-emoji">🚩</div>
-        </div>
-            <div>
-                <strong id="content-title">Content</strong>
-                <span id="content-source">Source</span>
-            </div>
-            <a id="original-link" href="#" target="_blank" rel="noopener noreferrer">View Original</a>
-        </div>
-
-        <!-- Text -->
-        <div id="text-display"  style="white-space:pre-wrap;" class="text-display"></div>
-<!-- Dictionary Popup -->
-<div id="dictionary-popup" class="dictionary-popup hidden">
-
-    <button id="dictionary-close" class="dictionary-close">
-        ✕
-    </button>
-
-    <h2 id="dictionary-word">
-        Word
-    </h2>
-
-    <div id="dictionary-phonetic">
+    <!-- 1. 關卡切換列 -->
+    <div class="level-bar">
+        <button id="prev-btn" class="secondary-btn">⬅ Previous</button>
+        <select id="level-select" class="level-select" disabled>
+            <option value=""> Level</option>
+        </select>
+        <div id="level-display">Level 1 / 1</div>
+        <button id="next-btn" class="secondary-btn">Next ➡</button>
     </div>
 
-    <button
-        id="dictionary-audio"
-        class="audio-btn"
-    >
-        🔊 發音
-    </button>
-
-    <div id="dictionary-content">
-        正在載入...
+    <!-- 2. 烏龜賽道（放在 section 內部） -->
+    <div id="turtle-track" class="turtle-track">
+        <div id="turtle-display" class="turtle-emoji">🐢</div>
+        <div class="flag-emoji">🚩</div>
     </div>
 
-</div>
-        <!-- Typing Input -->
-        <textarea
-            id="typing-input"
-            class="typing-input"
-            placeholder="Start typing here..."
-            spellcheck="false"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="none"
-            style="white-space:pre-wrap;"
-        ></textarea>
-
-        <!-- Statistics -->
-        <div class="stats">
-            <div>🎯 Accuracy <strong id="accuracy">100%</strong></div>
-            <div>⚡ WPM <strong id="wpm">0</strong></div>
-            <div>📝 Progress <strong id="progress">0%</strong></div>
+    <!-- 3. 文章來源資訊 -->
+    <div class="source-info">
+        <div>
+            <strong id="content-title">Content</strong>
+            <span id="content-source">Source</span>
         </div>
+        <a id="original-link" href="#" target="_blank" rel="noopener noreferrer">View Original</a>
+    </div>
 
-        <button id="restart-btn" class="restart-btn">🔄 Restart Level</button>
-    </section>
+    <!-- 4. 文字顯示區 -->
+    <div id="text-display" style="white-space:pre-wrap;" class="text-display"></div>
+
+    <!-- 5. 字典彈窗 -->
+    <div id="dictionary-popup" class="dictionary-popup hidden">
+        <button id="dictionary-close" class="dictionary-close">✕</button>
+        <h2 id="dictionary-word">Word</h2>
+        <div id="dictionary-phonetic"></div>
+        <button id="dictionary-audio" class="audio-btn">🔊 發音</button>
+        <div id="dictionary-content">正在載入...</div>
+    </div>
+
+    <!-- 6. 打字輸入框 -->
+    <textarea
+        id="typing-input"
+        class="typing-input"
+        placeholder="Start typing here..."
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        style="white-space:pre-wrap;"
+    ></textarea>
+
+    <!-- 7. 數據統計列 -->
+    <div class="stats">
+        <div>🎯 Accuracy <strong id="accuracy">100%</strong></div>
+        <div>⚡ WPM <strong id="wpm">0</strong></div>
+        <div>📝 Progress <strong id="progress">0%</strong></div>
+    </div>
+
+    <!-- 8. 重來按鈕 -->
+    <button id="restart-btn" class="restart-btn">🔄 Restart Level</button>
+
+</section>
 
 </div>
 
