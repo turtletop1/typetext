@@ -388,11 +388,43 @@ function createLevels(text, charsPerLevel) {
 function showLevel() {
     if (!GameState.getTotalLevels()) return;
     const text = GameState.getCurrentText();
+// 4. 更新烏龜位置
+const turtle = DOM.turtleDisplay();
+const track = DOM.turtleTrack();
 
+if (turtle && track) {
+
+    // 取得賽道實際寬度
+    const trackWidth = track.clientWidth;
+
+    // 取得烏龜實際寬度
+    const turtleWidth = turtle.offsetWidth;
+
+    // 左右保留少少空間
+    const padding = 8;
+
+    // 烏龜最多可以移動到的位置
+    const maxLeft = trackWidth - turtleWidth - padding;
+
+    // 根據進度計算位置
+    const currentLeft =
+        (progress / 100) * maxLeft;
+
+    // 確保永遠不會超出賽道
+    const safeLeft = Math.max(
+        padding,
+        Math.min(currentLeft, maxLeft)
+    );
+
+    turtle.style.left = `${safeLeft}px`;
+}
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
     }
+    
+    const levelSelect = DOM.levelSelect();
+    if (levelSelect) levelSelect.value = GameState.currentLevel.toString();
     
     renderText(text);
     
@@ -405,11 +437,12 @@ function showLevel() {
     GameState.gameFinished = false;
     GameState.startTime = null;
     
-    // 顯示遊戲區塊後，延遲 50ms 更新一次烏龜位置（確保 DOM 寬度已計算）
-    setTimeout(() => {
-        updateStats();
-        if (typingInput) typingInput.focus();
-    }, 50);
+    updateStats();
+    updateNavigationButtons();
+    
+    setTimeout(() => { 
+        if (typingInput) typingInput.focus(); 
+    }, 100);
 }
 
 function renderText(text) {
@@ -468,44 +501,40 @@ function updateStats() {
         if (typed[i] === target[i]) correct++;
     }
 
-    // 1. 計算數據
+    // 2. 計算準確率 Accuracy (%)
     const accuracy = typedLength > 0 ? (correct / typedLength) * 100 : 100;
-    const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
-
     const accuracyDisplay = DOM.accuracyDisplay();
-    const progressDisplay = DOM.progressDisplay();
-    if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
-    if (progressDisplay) progressDisplay.textContent = `${Math.round(progress)}%`;
-
-    // 2. 🐢 烏龜移動邏輯
-    const turtle = DOM.turtleDisplay();
-    const track = DOM.turtleTrack();
-
-    if (turtle && track) {
-        const trackWidth = track.clientWidth;
-        // 如果容器寬度為 0 (例如剛解除 hidden)，給予預設估計值，否則精確計算
-        const effectiveWidth = trackWidth > 0 ? trackWidth : 600; 
-        const turtleWidth = turtle.offsetWidth || 35;
-
-        const maxMoveDistance = effectiveWidth - turtleWidth;
-        const currentLeft = (progress / 100) * maxMoveDistance;
-
-        turtle.style.left = `${Math.max(0, currentLeft)}px`;
+    if (accuracyDisplay) {
+        accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
     }
-
-    // 3. 計算 WPM
+    // 3. 計算進度 Progress (%)
+    const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
+    const progressDisplay = DOM.progressDisplay();
+    if (progressDisplay) {
+        progressDisplay.textContent = `${Math.round(progress)}%`;
+    }
+    // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
+   const turtle = DOM.turtleDisplay();
+    if (turtle) {
+        const maxPercent = 88; // 最大移動範圍 %
+        const currentLeft = (progress / 100) * maxPercent;
+        turtle.style.left = `calc(${currentLeft}% + 10px)`;
+    }
     let wpm = 0;
     if (GameState.startTime && typedLength > 0) {
-        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000;
-        if (elapsedMinutes > 0.016) {
+        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000; // 1000ms * 60s
+        if (elapsedMinutes > 0.016) { 
             wpm = (correct / 5) / elapsedMinutes;
         }
     }
     const wpmDisplay = DOM.wpmDisplay();
-    if (wpmDisplay) wpmDisplay.textContent = Math.round(wpm);
-
+    if (wpmDisplay) {
+        wpmDisplay.textContent = Math.round(wpm);
+    }
     if (targetLength > 0 && typedLength >= targetLength && progress === 100) {
-        finishLevel();
+        if (typeof checkLevelCompletion === "function") {
+            checkLevelCompletion();
+        }
     }
 }
 
