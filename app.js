@@ -10,7 +10,6 @@ const CONFIG = {
     DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",
     TRANSLATION_API: "https://api.mymemory.translated.net/get",
 };
-
 const GameState = {
     pdfText: "",
     levels: [],
@@ -51,7 +50,6 @@ const GameState = {
         return this.levels.length;
     },
 };
-
 const DOM = {
     pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
     articleModeBtn: () => document.getElementById("article-mode-btn"),
@@ -102,6 +100,8 @@ const DOM = {
     newTitle: () => document.getElementById("newTitle"),
     newContent: () => document.getElementById("newContent"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
+   turtleDisplay: () => document.getElementById("turtle-display"),
+    turtleTrack: () => document.getElementById("turtle-track"),
 };
 
 const TranslationCache = (() => {
@@ -243,7 +243,6 @@ function initializeWordClickDelegation() {
         }
     });
 }
-
 function initializeFormToggle() {
     const toggleBtn = DOM.toggleFormBtn();
     const container = DOM.addArticleContainer();
@@ -254,7 +253,6 @@ function initializeFormToggle() {
         toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";
     });
 }
-
 function setupPageRangeUI(totalPages) {
     const startInput = DOM.pdfStartPageInput();
     const endInput = DOM.pdfEndPageInput();
@@ -268,7 +266,6 @@ function setupPageRangeUI(totalPages) {
     endInput.value = totalPages.toString();
     if (container) container.classList.remove("hidden");
 }
-
 function extractPageText(textContent) {
     let result = "";
     let previousY = null;
@@ -291,7 +288,6 @@ function extractPageText(textContent) {
     }
     return result;
 }
-
 function cleanPDFText(text) {
     return text
         .replace(/\r\n/g, "\n")
@@ -364,7 +360,6 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
         GameState.setLoading("loaded");
     }
 }
-
 function createLevels(text, charsPerLevel) {
     const result = [];
     text = text.replace(/\s+/g, " ").trim();
@@ -393,7 +388,36 @@ function createLevels(text, charsPerLevel) {
 function showLevel() {
     if (!GameState.getTotalLevels()) return;
     const text = GameState.getCurrentText();
+// 4. 更新烏龜位置
+const turtle = DOM.turtleDisplay();
+const track = DOM.turtleTrack();
 
+if (turtle && track) {
+
+    // 取得賽道實際寬度
+    const trackWidth = track.clientWidth;
+
+    // 取得烏龜實際寬度
+    const turtleWidth = turtle.offsetWidth;
+
+    // 左右保留少少空間
+    const padding = 8;
+
+    // 烏龜最多可以移動到的位置
+    const maxLeft = trackWidth - turtleWidth - padding;
+
+    // 根據進度計算位置
+    const currentLeft =
+        (progress / 100) * maxLeft;
+
+    // 確保永遠不會超出賽道
+    const safeLeft = Math.max(
+        padding,
+        Math.min(currentLeft, maxLeft)
+    );
+
+    turtle.style.left = `${safeLeft}px`;
+}
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
@@ -477,24 +501,28 @@ function updateStats() {
         if (typed[i] === target[i]) correct++;
     }
 
-    // 計算 Accuracy (%)
+    // 2. 計算準確率 Accuracy (%)
     const accuracy = typedLength > 0 ? (correct / typedLength) * 100 : 100;
     const accuracyDisplay = DOM.accuracyDisplay();
     if (accuracyDisplay) {
         accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
     }
-
-    // 計算 Progress (%)
+    // 3. 計算進度 Progress (%)
     const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
     const progressDisplay = DOM.progressDisplay();
     if (progressDisplay) {
         progressDisplay.textContent = `${Math.round(progress)}%`;
     }
-
-    // 計算 WPM
+    // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
+   const turtle = DOM.turtleDisplay();
+    if (turtle) {
+        const maxPercent = 88; // 最大移動範圍 %
+        const currentLeft = (progress / 100) * maxPercent;
+        turtle.style.left = `calc(${currentLeft}% + 10px)`;
+    }
     let wpm = 0;
     if (GameState.startTime && typedLength > 0) {
-        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000;
+        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000; // 1000ms * 60s
         if (elapsedMinutes > 0.016) { 
             wpm = (correct / 5) / elapsedMinutes;
         }
@@ -503,9 +531,10 @@ function updateStats() {
     if (wpmDisplay) {
         wpmDisplay.textContent = Math.round(wpm);
     }
-
     if (targetLength > 0 && typedLength >= targetLength && progress === 100) {
-        finishLevel();
+        if (typeof checkLevelCompletion === "function") {
+            checkLevelCompletion();
+        }
     }
 }
 
@@ -554,7 +583,7 @@ function updateLevelSelect() {
 }
 
 // =====================================================
-// Dictionary & Translation Logic
+// 🔟 Dictionary & Translation Logic
 // =====================================================
 
 async function translateToZh(text) {
@@ -658,18 +687,14 @@ async function lookupWord(word) {
                     const def = defs[index];
                     const div = document.createElement("div");
                     div.className = "dictionary-definition-text";
-                    div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}`;
                     
                     (async () => {
                         const zhText = await translateToZh(def.definition);
-                        if (zhText) {
-                            const zhSpan = document.createElement("span");
-                            zhSpan.style.cssText = "color: #2b6cb0; font-size: 0.9em; display: block;";
-                            zhSpan.textContent = `🇹🇼 ${zhText}`;
-                            div.appendChild(zhSpan);
-                        }
+                        const zhDisplay = zhText ? `<br><span style="color: #2b6cb0; font-size: 0.9em;">🇹🇼 ${zhText}</span>` : "";
+                        div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}${zhDisplay}`;
                     })();
                     
+                    div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}`;
                     section.appendChild(div);
                     
                     if (def.example) {
@@ -701,7 +726,7 @@ function playCurrentAudio() {
 }
 
 // =====================================================
-// Article Loader & Custom Text Management
+// 1️⃣1️⃣ Article Loader & Custom Text Management
 // =====================================================
 
 async function loadArticlesFromGit() {
@@ -777,9 +802,12 @@ function handleStartCustomText() {
     showLevel();
     setStatus(`✅ 已載入自訂文章！共 ${GameState.getTotalLevels()} 個關卡`);
 
+    // Hide the entire article mode section
     const articleModePanel = DOM.articleModePanel();
     if (articleModePanel) {
         articleModePanel.classList.add("hidden"); 
+        // Or use inline style if you don't use CSS classes:
+        // articleModePanel.style.display = "none";
     }
 }
 
@@ -824,7 +852,7 @@ async function handleAddAndDownload() {
 }
 
 // =====================================================
-// Event Handlers & Utility Functions
+// 1️⃣2️⃣ Event Handlers & Utility Functions
 // =====================================================
 
 async function handlePDFUpload(event) {
@@ -919,45 +947,48 @@ async function handleApplyPageRange() {
     await processPDF(GameState.loadedPdfDoc, start, end);
 }
 
-function handleTyping() {
-    const typingInput = DOM.typingInput();
-    if (!typingInput) return;
-
-    if (!GameState.startTime && typingInput.value.length > 0) {
+function handleTyping(event) {
+    if (GameState.gameFinished) return;
+    
+    const typed = event.target.value;
+    const target = GameState.getCurrentText();
+    
+    if (GameState.startTime === null && typed.length > 0) {
         GameState.startTime = Date.now();
     }
-
-    const typed = typingInput.value;
-    const target = GameState.getCurrentText() || "";
-
+    
     updateCharacterDisplay(typed, target);
     updateStats();
+    
+    if (typed.length >= target.length) {
+        finishLevel();
+    }
 }
 
 function handleLevelSelect(e) {
-    const selectedLevel = parseInt(e.target.value, 10);
-    if (!isNaN(selectedLevel) && selectedLevel >= 0 && selectedLevel < GameState.getTotalLevels()) {
-        GameState.currentLevel = selectedLevel;
+    const levelIndex = parseInt(e.target.value, 10);
+    if (!isNaN(levelIndex) && levelIndex >= 0 && levelIndex < GameState.getTotalLevels()) {
+        GameState.currentLevel = levelIndex;
         showLevel();
     }
 }
 
 function switchMode(mode) {
-    const pdfBtn = DOM.pdfModeBtn();
-    const articleBtn = DOM.articleModeBtn();
     const pdfPanel = DOM.pdfModePanel();
     const articlePanel = DOM.articleModePanel();
-
+    const pdfBtn = DOM.pdfModeBtn();
+    const articleBtn = DOM.articleModeBtn();
+    
     if (mode === "pdf") {
-        if (pdfBtn) pdfBtn.classList.add("active");
-        if (articleBtn) articleBtn.classList.remove("active");
         if (pdfPanel) pdfPanel.classList.remove("hidden");
         if (articlePanel) articlePanel.classList.add("hidden");
+        if (pdfBtn) pdfBtn.classList.add("active");
+        if (articleBtn) articleBtn.classList.remove("active");
     } else {
-        if (articleBtn) articleBtn.classList.add("active");
-        if (pdfBtn) pdfBtn.classList.remove("active");
-        if (articlePanel) articlePanel.classList.remove("hidden");
         if (pdfPanel) pdfPanel.classList.add("hidden");
+        if (articlePanel) articlePanel.classList.remove("hidden");
+        if (pdfBtn) pdfBtn.classList.remove("active");
+        if (articleBtn) articleBtn.classList.add("active");
     }
 }
 
@@ -970,57 +1001,24 @@ function setStatus(msg) {
 
 function getFileNameFromURL(url) {
     try {
-        const parsed = new URL(url);
-        const pathname = parsed.pathname;
-        return pathname.substring(pathname.lastIndexOf('/') + 1) || "document.pdf";
+        const pathname = new URL(url).pathname;
+        return pathname.substring(pathname.lastIndexOf('/') + 1) || "Document.pdf";
     } catch {
-        return "document.pdf";
+        return "Document.pdf";
     }
 }
 
-// 初始化應用程式
+// =====================================================
+// 1️⃣3️⃣ App Initialization Trigger
+// =====================================================
+
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
     }
+    
     initializeEventListeners();
     initializeWordClickDelegation();
     initializeFormToggle();
     loadArticlesFromGit();
-});
-// 1. 取得 DOM 元素
-const typingInput = document.getElementById('typing-input');
-const turtleDisplay = document.getElementById('turtle-display');
-const textDisplay = document.getElementById('text-display');
-
-// 2. 更新烏龜位置的函式（根據打字字數比例）
-function updateTurtlePosition() {
-    const targetText = textDisplay.innerText || "";
-    const typedText = typingInput.value;
-
-    if (!targetText.length) return;
-
-    // 計算打字進度百分比 (0 ~ 100)
-    let progressPercent = (typedText.length / targetText.length) * 100;
-    if (progressPercent > 100) progressPercent = 100;
-
-    // 保留右側邊界 (93%) 避免烏龜超出視窗
-    const maxLeft = 93; 
-    const currentLeft = (progressPercent / 100) * maxLeft;
-
-    // 設定烏龜 CSS left 屬性
-    turtleDisplay.style.left = `${currentLeft}%`;
-}
-
-// 3. 監聽打字框的 input 事件（按任意鍵或刪除鍵都會觸發）
-typingInput.addEventListener('input', updateTurtlePosition);
-
-// 4. 當重置關卡時重置烏龜位置
-function resetTurtle() {
-    turtleDisplay.style.left = '0%';
-}
-
-// 綁定到重置按鈕
-document.getElementById('restart-btn')?.addEventListener('click', () => {
-    resetTurtle();
 });
