@@ -391,32 +391,20 @@ function showLevel() {
 // 4. 更新烏龜位置
 const turtle = DOM.turtleDisplay();
 const track = DOM.turtleTrack();
-
+    
 if (turtle && track) {
-
-    // 取得賽道實際寬度
     const trackWidth = track.clientWidth;
-
-    // 取得烏龜實際寬度
     const turtleWidth = turtle.offsetWidth;
 
-    // 左右保留少少空間
-    const padding = 8;
+    // 定義移動範圍佔賽道的 20% 到 80%
+    const minLeft = trackWidth * 0.2;
+    const maxLeft = (trackWidth * 0.8) - turtleWidth;
 
-    // 烏龜最多可以移動到的位置
-    const maxLeft = trackWidth - turtleWidth - padding;
+    const movableRange = maxLeft - minLeft;
+    const currentLeft = minLeft + (progress / 100) * movableRange;
 
-    // 根據進度計算位置
-    const currentLeft =
-        (progress / 100) * maxLeft;
-
-    // 確保永遠不會超出賽道
-    const safeLeft = Math.max(
-        padding,
-        Math.min(currentLeft, maxLeft)
-    );
-
-    turtle.style.left = `${1200}px`;
+    const safeLeft = Math.max(minLeft, Math.min(currentLeft, maxLeft));
+    turtle.style.left = `${safeLeft}px`;
 }
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
