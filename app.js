@@ -388,31 +388,11 @@ function createLevels(text, charsPerLevel) {
 function showLevel() {
     if (!GameState.getTotalLevels()) return;
     const text = GameState.getCurrentText();
-// 4. 更新烏龜位置
-const turtle = DOM.turtleDisplay();
-const track = DOM.turtleTrack();
-    
-if (turtle && track) {
-    const trackWidth = track.clientWidth;
-    const turtleWidth = turtle.offsetWidth;
 
-    // 定義移動範圍佔賽道的 20% 到 80%
-    const minLeft = trackWidth * 0.2;
-    const maxLeft = (trackWidth * 0.8) - turtleWidth;
-
-    const movableRange = maxLeft - minLeft;
-    const currentLeft = minLeft + (progress / 100) * movableRange;
-
-    const safeLeft = Math.max(minLeft, Math.min(currentLeft, maxLeft));
-    turtle.style.left = `${safeLeft}px`;
-}
     const levelDisplay = DOM.levelDisplay();
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
     }
-    
-    const levelSelect = DOM.levelSelect();
-    if (levelSelect) levelSelect.value = GameState.currentLevel.toString();
     
     renderText(text);
     
@@ -425,12 +405,11 @@ if (turtle && track) {
     GameState.gameFinished = false;
     GameState.startTime = null;
     
-    updateStats();
-    updateNavigationButtons();
-    
-    setTimeout(() => { 
-        if (typingInput) typingInput.focus(); 
-    }, 100);
+    // 顯示遊戲區塊後，延遲 50ms 更新一次烏龜位置（確保 DOM 寬度已計算）
+    setTimeout(() => {
+        updateStats();
+        if (typingInput) typingInput.focus();
+    }, 50);
 }
 
 function renderText(text) {
@@ -489,7 +468,7 @@ function updateStats() {
         if (typed[i] === target[i]) correct++;
     }
 
-    // 計算 Accuracy & Progress
+    // 1. 計算數據
     const accuracy = typedLength > 0 ? (correct / typedLength) * 100 : 100;
     const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
 
@@ -498,21 +477,23 @@ function updateStats() {
     if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
     if (progressDisplay) progressDisplay.textContent = `${Math.round(progress)}%`;
 
-    // 🐢 更新烏龜在 #game-area 跑道內的動態位置
+    // 2. 🐢 烏龜移動邏輯
     const turtle = DOM.turtleDisplay();
     const track = DOM.turtleTrack();
-    if (turtle && track && track.clientWidth > 0) {
+
+    if (turtle && track) {
         const trackWidth = track.clientWidth;
-        const turtleWidth = turtle.offsetWidth || 30; // 預設 30px 避免未渲染時拿到 0
-        
-        // 可移動的總距離 = 跑道寬度 - 烏龜寬度
-        const maxMoveDistance = trackWidth - turtleWidth;
+        // 如果容器寬度為 0 (例如剛解除 hidden)，給予預設估計值，否則精確計算
+        const effectiveWidth = trackWidth > 0 ? trackWidth : 600; 
+        const turtleWidth = turtle.offsetWidth || 35;
+
+        const maxMoveDistance = effectiveWidth - turtleWidth;
         const currentLeft = (progress / 100) * maxMoveDistance;
 
         turtle.style.left = `${Math.max(0, currentLeft)}px`;
     }
 
-    // 計算 WPM
+    // 3. 計算 WPM
     let wpm = 0;
     if (GameState.startTime && typedLength > 0) {
         const elapsedMinutes = (Date.now() - GameState.startTime) / 60000;
