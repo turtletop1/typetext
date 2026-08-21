@@ -504,9 +504,9 @@ function updateStats() {
     // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
    const turtle = DOM.turtleDisplay();
     if (turtle) {
-        const maxPercent = 90; // 最大移動範圍 %
+        const maxPercent = 88; // 最大移動範圍 %
         const currentLeft = (progress / 100) * maxPercent;
-        turtle.style.left = `${currentLeft}%`;
+        turtle.style.left = `calc(${currentLeft}% + 10px)`;
     }
     let wpm = 0;
     if (GameState.startTime && typedLength > 0) {
