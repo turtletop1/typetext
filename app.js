@@ -1,20 +1,15 @@
 const CONFIG = {
     PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
     PDF_LINE_HEIGHT_THRESHOLD: 5,
-    
     CHARS_PER_LEVEL: 500,
     MIN_TEXT_LENGTH: 20,
     MIN_CUSTOM_TEXT_LENGTH: 5,
-    
     SPEECH_RATE: 0.9,
     SPEECH_LANG: "en-US",
-    
     TRANSLATION_CACHE_SIZE: 100,
-    
     DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",
     TRANSLATION_API: "https://api.mymemory.translated.net/get",
 };
-
 const GameState = {
     pdfText: "",
     levels: [],
@@ -55,7 +50,6 @@ const GameState = {
         return this.levels.length;
     },
 };
-
 const DOM = {
     pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
     articleModeBtn: () => document.getElementById("article-mode-btn"),
@@ -508,11 +502,11 @@ function updateStats() {
         progressDisplay.textContent = `${Math.round(progress)}%`;
     }
     // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
-    const turtle = DOM.turtleDisplay();
+   const turtle = DOM.turtleDisplay();
     if (turtle) {
-        const maxPercent = 88; 
+        const maxPercent = 90; // 最大移動範圍 %
         const currentLeft = (progress / 100) * maxPercent;
-        turtle.style.left = `calc(${currentLeft}% + 10px)`;
+        turtle.style.left = `${currentLeft}%`;
     }
     let wpm = 0;
     if (GameState.startTime && typedLength > 0) {
