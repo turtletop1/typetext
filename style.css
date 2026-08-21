@@ -754,13 +754,8 @@ button {
 
 .turtle-track {
     position: relative;
-
     width: 100%;
-    height: 55px;
-
-    margin: 15px 0;
-
-    padding: 0;
+    height: 48px;
 
     background: linear-gradient(
         180deg,
@@ -768,36 +763,48 @@ button {
         #cbd5e1 100%
     );
 
+    border-radius: 24px;
+    margin: 12px 0;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 16px;
+
     border: 2px solid #94a3b8;
-    border-radius: 28px;
-    /* 最重要：所有內容限制在框內 */
+
+    /* ⭐ 防止龜走出框架 */
     overflow: hidden;
-    display: block;
 }
 
 .turtle-emoji {
     position: absolute;
-    /* 龜永遠由框內左邊開始 */
+
     left: 8px;
-    /* 垂直置中 */
+
     top: 50%;
     transform: translateY(-50%);
-    font-size: 30px;
-    line-height: 1;
-    user-select: none;
-    z-index: 2;
-    /* 龜移動動畫 */
+
+    font-size: 26px;
+
     transition: left 0.12s ease-out;
+
+    user-select: none;
+
+    z-index: 2;
 }
 
 .flag-emoji {
     position: absolute;
-    /* 永遠保持在 track 裏面 */
+
     right: 8px;
+
     top: 50%;
     transform: translateY(-50%);
-    font-size: 28px;
-    line-height: 1;
+
+    font-size: 24px;
+
     user-select: none;
-    z-index: 2;
+
+    z-index: 1;
 }
