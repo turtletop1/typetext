@@ -671,11 +671,6 @@ button {
     display: none;
 }
 
-
-/* =========================
-   CLICKABLE WORD
-========================= */
-
 .clickable-word {
 
     cursor: pointer;
@@ -733,16 +728,12 @@ button {
 .level-select:focus {
     border-color: #3498db;
 }
-
 .level-select:disabled {
     background: lightblue;
     color: #b2bec3;
     cursor: not-allowed;
     border-color: #e5e8eb;
 }
-
-
-
     .level-select {
         grid-column: span 2;
         order: -1; /* 手機端將選單移至最上方 */
@@ -756,4 +747,33 @@ button {
     #restart-btn {
         grid-column: span 2; /* 重新開始按鈕在手機端拉寬佔滿整行 */
     }
+}
+.turtle-track {
+    position: relative;
+    width: 100%;
+    height: 45px;
+    background-color: #edf2f7;
+    border-radius: 25px;
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-sizing: border-box;
+    border: 2px solid #cbd5e0;
+    overflow: hidden;
+}
+.turtle-emoji {
+    position: absolute;
+    left: 10px;
+    font-size: 26px;
+    transition: left 0.15s ease-out; /* 讓移動過程更平滑 */
+    user-select: none;
+    z-index: 2;
+}
+.flag-emoji {
+    position: absolute;
+    right: 15px;
+    font-size: 26px;
+    user-select: none;
+    z-index: 1;
 }
