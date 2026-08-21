@@ -489,40 +489,42 @@ function updateStats() {
         if (typed[i] === target[i]) correct++;
     }
 
-    // 2. 計算準確率 Accuracy (%)
+    // 計算 Accuracy & Progress
     const accuracy = typedLength > 0 ? (correct / typedLength) * 100 : 100;
-    const accuracyDisplay = DOM.accuracyDisplay();
-    if (accuracyDisplay) {
-        accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
-    }
-    // 3. 計算進度 Progress (%)
     const progress = targetLength > 0 ? Math.min((typedLength / targetLength) * 100, 100) : 0;
+
+    const accuracyDisplay = DOM.accuracyDisplay();
     const progressDisplay = DOM.progressDisplay();
-    if (progressDisplay) {
-        progressDisplay.textContent = `${Math.round(progress)}%`;
+    if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
+    if (progressDisplay) progressDisplay.textContent = `${Math.round(progress)}%`;
+
+    // 🐢 更新烏龜在 #game-area 跑道內的動態位置
+    const turtle = DOM.turtleDisplay();
+    const track = DOM.turtleTrack();
+    if (turtle && track && track.clientWidth > 0) {
+        const trackWidth = track.clientWidth;
+        const turtleWidth = turtle.offsetWidth || 30; // 預設 30px 避免未渲染時拿到 0
+        
+        // 可移動的總距離 = 跑道寬度 - 烏龜寬度
+        const maxMoveDistance = trackWidth - turtleWidth;
+        const currentLeft = (progress / 100) * maxMoveDistance;
+
+        turtle.style.left = `${Math.max(0, currentLeft)}px`;
     }
-    // 4. 更新烏龜位置 (保留 88% 避免過度重疊旗仔)
-   const turtle = DOM.turtleDisplay();
-    if (turtle) {
-        const maxPercent = 88; // 最大移動範圍 %
-        const currentLeft = (progress / 100) * maxPercent;
-        turtle.style.left = `calc(${currentLeft}% + 10px)`;
-    }
+
+    // 計算 WPM
     let wpm = 0;
     if (GameState.startTime && typedLength > 0) {
-        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000; // 1000ms * 60s
-        if (elapsedMinutes > 0.016) { 
+        const elapsedMinutes = (Date.now() - GameState.startTime) / 60000;
+        if (elapsedMinutes > 0.016) {
             wpm = (correct / 5) / elapsedMinutes;
         }
     }
     const wpmDisplay = DOM.wpmDisplay();
-    if (wpmDisplay) {
-        wpmDisplay.textContent = Math.round(wpm);
-    }
+    if (wpmDisplay) wpmDisplay.textContent = Math.round(wpm);
+
     if (targetLength > 0 && typedLength >= targetLength && progress === 100) {
-        if (typeof checkLevelCompletion === "function") {
-            checkLevelCompletion();
-        }
+        finishLevel();
     }
 }
 
