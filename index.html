@@ -10,6 +10,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <link rel="stylesheet" href="style.css">
+    <style>
+     
+    </style>
 </head>
 
 <body>
@@ -80,11 +83,11 @@
    <section id="article-mode" class="mode-panel hidden">
 
        <div class="article-selector">
-  <label for="articleSelect">Choose an article:</label>
-  <select id="articleSelect">
-    <option value="">-- Select an article --</option>
-  </select>
-</div>
+        <label for="articleSelect">Choose an article:</label>
+        <select id="articleSelect">
+          <option value="">-- Select an article --</option>
+        </select>
+      </div>
        <button id="toggleFormBtn" style="padding: 8px 16px; margin-bottom: 10px; cursor: pointer;">
   ➕ 新增文章
 </button>
@@ -139,8 +142,10 @@
         <button id="next-btn" class="secondary-btn">Next ➡</button>
     </div>
 
+
       <div class="turtle-track" id="turtle-track">
-        <div id="turtle-display" class="turtle-display">🐢</div>
+        <img class="turtle-display" id="turtle-display" src="img.svg" alt="Interactive Logo" width="50">
+        <img class="flag" src="flag.png" alt="Interactive Logo" width="50">
     </div>
 
     <!-- 3. 文章來源資訊 -->
@@ -193,28 +198,7 @@
 
 <script src="app.js">
 </script>
-   <script>
-      const container = document.getElementById('turtle-track');
-      const image = document.getElementById('turtle-display');
-      
-      let currentX = 0; // 记录当前图片的 X 轴位置（从 0 开始）
-      
-      const step = 20; 	// 每次按键向右移动的步长（像素）
-
-     
-      window.addEventListener('keydown', function(event) { // 监听整个网页的键盘按下事件
-         
-         const maxX = container.offsetWidth - 60;// 计算向右移动的最大限度（容器宽度 400 - 图片宽度 60 = 340px）
-         
-         currentX += step;	// 累加位置
-         
-         if (currentX > maxX) {		// 边界控制：如果超过最右侧，就停在最右侧
-            currentX = maxX;
-         }
-         
-         image.style.left = currentX + 'px';		// 更新图片的 left 样式
-      });
-   </script>
+  
 
 </body>
 
