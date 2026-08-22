@@ -46,7 +46,7 @@ body {
       .turtle-display {
           position: absolute !important;
           left: 0px;
-          top: 18px;
+          top: 25px;
           transform: scaleX(-1);
           transition: left 0.1s ease;
       }
