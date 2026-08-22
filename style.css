@@ -5,7 +5,6 @@
 }
 
 body {
-
     font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -13,31 +12,20 @@ body {
         Roboto,
         Arial,
         sans-serif;
-
     background: #f4f6f8;
-
     color: #2c3e50;
-
     min-height: 100vh;
-
     padding: 20px;
 }
 
 
 .container {
-
     width: 100%;
-
     max-width: 850px;
-
     margin: auto;
-
     background: white;
-
     padding: 25px;
-
     border-radius: 16px;
-
     box-shadow:
         0 5px 25px
         rgba(0,0,0,0.08);
@@ -47,21 +35,16 @@ body {
 /* HEADER */
 
 header {
-
     text-align: center;
-
     margin-bottom: 25px;
 }
 
 header h1 {
-
     font-size: 30px;
-
     margin-bottom: 5px;
 }
 
 header p {
-
     color: #7f8c8d;
 }
 
@@ -69,51 +52,36 @@ header p {
 /* MODE */
 
 .mode-section {
-
     margin-bottom: 20px;
 }
 
 .mode-section h2 {
-
     margin-bottom: 12px;
 }
 
 
 .mode-buttons {
-
     display: grid;
-
     grid-template-columns:
         1fr 1fr;
-
     gap: 10px;
 }
 
 
 .mode-btn {
-
     padding: 15px;
-
     border: 2px solid #dfe6e9;
-
     background: white;
-
     border-radius: 10px;
-
     cursor: pointer;
-
     font-size: 16px;
-
     font-weight: bold;
 }
 
 
 .mode-btn.active {
-
     background: #3498db;
-
     color: white;
-
     border-color: #3498db;
 }
 
@@ -121,13 +89,9 @@ header p {
 /* PANELS */
 
 .mode-panel {
-
     background: #f8f9fa;
-
     padding: 20px;
-
     border-radius: 12px;
-
     margin-bottom: 20px;
 }
 
@@ -138,74 +102,49 @@ header p {
 /* PDF */
 
 .url-row {
-
     display: flex;
-
     gap: 8px;
 }
 
 .url-row input {
-
     flex: 1;
-
     padding: 12px;
-
     border: 1px solid #dcdfe3;
-
     border-radius: 8px;
-
     font-size: 15px;
 }
 
 
 button {
-
     border: none;
-
     border-radius: 8px;
-
     cursor: pointer;
-
     font-weight: bold;
 }
 
 
 .primary-btn {
-
     background: #3498db;
-
     color: white;
-
     padding: 12px 20px;
 }
 
 
 .upload-btn {
-
     display: block;
-
     text-align: center;
-
     background: #2ecc71;
-
     color: white;
-
     padding: 13px;
-
     border-radius: 8px;
-
     cursor: pointer;
-
     font-weight: bold;
 }
 
 
 .divider {
-
     text-align: center;
-
     color: #aaa;
-
     margin: 18px 0;
 }
 
@@ -213,37 +152,26 @@ button {
 /* ARTICLE */
 
 .article-options {
-
     display: grid;
-
     gap: 10px;
 }
 
 .article-options label {
-
     font-weight: bold;
 }
 
 .article-options select {
-
     padding: 11px;
-
     border: 1px solid #dcdfe3;
-
     border-radius: 8px;
-
     background: white;
 }
 
 
 .random-btn {
-
     padding: 14px;
-
     background: #9b59b6;
-
     color: white;
-
     font-size: 16px;
 }
 
@@ -251,13 +179,9 @@ button {
 /* STATUS */
 
 .status {
-
     text-align: center;
-
     margin-top: 12px;
-
     color: #7f8c8d;
-
     line-height: 1.5;
 }
 
@@ -273,43 +197,30 @@ button {
 /* LEVEL */
 
 .level-bar {
-
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
-
     gap: 10px;
-
     padding: 10px;
-
     background: #eef2f5;
-
     border-radius: 10px;
 }
 
 
 .secondary-btn {
-
     padding: 9px 15px;
-
     background: #ecf0f1;
-
     color: #34495e;
 }
 
 
 .secondary-btn:disabled {
-
     opacity: 0.4;
-
     cursor: not-allowed;
 }
 
 
 #level-display {
-
     font-weight: bold;
 }
 
@@ -317,105 +228,71 @@ button {
 /* SOURCE */
 
 .source-info {
-
     display: flex;
-
     justify-content: space-between;
-
     align-items: center;
-
     gap: 10px;
-
     margin: 12px 0;
-
     padding: 12px;
-
     background: #f8f9fa;
-
     border-radius: 8px;
 }
 
 
 #content-title {
-
     display: block;
-
     margin-bottom: 3px;
 }
 
 
 #content-source {
-
     color: #7f8c8d;
-
     font-size: 13px;
 }
 
 
 #original-link {
-
     color: #3498db;
-
     text-decoration: none;
-
     white-space: nowrap;
 }
-
 
 /* TEXT */
 
 .text-display {
-
     padding: 20px;
-
     background: #f8f9fa;
-
     border: 1px solid #e5e8eb;
-
     border-radius: 10px;
-
     min-height: 200px;
-
     max-height: 380px;
-
     overflow-y: auto;
-
     font-size: 20px;
-
     line-height: 1.7;
-
     white-space: pre-wrap;
-
     word-break: break-word;
 }
 
 
 .char {
-
     transition: 0.05s;
 }
 
 
 .char.correct {
-
     color: #27ae60;
-
     background: #e8f8f0;
 }
 
 
 .char.incorrect {
-
     color: #e74c3c;
-
     background: #fdeaea;
-
     text-decoration: underline;
 }
 
 
 .char.current {
-
     border-bottom: 3px solid #3498db;
 }
 
@@ -423,27 +300,16 @@ button {
 /* INPUT */
 
 .typing-input {
-
     width: 100%;
-
     min-height: 110px;
-
     margin-top: 15px;
-
     padding: 15px;
-
     resize: vertical;
-
     border: 2px solid #dfe6e9;
-
     border-radius: 10px;
-
     font-family: inherit;
-
     font-size: 18px;
-
     line-height: 1.5;
-
     outline: none;
 }
 
@@ -457,36 +323,25 @@ button {
 /* STATS */
 
 .stats {
-
     display: grid;
-
     grid-template-columns:
         repeat(3,1fr);
-
     gap: 10px;
-
     margin-top: 15px;
 }
 
 
 .stats div {
-
     padding: 12px;
-
     background: #f8f9fa;
-
     border-radius: 8px;
-
     text-align: center;
 }
 
 
 .stats strong {
-
     display: block;
-
     font-size: 20px;
-
     margin-top: 5px;
 }
 
@@ -494,15 +349,10 @@ button {
 /* RESTART */
 
 .restart-btn {
-
     width: 100%;
-
     padding: 12px;
-
     margin-top: 15px;
-
     background: #34495e;
-
     color: white;
 }
 
@@ -510,45 +360,34 @@ button {
 /* MOBILE */
 
 @media(max-width:600px) {
-
     body {
         padding: 10px;
     }
-
     .container {
         padding: 15px;
     }
-
     .mode-buttons {
         grid-template-columns: 1fr;
     }
-
     .url-row {
         flex-direction: column;
     }
-
     .level-bar {
         flex-wrap: wrap;
-
         justify-content: center;
     }
 
     #level-display {
         width: 100%;
-
         text-align: center;
-
         order: -1;
     }
-
     .text-display {
         font-size: 18px;
     }
-
     .stats {
         grid-template-columns: 1fr;
     }
-
     .source-info {
         flex-direction: column;
 
@@ -557,109 +396,75 @@ button {
 }
 
 .dictionary-popup {
-
     position: fixed;
-
     left: 50%;
-
     top: 50%;
-
     transform: translate(
         -50%,
         -50%
     );
-
     width: min(
         90%,
         450px
     );
-
     max-height: 80vh;
-
     overflow-y: auto;
-
     background: white;
-
     padding: 25px;
-
     border-radius: 15px;
-
     box-shadow:
         0 10px 40px
         rgba(0, 0, 0, 0.25);
-
     z-index: 1000;
 }
 
 
 .dictionary-popup h2 {
-
     font-size: 28px;
-
     margin-bottom: 5px;
 }
 
 
 .dictionary-close {
-
     position: absolute;
-
     right: 12px;
-
     top: 12px;
-
     background: none;
-
     font-size: 20px;
-
     color: #777;
 }
 
 
 #dictionary-phonetic {
-
     color: #7f8c8d;
-
     margin-bottom: 12px;
 }
 
 
 .audio-btn {
-
     background: #3498db;
-
     color: white;
-
     padding: 9px 15px;
-
     margin-bottom: 15px;
 }
 
 
 .dictionary-definition {
-
     margin-bottom: 15px;
-
     line-height: 1.6;
 }
 
 
 .dictionary-part {
-
     font-weight: bold;
-
     color: #3498db;
-
     margin-bottom: 5px;
 }
 
 
 .dictionary-example {
-
     color: #7f8c8d;
-
     font-style: italic;
-
     margin-top: 5px;
 }
 
@@ -667,20 +472,15 @@ button {
 /* 避免 Dictionary popup 被 hidden class 覆蓋 */
 
 .dictionary-popup.hidden {
-
     display: none;
 }
 
 .clickable-word {
-
     cursor: pointer;
-
     border-radius: 4px;
-
     transition: background 0.15s;
 }
 .clickable-word:hover {
-
     background: #fff3cd;
 }
 
@@ -750,12 +550,13 @@ button {
 }
 
 
-.turtle-track {
+.container.turtle-track {
     position: relative;
     width: 400px;
     height: 300px;
     border: 2px solid #333;
     margin: 20px 0;
+    left: 30px; 
 }
 
 .turtle-display {
