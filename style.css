@@ -49,11 +49,13 @@ body {
           top: 25px;
           transform: scaleX(-1);
           transition: left 0.1s ease;
+          z-index: 2;
       }
       .flag {
           position: absolute !important;
           right: 0px;
           top: 18px;
+          z-index: 1;
       }
       
       
