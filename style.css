@@ -31,7 +31,32 @@ body {
         rgba(0,0,0,0.08);
 }
 
+.turtle-track {
+          width: 100%;
+          min-height: 90px;
+          position: relative !important;
+          margin: 20px 0;
+          border-radius: 10px;
+          background-color: #98c6f5; 
+          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 180"><path fill="%23a7f048" d="M30 170 Q 60 115 90 150 Z M120 150 Q 170 95 220 165 Z M380 165 Q 420 105 460 165 Z M480 150 Q 520 100 560 165 Z"/><text x="200" y="57" font-family="monospace" font-weight="bold" font-size="18" fill="%23fff">?</text><rect x="0" y="160" width="600" height="20" fill="%23c9a655"/><path fill="%2380c242" d="M0 150 Q 15 157 30 150 Q 45 157 60 150 Q 75 157 90 150 Q 105 157 120 150 Q 135 157 150 150 Q 165 157 180 150 Q 195 157 210 150 Q 225 157 240 150 Q 255 157 270 150 Q 285 157 300 150 Q 315 157 330 150 Q 345 157 360 150 Q 375 157 390 150 Q 405 157 420 150 Q 435 157 450 150 Q 465 157 480 150 Q 495 157 510 150 Q 525 157 540 150 Q 555 157 570 150 Q 585 157 600 150 L 600 160 L 0 160 Z"/></svg>'); 
+          background-size: cover;
+          background-position: bottom;
+      }
 
+      .turtle-display {
+          position: absolute !important;
+          left: 0px;
+          top: 18px;
+          transform: scaleX(-1);
+          transition: left 0.1s ease;
+      }
+      .flag {
+          position: absolute !important;
+          right: 0px;
+          top: 18px;
+      }
+      
+      
 /* HEADER */
 
 header {
@@ -550,18 +575,3 @@ button {
 }
 
 
-.turtle-track {
-    position: relative;
-    width: 400px;
-    height: 300px;
-    border: 2px solid #333;
-    margin: 20px 0;
-    left: 150px; 
-}
-
-.turtle-display {
-    position: absolute;
-    top: 120px; 
-    left: 0px;  
-    transition: left 0.1s ease; 
-}
