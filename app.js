@@ -545,7 +545,7 @@ function updateStats() {
     const typed = typingInput.value;
     const target = GameState.getCurrentText();
     
-    let correct = 0;
+    let correct = 0;        // 計算打對嘅字符數量
     for (let i = 0; i < typed.length && i < target.length; i++) {
         if (typed[i] === target[i]) correct++;
     }
@@ -554,7 +554,7 @@ function updateStats() {
     const accuracyDisplay = DOM.accuracyDisplay();
     if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
     
-    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;
+    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;    // 顯示總字符完成進度（ UI 面板上依然顯示輸入進度）
     const progressDisplay = DOM.progressDisplay();
     if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(0)}%`;
     
@@ -565,6 +565,23 @@ function updateStats() {
     }
     const wpmDisplay = DOM.wpmDisplay();
     if (wpmDisplay) wpmDisplay.textContent = Math.round(wpm);
+
+    const container = document.getElementById('turtle-track');
+    const image = document.getElementById('turtle-display');
+    if (image) {
+        image.src = "img.svg";     
+    }
+    
+    if (container && image) {
+       
+        const maxX = container.offsetWidth - image.offsetWidth;      // 計算圖片可以移動嘅最大 X 坐標（容器寬度 - 圖片寬度)
+        
+        const correctRatio = target.length > 0 ? Math.min(correct / target.length, 1) : 0;  // 基於正確字數嘅比例（0到1之間）
+        
+        const currentX = maxX * correctRatio;   // 當前位置 = 最大移動距離*正確字數比例
+        
+        image.style.left = `${currentX}px`;     // 更新圖片 CSS 位置
+    }
 }
 
 function finishLevel() {
@@ -573,6 +590,11 @@ function finishLevel() {
     if (typingInput) typingInput.disabled = true;
     
     updateStats();
+    
+    const image = document.getElementById('turtle-display');
+    if (image) {
+        image.src = "1f422.gif";     
+    }
     
     const accuracy = DOM.accuracyDisplay()?.textContent || "0%";
     const wpm = DOM.wpmDisplay()?.textContent || "0";
