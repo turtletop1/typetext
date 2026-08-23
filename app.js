@@ -115,6 +115,7 @@ const DOM = {
     articleStatus: () => document.getElementById("article-status"),
     
     articleSelect: () => document.getElementById("articleSelect"),
+    articleSelect2: () => document.getElementById("articleSelect"),
     articleContainer: () => document.getElementById("articleContainer"),
     
     toggleFormBtn: () => document.getElementById("toggleFormBtn"),
@@ -783,99 +784,109 @@ function playCurrentAudio() {
 // 1️⃣1️⃣ Article Loader & Custom Text Management
 // =====================================================
 
+
 async function loadArticlesFromGit() {
-    const articleSelectContainer = document.querySelector(".article-selector");
+    const articleSelect = DOM.articleSelect();
+    const articleSelect2 = DOM.articleSelect2();
     const articleContainer = DOM.articleContainer();
     const customTextInput = DOM.customTextInput();
     
-    if (!articleSelectContainer) return;
+    if (!articleSelect || !articleSelect2) return;
     
     try {
-        const response = await fetch("./articles.json");
+        const response = await fetch("articles.json");
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
-        const rootData = await response.json(); // 傳入樹狀資料 { options: [...] }
+        const articles = await response.json();
         
-        // 重置選單容器
-        articleSelectContainer.innerHTML = "";
+        // 1. 初始化第一層選單
+        articleSelect.innerHTML = "";
+        const defaultOption1 = document.createElement("option");
+        defaultOption1.value = "";
+        defaultOption1.textContent = "-- 選擇分類 --";
+        articleSelect.appendChild(defaultOption1);
         
-        // 遞迴/動態創建選單的函式
-        function buildSelectMenu(currentBranch, level = 0) {
-            // 清除當前層級之後的所有舊選單 (避免選單殘留)
-            const existingSelects = articleSelectContainer.querySelectorAll(`select[data-level]`);
-            existingSelects.forEach(sel => {
-                if (parseInt(sel.dataset.level, 10) >= level) {
-                    sel.remove();
-                }
-            });
+        // 初始化第二層預設狀態
+        articleSelect2.innerHTML = '<option value="">-- 請先選擇第一層 --</option>';
+        articleSelect2.disabled = true;
 
-            // 如果該節點沒有子選項，代表已經到達最終文章節點
-            if (!currentBranch || !currentBranch.options) {
-                renderArticle(currentBranch);
+        articles.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category.id;
+            option.textContent = category.title;
+            articleSelect.appendChild(option);
+        });
+
+        // 2. 第一層選單變更事件
+        articleSelect.addEventListener("change", (e) => {
+            const selectedCategoryId = e.target.value;
+            
+            // 清空第二層與內容顯示
+            articleSelect2.innerHTML = '<option value="">-- 請選擇文章 --</option>';
+            clearContent();
+
+            if (!selectedCategoryId) {
+                articleSelect2.disabled = true;
                 return;
             }
 
-            // 清空舊文章顯示
-            clearContent();
+            // 尋找第一層選中的分類
+            const selectedCategory = articles.find(cat => cat.id === selectedCategoryId);
 
-            // 創建新的下拉選單
-            const select = document.createElement("select");
-            select.dataset.level = level;
-
-            const defaultOption = document.createElement("option");
-            defaultOption.value = "";
-            defaultOption.textContent = `-- 請選擇第 ${level + 1} 層項目 --`;
-            select.appendChild(defaultOption);
-
-            currentBranch.options.forEach((item, index) => {
-                const option = document.createElement("option");
-                option.value = index; // 使用陣列 index 作為 value
-                option.textContent = item.title || item.name || `選項 ${index + 1}`;
-                select.appendChild(option);
-            });
-
-            // 監聽選單變更
-            select.addEventListener("change", (e) => {
-                const selectedIndex = e.target.value;
-                if (selectedIndex === "") {
-                    // 清除後續選單與內容
-                    buildSelectMenu(null, level + 1);
-                    return;
-                }
-                
-                const nextNode = currentBranch.options[selectedIndex];
-                // 渲染下一層或顯示文章內容
-                buildSelectMenu(nextNode, level + 1);
-            });
-
-            articleSelectContainer.appendChild(select);
-        }
-
-        // 渲染文章內容
-        function renderArticle(articleNode) {
-            if (articleNode && (articleNode.content || articleNode.title)) {
-                if (articleContainer) {
-                    articleContainer.innerHTML = `
-                        <h3>${articleNode.title || '無標題'}</h3>
-                        <p>${articleNode.content || ''}</p>
-                    `;
-                }
-                if (customTextInput) {
-                    customTextInput.value = articleNode.content || "";
-                }
+            if (selectedCategory && selectedCategory.options) {
+                // 動態加入第二層選項
+                selectedCategory.options.forEach(article => {
+                    const option = document.createElement("option");
+                    option.value = article.id;
+                    option.textContent = article.title;
+                    articleSelect2.appendChild(option);
+                });
+                articleSelect2.disabled = false;
             } else {
+                articleSelect2.disabled = true;
+            }
+        });
+
+        // 3. 第二層選單變更事件（顯示最終文章內容）
+        articleSelect2.addEventListener("change", (e) => {
+            const selectedCategoryId = articleSelect.value;
+            const selectedArticleId = e.target.value;
+
+            if (!selectedArticleId) {
                 clearContent();
+                return;
+            }
+
+            const selectedCategory = articles.find(cat => cat.id === selectedCategoryId);
+            if (selectedCategory) {
+                const selectedArticle = selectedCategory.options.find(a => a.id === selectedArticleId);
+                
+                if (selectedArticle) {
+                    renderArticle(selectedArticle);
+                } else {
+                    clearContent();
+                }
+            }
+        });
+
+        // 輔助函式：渲染文章內容
+        function renderArticle(article) {
+            if (articleContainer) {
+                articleContainer.innerHTML = `
+                    <h3>${article.title}</h3>
+                    <p>${article.content}</p>
+                `;
+            }
+            if (customTextInput) {
+                customTextInput.value = article.content;
             }
         }
 
-        // 清空顯示區域
+        // 輔助函式：清空文章內容
         function clearContent() {
             if (articleContainer) articleContainer.innerHTML = "";
             if (customTextInput) customTextInput.value = "";
         }
-
-        // 開始繪製第一層
-        buildSelectMenu(rootData, 0);
 
     } catch (error) {
         console.error("Failed to load articles.json:", error);
