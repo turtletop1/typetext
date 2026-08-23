@@ -115,7 +115,6 @@ const DOM = {
     articleStatus: () => document.getElementById("article-status"),
     
     articleSelect: () => document.getElementById("articleSelect"),
-    articleSelect2: () => document.getElementById("articleSelect"),
     articleContainer: () => document.getElementById("articleContainer"),
     
     toggleFormBtn: () => document.getElementById("toggleFormBtn"),
@@ -784,110 +783,53 @@ function playCurrentAudio() {
 // 1️⃣1️⃣ Article Loader & Custom Text Management
 // =====================================================
 
-
 async function loadArticlesFromGit() {
     const articleSelect = DOM.articleSelect();
-    const articleSelect2 = DOM.articleSelect2();
     const articleContainer = DOM.articleContainer();
     const customTextInput = DOM.customTextInput();
     
-    if (!articleSelect || !articleSelect2) return;
+    if (!articleSelect) return;
     
     try {
-        const response = await fetch("articles.json");
+        const response = await fetch("./articles.json");
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const articles = await response.json();
         
-        // 1. 初始化第一層選單
         articleSelect.innerHTML = "";
-        const defaultOption1 = document.createElement("option");
-        defaultOption1.value = "";
-        defaultOption1.textContent = "-- 選擇分類 --";
-        articleSelect.appendChild(defaultOption1);
         
-        // 初始化第二層預設狀態
-        articleSelect2.innerHTML = '<option value="">-- 請先選擇第一層 --</option>';
-        articleSelect2.disabled = true;
-
-        articles.forEach(category => {
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "-- 選擇一篇文章 --";
+        articleSelect.appendChild(defaultOption);
+        
+        articles.forEach(article => {
             const option = document.createElement("option");
-            option.value = category.id;
-            option.textContent = category.title;
+            option.value = article.id;
+            option.textContent = article.title;
             articleSelect.appendChild(option);
         });
-
-        // 2. 第一層選單變更事件
+        
         articleSelect.addEventListener("change", (e) => {
-            const selectedCategoryId = e.target.value;
+            const selectedId = e.target.value;
+            const selectedArticle = articles.find(a => a.id === selectedId);
             
-            // 清空第二層與內容顯示
-            articleSelect2.innerHTML = '<option value="">-- 請選擇文章 --</option>';
-            clearContent();
-
-            if (!selectedCategoryId) {
-                articleSelect2.disabled = true;
-                return;
-            }
-
-            // 尋找第一層選中的分類
-            const selectedCategory = articles.find(cat => cat.id === selectedCategoryId);
-
-            if (selectedCategory && selectedCategory.options) {
-                // 動態加入第二層選項
-                selectedCategory.options.forEach(article => {
-                    const option = document.createElement("option");
-                    option.value = article.id;
-                    option.textContent = article.title;
-                    articleSelect2.appendChild(option);
-                });
-                articleSelect2.disabled = false;
-            } else {
-                articleSelect2.disabled = true;
-            }
-        });
-
-        // 3. 第二層選單變更事件（顯示最終文章內容）
-        articleSelect2.addEventListener("change", (e) => {
-            const selectedCategoryId = articleSelect.value;
-            const selectedArticleId = e.target.value;
-
-            if (!selectedArticleId) {
-                clearContent();
-                return;
-            }
-
-            const selectedCategory = articles.find(cat => cat.id === selectedCategoryId);
-            if (selectedCategory) {
-                const selectedArticle = selectedCategory.options.find(a => a.id === selectedArticleId);
-                
-                if (selectedArticle) {
-                    renderArticle(selectedArticle);
-                } else {
-                    clearContent();
+            if (selectedArticle) {
+                if (articleContainer) {
+                    articleContainer.innerHTML = `
+                        <h3>${selectedArticle.title}</h3>
+                        <p>${selectedArticle.content}</p>
+                    `;
                 }
+                if (customTextInput) {
+                    customTextInput.value = selectedArticle.content;
+                }
+            } else {
+                if (articleContainer) articleContainer.innerHTML = "";
+                if (customTextInput) customTextInput.value = "";
             }
         });
-
-        // 輔助函式：渲染文章內容
-        function renderArticle(article) {
-            if (articleContainer) {
-                articleContainer.innerHTML = `
-                    <h3>${article.title}</h3>
-                    <p>${article.content}</p>
-                `;
-            }
-            if (customTextInput) {
-                customTextInput.value = article.content;
-            }
-        }
-
-        // 輔助函式：清空文章內容
-        function clearContent() {
-            if (articleContainer) articleContainer.innerHTML = "";
-            if (customTextInput) customTextInput.value = "";
-        }
-
+        
     } catch (error) {
         console.error("Failed to load articles.json:", error);
         if (articleContainer) {
@@ -895,7 +837,6 @@ async function loadArticlesFromGit() {
         }
     }
 }
-
 
 function handleStartCustomText() {
     const input = DOM.customTextInput()?.value.trim();
@@ -923,7 +864,6 @@ function handleStartCustomText() {
         // articleModePanel.style.display = "none";
     }
 }
-
 
 async function handleAddAndDownload() {
     const titleInput = DOM.newTitle();
