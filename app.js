@@ -838,8 +838,6 @@ async function loadArticlesFromGit() {
     }
 }
 
-
-
 function handleStartCustomText() {
     const input = DOM.customTextInput()?.value.trim();
     if (!input || input.length < CONFIG.MIN_CUSTOM_TEXT_LENGTH) {
