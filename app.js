@@ -784,52 +784,81 @@ function playCurrentAudio() {
 // =====================================================
 
 async function loadArticlesFromGit() {
-    const articleSelect = DOM.articleSelect();
+    const articleSelectContainer = document.querySelector(".article-selector");
     const articleContainer = DOM.articleContainer();
     const customTextInput = DOM.customTextInput();
     
-    if (!articleSelect) return;
+    if (!articleSelectContainer) return;
     
     try {
         const response = await fetch("./articles.json");
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
-        const articles = await response.json();
+        const rootData = await response.json();                   // 傳入樹狀資料 { options: [...] }
+        articleSelectContainer.innerHTML = "";                     // 重置選單容器
         
-        articleSelect.innerHTML = "";
-        
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.textContent = "-- 選擇一篇文章 --";
-        articleSelect.appendChild(defaultOption);
-        
-        articles.forEach(article => {
-            const option = document.createElement("option");
-            option.value = article.id;
-            option.textContent = article.title;
-            articleSelect.appendChild(option);
-        });
-        
-        articleSelect.addEventListener("change", (e) => {
-            const selectedId = e.target.value;
-            const selectedArticle = articles.find(a => a.id === selectedId);
-            
-            if (selectedArticle) {
+        function buildSelectMenu(currentBranch, level = 0) {      // 遞迴/動態創建選單的函式
+            const existingSelects = articleSelectContainer.querySelectorAll(`select[data-level]`);      // 清除當前層級之後的所有舊選單 (避免選單殘留)
+            existingSelects.forEach(sel => {
+                if (parseInt(sel.dataset.level, 10) >= level) {
+                    sel.remove();
+                }
+            });
+            if (!currentBranch || !currentBranch.options) {        // 如果該節點沒有子選項，代表已經到達最終文章節點
+                renderArticle(currentBranch);
+                return;
+            }
+            clearContent();                 // 清空舊文章顯示
+
+            const select = document.createElement("select");            // 創建新的下拉選單
+            select.dataset.level = level;
+
+            const defaultOption = document.createElement("option");
+            defaultOption.value = "";
+            defaultOption.textContent = `-- 請選擇第 ${level + 1} 層項目 --`;
+            select.appendChild(defaultOption);
+
+            currentBranch.options.forEach((item, index) => {
+                const option = document.createElement("option");
+                option.value = index;             // 使用陣列 index 作為 value
+                option.textContent = item.title || item.name || `選項 ${index + 1}`;
+                select.appendChild(option);
+            });
+
+            select.addEventListener("change", (e) => {       // 監聽選單變更
+                const selectedIndex = e.target.value;
+                if (selectedIndex === "") {
+                    buildSelectMenu(null, level + 1);          // 清除後續選單與內容
+                    return;
+                }
+                const nextNode = currentBranch.options[selectedIndex];
+                buildSelectMenu(nextNode, level + 1);      // 渲染下一層或顯示文章內容
+            });
+
+            articleSelectContainer.appendChild(select);
+        }
+        function renderArticle(articleNode) {            // 渲染文章內容
+            if (articleNode && (articleNode.content || articleNode.title)) {
                 if (articleContainer) {
                     articleContainer.innerHTML = `
-                        <h3>${selectedArticle.title}</h3>
-                        <p>${selectedArticle.content}</p>
+                        <h3>${articleNode.title || '無標題'}</h3>
+                        <p>${articleNode.content || ''}</p>
                     `;
                 }
                 if (customTextInput) {
-                    customTextInput.value = selectedArticle.content;
+                    customTextInput.value = articleNode.content || "";
                 }
             } else {
-                if (articleContainer) articleContainer.innerHTML = "";
-                if (customTextInput) customTextInput.value = "";
+                clearContent();
             }
-        });
-        
+        }
+        function clearContent() {               // 清空顯示區域
+            if (articleContainer) articleContainer.innerHTML = "";
+            if (customTextInput) customTextInput.value = "";
+        }
+
+        buildSelectMenu(rootData, 0);      // 開始繪製第一層
+
     } catch (error) {
         console.error("Failed to load articles.json:", error);
         if (articleContainer) {
@@ -864,6 +893,7 @@ function handleStartCustomText() {
         // articleModePanel.style.display = "none";
     }
 }
+
 
 async function handleAddAndDownload() {
     const titleInput = DOM.newTitle();
