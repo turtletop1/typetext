@@ -23,6 +23,9 @@ const CONFIG = {
     TRANSLATION_API: "https://api.mymemory.translated.net/get",
 };
 
+// Global state to store current selected article object
+let currentSelectedArticle = null;
+
 // =====================================================
 // 2️⃣ Game State Management
 // =====================================================
@@ -33,6 +36,7 @@ const GameState = {
     currentLevel: 0,
     startTime: null,
     gameFinished: false,
+    currentAnnotations: [], // Stores Chinese annotations for the current article
     
     currentAudio: null,
     currentLookupWord: "",
@@ -48,6 +52,7 @@ const GameState = {
         this.gameFinished = false;
         this.currentLookupWord = "";
         this.loadingState = "idle";
+        this.currentAnnotations = [];
     },
     
     setLoading(state) {
@@ -114,6 +119,7 @@ const DOM = {
     startCustomTextBtn: () => document.getElementById("start-custom-text-btn"),
     articleStatus: () => document.getElementById("article-status"),
     
+    categorySelect: () => document.getElementById("categorySelect"),
     articleSelect: () => document.getElementById("articleSelect"),
     articleContainer: () => document.getElementById("articleContainer"),
     
@@ -477,7 +483,9 @@ function showLevel() {
     const levelSelect = DOM.levelSelect();
     if (levelSelect) levelSelect.value = GameState.currentLevel.toString();
     
-    renderText(text);
+    // Pass current level text and Chinese annotations to renderText
+    const currentAnnotations = GameState.currentAnnotations || [];
+    renderText(text, currentAnnotations);
     
     const typingInput = DOM.typingInput();
     if (typingInput) {
@@ -496,22 +504,51 @@ function showLevel() {
     }, 100);
 }
 
-function renderText(text) {
+function renderText(text, annotations = []) {
     const textDisplay = DOM.textDisplay();
     if (!textDisplay) return;
     
     textDisplay.innerHTML = "";
-    
-    for (let i = 0; i < text.length; i++) {
-        const span = document.createElement("span");
-        span.className = "char";
-        span.textContent = text[i];
-        
-        if (i === 0) span.classList.add("current");
-        if (/^[A-Za-z]$/.test(text[i])) span.classList.add("clickable-word");
-        
-        textDisplay.appendChild(span);
-    }
+
+    // Split text keeping words, spaces, and punctuations
+    const tokens = text.split(/(\s+|[^\w\s]+)/);
+
+    let globalCharIndex = 0;
+
+    tokens.forEach(token => {
+        // Find matching Chinese annotation for the current word token
+        const matchedAnnotation = annotations.find(
+            a => a.word.toLowerCase() === token.toLowerCase()
+        );
+
+        // Wrap with <ruby> if annotation exists, otherwise use Fragment
+        const tokenContainer = matchedAnnotation ? document.createElement("ruby") : document.createDocumentFragment();
+
+        for (let j = 0; j < token.length; j++) {
+            const char = token[j];
+            const span = document.createElement("span");
+            span.className = "char";
+            span.textContent = char;
+            
+            span.dataset.index = globalCharIndex;
+
+            if (globalCharIndex === 0) span.classList.add("current");
+            if (/^[A-Za-z]$/.test(char)) span.classList.add("clickable-word");
+
+            tokenContainer.appendChild(span);
+            globalCharIndex++;
+        }
+
+        // Add <rt> for displaying Chinese annotation above word
+        if (matchedAnnotation) {
+            const rt = document.createElement("rt");
+            rt.className = "word-note";
+            rt.textContent = matchedAnnotation.note;
+            tokenContainer.appendChild(rt);
+        }
+
+        textDisplay.appendChild(tokenContainer);
+    });
 }
 
 function updateCharacterDisplay(typed, target) {
@@ -545,7 +582,7 @@ function updateStats() {
     const typed = typingInput.value;
     const target = GameState.getCurrentText();
     
-    let correct = 0;        // 計算打對嘅字符數量
+    let correct = 0;
     for (let i = 0; i < typed.length && i < target.length; i++) {
         if (typed[i] === target[i]) correct++;
     }
@@ -554,7 +591,7 @@ function updateStats() {
     const accuracyDisplay = DOM.accuracyDisplay();
     if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
     
-    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;    // 顯示總字符完成進度（ UI 面板上依然顯示輸入進度）
+    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;
     const progressDisplay = DOM.progressDisplay();
     if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(0)}%`;
     
@@ -573,14 +610,10 @@ function updateStats() {
     }
     
     if (container && image) {
-       
-        const maxX = container.offsetWidth - image.offsetWidth;      // 計算圖片可以移動嘅最大 X 坐標（容器寬度 - 圖片寬度)
-        
-        const correctRatio = target.length > 0 ? Math.min(correct / target.length, 1) : 0;  // 基於正確字數嘅比例（0到1之間）
-        
-        const currentX = maxX * correctRatio;   // 當前位置 = 最大移動距離*正確字數比例
-        
-        image.style.left = `${currentX}px`;     // 更新圖片 CSS 位置
+        const maxX = container.offsetWidth - image.offsetWidth;
+        const correctRatio = target.length > 0 ? Math.min(correct / target.length, 1) : 0;
+        const currentX = maxX * correctRatio;
+        image.style.left = `${currentX}px`;
     }
 }
 
@@ -784,37 +817,75 @@ function playCurrentAudio() {
 // =====================================================
 
 async function loadArticlesFromGit() {
+    const categorySelect = DOM.categorySelect();
     const articleSelect = DOM.articleSelect();
     const articleContainer = DOM.articleContainer();
     const customTextInput = DOM.customTextInput();
     
-    if (!articleSelect) return;
+    if (!categorySelect || !articleSelect) return;
     
     try {
         const response = await fetch("./articles.json");
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
-        const articles = await response.json();
+        const categories = await response.json();
         
-        articleSelect.innerHTML = "";
+        // 1. Initialize category options
+        categorySelect.innerHTML = '<option value="">-- 選擇分類 --</option>';
+        articleSelect.innerHTML = '<option value="">-- 請先選擇分類 --</option>';
+        articleSelect.disabled = true;
         
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.textContent = "-- 選擇一篇文章 --";
-        articleSelect.appendChild(defaultOption);
-        
-        articles.forEach(article => {
+        categories.forEach((cat, index) => {
             const option = document.createElement("option");
-            option.value = article.id;
-            option.textContent = article.title;
-            articleSelect.appendChild(option);
+            option.value = index;
+            option.textContent = cat.category;
+            categorySelect.appendChild(option);
         });
         
+        // 2. On Category Change: populate article options
+        categorySelect.addEventListener("change", (e) => {
+            const catIndex = e.target.value;
+            
+            articleSelect.innerHTML = '<option value="">-- 選擇一篇文章 --</option>';
+            if (customTextInput) customTextInput.value = "";
+            if (articleContainer) articleContainer.innerHTML = "";
+            currentSelectedArticle = null;
+            
+            if (catIndex === "") {
+                articleSelect.disabled = true;
+                return;
+            }
+            
+            const selectedCategory = categories[catIndex];
+            if (selectedCategory && selectedCategory.articles) {
+                selectedCategory.articles.forEach(article => {
+                    const option = document.createElement("option");
+                    option.value = article.id;
+                    option.textContent = article.title;
+                    articleSelect.appendChild(option);
+                });
+                articleSelect.disabled = false;
+            }
+        });
+
+        // 3. On Article Change: load article content and store metadata
         articleSelect.addEventListener("change", (e) => {
+            const selectedCatIndex = categorySelect.value;
             const selectedId = e.target.value;
-            const selectedArticle = articles.find(a => a.id === selectedId);
+            
+            if (selectedCatIndex === "" || !selectedId) {
+                if (articleContainer) articleContainer.innerHTML = "";
+                if (customTextInput) customTextInput.value = "";
+                currentSelectedArticle = null;
+                return;
+            }
+
+            const currentArticles = categories[selectedCatIndex].articles || [];
+            const selectedArticle = currentArticles.find(a => a.id === selectedId);
             
             if (selectedArticle) {
+                currentSelectedArticle = selectedArticle;
+                
                 if (articleContainer) {
                     articleContainer.innerHTML = `
                         <h3>${selectedArticle.title}</h3>
@@ -824,16 +895,13 @@ async function loadArticlesFromGit() {
                 if (customTextInput) {
                     customTextInput.value = selectedArticle.content;
                 }
-            } else {
-                if (articleContainer) articleContainer.innerHTML = "";
-                if (customTextInput) customTextInput.value = "";
             }
         });
         
     } catch (error) {
         console.error("Failed to load articles.json:", error);
         if (articleContainer) {
-            articleContainer.innerHTML = "<p>⚠️ 無法載入文章選單，請檢查 articles.json 檔案路徑。</p>";
+            articleContainer.innerHTML = "<p>⚠️ 無法載入 articles.json 檔案路徑。</p>";
         }
     }
 }
@@ -847,6 +915,14 @@ function handleStartCustomText() {
     
     GameState.reset();
     GameState.pdfText = input;
+
+    // Attach Chinese annotations to GameState if available
+    if (currentSelectedArticle && currentSelectedArticle.annotations) {
+        GameState.currentAnnotations = currentSelectedArticle.annotations;
+    } else {
+        GameState.currentAnnotations = [];
+    }
+
     GameState.createLevels(input, CONFIG.CHARS_PER_LEVEL);
     
     updateLevelSelect();
@@ -856,12 +932,9 @@ function handleStartCustomText() {
     showLevel();
     setStatus(`✅ 已載入自訂文章！共 ${GameState.getTotalLevels()} 個關卡`);
 
-    // Hide the entire article mode section
     const articleModePanel = DOM.articleModePanel();
     if (articleModePanel) {
         articleModePanel.classList.add("hidden"); 
-        // Or use inline style if you don't use CSS classes:
-        // articleModePanel.style.display = "none";
     }
 }
 
