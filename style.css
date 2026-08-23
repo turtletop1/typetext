@@ -574,6 +574,24 @@ button {
     #restart-btn {
         grid-column: span 2; /* 重新開始按鈕在手機端拉寬佔滿整行 */
     }
+
+/* 讓帶有 Ruby 註解的文字列高稍微放寬，避免擠壓 */
+.text-display {
+  line-height: 2.2;
 }
+
+/* Ruby 註解小字樣式 */
+ruby {
+  ruby-position: over; /* 顯示在單字上方 */
+}
+
+rt.word-note {
+  font-size: 0.6em;
+  color: #007bff; /* 註解顏色 */
+  font-weight: normal;
+  user-select: none; /* 防止被選取或影響打字 */
+  pointer-events: none;
+}
+
 
 
