@@ -287,7 +287,7 @@ button {
 /* TEXT */
 
 .text-display {
-    padding: 20px;
+    padding: 15px;
     background: #f8f9fa;
     border: 1px solid #e5e8eb;
     border-radius: 10px;
@@ -295,11 +295,22 @@ button {
     max-height: 380px;
     overflow-y: auto;
     font-size: 20px;
-    line-height: 1.7;
-    white-space: pre-wrap;
+    white-space: pre-wrap !important;
+    line-height: 1;
     word-break: break-word;
 }
 
+.text-display ruby {
+    display: inline-ruby;
+}
+
+rt.word-note {
+    font-size: 0.55em;
+    color: #0284c7; /* Subtle blue tint */
+    font-weight: 500;
+    user-select: none;
+    pointer-events: none;
+}
 
 .char {
     transition: 0.05s;
