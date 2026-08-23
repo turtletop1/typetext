@@ -1,30 +1,69 @@
-{
-  "options": [
-    {
-      "name": "分類 A：前端開發",
-      "options": [
-        {
-          "title": "JavaScript 基礎",
-          "content": "這是 JavaScript 基礎教學文章的內容..."
-        },
-        {
-          "title": "CSS Flexbox 指南",
-          "content": "這是 Flexbox 版面設定文章..."
-        }
-      ]
-    },
-    {
-      "name": "英文詞語",
-      "options": [
-        {
-          "title": "be immersed in",
-          "content": "be immersed in \nThe best way to learn a language is to be immersed in the local culture. \n He was so immersed in his book that he didn't hear the doorbell ring. \n "
-        },   
-        {
-          "title": "endeavour",
-          "content": "However, there are many challenges and opportunities for the Community as it endeavours to move towards integration"
-        }
-      ]
-    }
-  ]
-}
+
+[
+  {
+    "category": "基礎科技",
+    "articles": [
+      {
+        "id": "art_101",
+        "title": "Artificial Intelligence Basics",
+        "charsPerLevel": 150,
+        "delimiter": "[NEXT]",               
+        "content": "Artificial Intelligence is very powerful.",   
+        "annotations": [
+          { "word": "Artificial", "note": "人造的" },
+          { "word": "Intelligence", "note": "智慧" },
+          { "word": "powerful", "note": "強大的" }
+        ]
+      },
+      {
+        "id": "art_102",
+        "title": "How Web Browsers Work",
+        "content": "A web browser takes you anywhere on the internet..."
+      }
+    ]
+  },
+
+  
+  {
+    "category": "生物",
+    "articles": [
+      {
+        "id": "art_201",
+        "title": "1 Introducing biology",
+        "content": ["Anatomy - the structure of organisms",
+                    "Cytology - the basic unit of organisms — cells,",
+                    "Ecology - interactions between organisms and their environment,",
+                    "Genetics - the ways in which characteristics of organisms are passed on from one generation to the next, ",
+                    "Genetics - the basic unit of organisms — cells"
+                  ]
+      },
+       {
+        "id": "art_202",
+        "title": "2 The cell as the basic unit of life",
+        "delimiter": "[NEXT]",
+        "content": [
+                    "Nitrate,Magnesium,Calcium,Iron ",
+                    "Biomolecules","\n",
+                    "Carbohydrates - Glucose, Starch, Cellulose\n",
+                    "Lipids -Triglycerides, Phospholipids \n",
+                    "Proteins - Structural proteins , Enzymes , Antibodies \n",
+                    "Nucleic acids - Deoxyribonucleic acid , Ribonucleic acid",
+                    "[NEXT]",
+                    "Light microscope , Transmission , Electron microscope , Scanning electron microscope"
+                  ],
+          "annotations": [
+            { "word": "Nitrate", "note": "硝酸鹽" },{ "word": "Magnesium", "note": "鎂" },
+            { "word": "Calcium", "note": "鈣" },{ "word": "Iron", "note": "鐵" },
+            { "word": "Biomolecules", "note": "生物分子" },{ "word": "Carbohydrates", "note": "碳水化合物" },
+            { "word": "Glucose", "note": "葡萄糖" },{ "word": "Starch", "note": "澱粉" },{ "word": "Cellulose", "note": "纖維素" },
+            { "word": "Lipids", "note": "脂質" },{ "word": "Triglycerides", "note": "甘油三酯" },{ "word": "Phospholipids", "note": "磷脂" },
+            { "word": "Proteins", "note": "蛋白質" },{ "word": "Structural proteins ", "note": "結構蛋白質" },{ "word": "Enzymes", "note": "酶" },{ "word": "Antibodies", "note": "抗體" },
+            { "word": "Nucleic acids", "note": "核酸" },{ "word": "Deoxyribonucleic acid", "note": "DNA脫氧核糖核酸" },{ "word": "Ribonucleic acid", "note": "RNA 核糖" },
+            { "word": "Light microscope", "note": "光學顯微鏡" },{ "word": "Transmission", "note": "透射電子顯微鏡" },
+            { "word": "Electron microscope", "note": "電子顯微鏡" },{ "word": "Scanning electron microscope", "note": "掃描電子顯微鏡" },
+            { "word": "Scanning electron microscope", "note": "掃描電子顯微鏡" }
+          ]
+      }
+    ]
+  }
+]
