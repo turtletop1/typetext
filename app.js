@@ -794,23 +794,32 @@ async function loadArticlesFromGit() {
         const response = await fetch("./articles.json");
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
-        const rootData = await response.json();                   // 傳入樹狀資料 { options: [...] }
-        articleSelectContainer.innerHTML = "";                     // 重置選單容器
+        const rootData = await response.json(); // 傳入樹狀資料 { options: [...] }
         
-        function buildSelectMenu(currentBranch, level = 0) {      // 遞迴/動態創建選單的函式
-            const existingSelects = articleSelectContainer.querySelectorAll(`select[data-level]`);      // 清除當前層級之後的所有舊選單 (避免選單殘留)
+        // 重置選單容器
+        articleSelectContainer.innerHTML = "";
+        
+        // 遞迴/動態創建選單的函式
+        function buildSelectMenu(currentBranch, level = 0) {
+            // 清除當前層級之後的所有舊選單 (避免選單殘留)
+            const existingSelects = articleSelectContainer.querySelectorAll(`select[data-level]`);
             existingSelects.forEach(sel => {
                 if (parseInt(sel.dataset.level, 10) >= level) {
                     sel.remove();
                 }
             });
-            if (!currentBranch || !currentBranch.options) {        // 如果該節點沒有子選項，代表已經到達最終文章節點
+
+            // 如果該節點沒有子選項，代表已經到達最終文章節點
+            if (!currentBranch || !currentBranch.options) {
                 renderArticle(currentBranch);
                 return;
             }
-            clearContent();                 // 清空舊文章顯示
 
-            const select = document.createElement("select");            // 創建新的下拉選單
+            // 清空舊文章顯示
+            clearContent();
+
+            // 創建新的下拉選單
+            const select = document.createElement("select");
             select.dataset.level = level;
 
             const defaultOption = document.createElement("option");
@@ -820,24 +829,30 @@ async function loadArticlesFromGit() {
 
             currentBranch.options.forEach((item, index) => {
                 const option = document.createElement("option");
-                option.value = index;             // 使用陣列 index 作為 value
+                option.value = index; // 使用陣列 index 作為 value
                 option.textContent = item.title || item.name || `選項 ${index + 1}`;
                 select.appendChild(option);
             });
 
-            select.addEventListener("change", (e) => {       // 監聽選單變更
+            // 監聽選單變更
+            select.addEventListener("change", (e) => {
                 const selectedIndex = e.target.value;
                 if (selectedIndex === "") {
-                    buildSelectMenu(null, level + 1);          // 清除後續選單與內容
+                    // 清除後續選單與內容
+                    buildSelectMenu(null, level + 1);
                     return;
                 }
+                
                 const nextNode = currentBranch.options[selectedIndex];
-                buildSelectMenu(nextNode, level + 1);      // 渲染下一層或顯示文章內容
+                // 渲染下一層或顯示文章內容
+                buildSelectMenu(nextNode, level + 1);
             });
 
             articleSelectContainer.appendChild(select);
         }
-        function renderArticle(articleNode) {            // 渲染文章內容
+
+        // 渲染文章內容
+        function renderArticle(articleNode) {
             if (articleNode && (articleNode.content || articleNode.title)) {
                 if (articleContainer) {
                     articleContainer.innerHTML = `
@@ -852,12 +867,15 @@ async function loadArticlesFromGit() {
                 clearContent();
             }
         }
-        function clearContent() {               // 清空顯示區域
+
+        // 清空顯示區域
+        function clearContent() {
             if (articleContainer) articleContainer.innerHTML = "";
             if (customTextInput) customTextInput.value = "";
         }
 
-        buildSelectMenu(rootData, 0);      // 開始繪製第一層
+        // 開始繪製第一層
+        buildSelectMenu(rootData, 0);
 
     } catch (error) {
         console.error("Failed to load articles.json:", error);
@@ -866,6 +884,7 @@ async function loadArticlesFromGit() {
         }
     }
 }
+
 
 function handleStartCustomText() {
     const input = DOM.customTextInput()?.value.trim();
