@@ -783,49 +783,6 @@ function playCurrentAudio() {
 // 1️⃣1️⃣ Article Loader & Custom Text Management
 // =====================================================
 
-// 輔助函式：在樹狀 JSON 中遞歸搜尋指定 id 的文章/目標
-function findArticleInTree(nodes, targetId) {
-    if (!Array.isArray(nodes)) return null;
-
-    for (const node of nodes) {
-        // 1. 如果當前節點 match ID
-        if (node.id === targetId) {
-            return node;
-        }
-        // 2. 如果當前節點有 options (分支)，繼續往下找
-        if (node.options && Array.isArray(node.options)) {
-            const found = findArticleInTree(node.options, targetId);
-            if (found) return found;
-        }
-    }
-    return null;
-}
-
-// 輔助函式：遞歸渲染下拉選單（用縮排標示層級）
-function renderTreeOptions(selectElement, nodes, depth = 0) {
-    nodes.forEach(node => {
-        const option = document.createElement("option");
-        
-        // 使用空格縮排來呈現樹狀結構的視覺效果
-        const indent = " ".repeat(depth); 
-        option.textContent = depth > 0 ? `${indent}└ ${node.title || node.name}` : (node.title || node.name);
-
-        if (node.id) {
-            option.value = node.id;
-            selectElement.appendChild(option);
-        } else {
-            // 如果只有分支標題但沒有 id，設為不可選取（作為 Group 標籤）
-            option.disabled = true;
-            selectElement.appendChild(option);
-        }
-
-        // 如果有子分支 (options)，繼續遞歸渲染
-        if (node.options && Array.isArray(node.options)) {
-            renderTreeOptions(selectElement, node.options, depth + 1);
-        }
-    });
-}
-
 async function loadArticlesFromGit() {
     const articleSelect = DOM.articleSelect();
     const articleContainer = DOM.articleContainer();
@@ -837,7 +794,7 @@ async function loadArticlesFromGit() {
         const response = await fetch("./articles.json");
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
-        const articlesTree = await response.json();
+        const articles = await response.json();
         
         articleSelect.innerHTML = "";
         
@@ -846,28 +803,26 @@ async function loadArticlesFromGit() {
         defaultOption.textContent = "-- 選擇一篇文章 --";
         articleSelect.appendChild(defaultOption);
         
-        // 渲染樹狀選項到 select
-        renderTreeOptions(articleSelect, articlesTree);
+        articles.forEach(article => {
+            const option = document.createElement("option");
+            option.value = article.id;
+            option.textContent = article.title;
+            articleSelect.appendChild(option);
+        });
         
-        // 監聽選擇變更
         articleSelect.addEventListener("change", (e) => {
             const selectedId = e.target.value;
-            
-            // 使用遞歸搜尋在 JSON 樹中查找對應的文章
-            const selectedArticle = findArticleInTree(articlesTree, selectedId);
+            const selectedArticle = articles.find(a => a.id === selectedId);
             
             if (selectedArticle) {
-                // 處理找到的內容 (支援 content 或 link)
-                const articleContent = selectedArticle.content || selectedArticle.link || "";
-                
                 if (articleContainer) {
                     articleContainer.innerHTML = `
-                        <h3>${selectedArticle.title || selectedArticle.name}</h3>
-                        <p>${articleContent}</p>
+                        <h3>${selectedArticle.title}</h3>
+                        <p>${selectedArticle.content}</p>
                     `;
                 }
                 if (customTextInput) {
-                    customTextInput.value = articleContent;
+                    customTextInput.value = selectedArticle.content;
                 }
             } else {
                 if (articleContainer) articleContainer.innerHTML = "";
@@ -882,6 +837,9 @@ async function loadArticlesFromGit() {
         }
     }
 }
+
+
+
 function handleStartCustomText() {
     const input = DOM.customTextInput()?.value.trim();
     if (!input || input.length < CONFIG.MIN_CUSTOM_TEXT_LENGTH) {
