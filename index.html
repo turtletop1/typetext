@@ -77,36 +77,44 @@
         </p>
     </section>
     <!-- =================================================
-         ARTICLE MODE
+        ARTICLE MODE
     ================================================== -->
 
-   <section id="article-mode" class="mode-panel hidden">
+    <section id="article-mode" class="mode-panel hidden">
 
-        <label for="articleSelect">Choose an article:</label>
-           
-        <select class="articleSelect">
-            <option value="">-- 請選擇 --</option>
-        </select>
-        <select class="articleSelect2">
-            <option value="">-- 請選擇 --</option>
-        </select>
-           
-      </div>
-       <button id="toggleFormBtn" style="padding: 8px 16px; margin-bottom: 10px; cursor: pointer;">
-  ➕ 新增文章
-</button>
-    <div id="addArticleContainer" class="add-article-container" style="display: none; border: 1px solid #ccc; padding: 15px; margin-top: 10px;">
-      <h3>➕ 新增文章並匯出 JSON</h3>
-      
-      <label for="newTitle">文章標題：</label><br>
-      <input type="text" id="newTitle" placeholder="例如: Exercise Benefits" style="width: 100%; margin-bottom: 10px;"><br>
-    
-      <label for="newContent">文章內容：</label><br>
-      <textarea id="newContent" rows="5" placeholder="輸入文章內文..." style="width: 100%; margin-bottom: 10px;"></textarea><br>
-    
-      <button id="addAndDownloadBtn" style="padding: 8px 16px; cursor: pointer;">
-        📥 新增並下載最新 articles.json
-      </button>
+        <div class="article-selector" style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <!-- 第一層：分類選單 -->
+            <div>
+                <label for="categorySelect">選擇分類：</label>
+                <select id="categorySelect">
+                <option value="">-- 選擇分類 --</option>
+                </select>
+            </div>
+
+            <!-- 第二層：文章選單 -->
+            <div>
+                <label for="articleSelect">選擇文章：</label>
+                <select id="articleSelect" disabled>
+                <option value="">-- 請先選擇分類 --</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="toggleFormBtn" style="padding: 8px 16px; margin-bottom: 10px; cursor: pointer;">
+            新增文章
+        </button>
+        <div id="addArticleContainer" class="add-article-container" style="display: none; border: 1px solid #ccc; padding: 15px; margin-top: 10px;">
+            <h3>➕ 新增文章並匯出 JSON</h3>
+
+            <label for="newTitle">文章標題：</label><br>
+            <input type="text" id="newTitle" placeholder="例如: Exercise Benefits" style="width: 100%; margin-bottom: 10px;"><br>
+        
+            <label for="newContent">文章內容：</label><br>
+            <textarea id="newContent" rows="5" placeholder="輸入文章內文..." style="width: 100%; margin-bottom: 10px;"></textarea><br>
+        
+            <button id="addAndDownloadBtn" style="padding: 8px 16px; cursor: pointer;">
+                📥 新增並下載最新 articles.json
+            </button>
     </div>
     
 <!-- 顯示文章內容的容器 -->
@@ -118,7 +126,7 @@
                 id="custom-text-input" 
                 rows="6" 
                 placeholder="在此貼上任何英文文章或段落..."
-                style="width: 100%; white-space=:pre-wrap; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; resize: vertical;"
+                style="width: 100%; white-space:pre-wrap; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; resize: vertical;"
             ></textarea>
 
             <button id="start-custom-text-btn" class="primary-btn" style="align-self: flex-end;">🚀 開始打字練習</button>
@@ -129,7 +137,6 @@
         </p>
     </section>
     
-
     <!-- =================================================
          GAME
     ================================================== -->
@@ -147,7 +154,7 @@
     </div>
 
 
-      <div class="turtle-track" id="turtle-track">
+    <div class="turtle-track" id="turtle-track">
         <img class="turtle-display" id="turtle-display" src="img.svg" alt="Interactive Logo" width="50">
         <img class="flag" src="flag.png" alt="Interactive Logo" width="50">
     </div>
@@ -162,7 +169,7 @@
     </div>
 
     <!-- 4. 文字顯示區 -->
-    <div id="text-display" style="white-space:pre-wrap;" class="text-display"></div>
+    <div id="text-display" class="text-display"></div>
 
     <!-- 5. 字典彈窗 -->
     <div id="dictionary-popup" class="dictionary-popup hidden">
@@ -202,7 +209,7 @@
 
 <script src="app.js">
 </script>
-  
+
 
 </body>
 
