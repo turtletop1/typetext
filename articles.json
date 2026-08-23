@@ -42,14 +42,19 @@
         "title": "2 The cell as the basic unit of life",
         "delimiter": "[NEXT]",
         "content": [
-                    "Nitrate,Magnesium,Calcium,Iron ",
-                    "Biomolecules","\n",
+                    "Nitrate,Magnesium,Calcium,Iron\n",
+                    "Biomolecules",
                     "Carbohydrates - Glucose, Starch, Cellulose\n",
                     "Lipids -Triglycerides, Phospholipids \n",
                     "Proteins - Structural proteins , Enzymes , Antibodies \n",
                     "Nucleic acids - Deoxyribonucleic acid , Ribonucleic acid",
                     "[NEXT]",
-                    "Light microscope , Transmission , Electron microscope , Scanning electron microscope"
+                    "Light microscope , Transmission , Electron microscope , Scanning electron microscope",
+                    "[NEXT]",
+                    "animal cells - cell membrane-(Differentially permeable) ,cell cytoplasm ,  mitochondrion , nucleus ,rough endoplasmic reticulum , ribosome , vacuole , smooth endoplasmic reticulum \n",
+                    "plant cells - cell wall ,chloroplast",
+                    "[NEXT]",
+                    "Prokaryotic , eukaryotic cells ,genetic material"
                   ],
           "annotations": [
             { "word": "Nitrate", "note": "硝酸鹽" },{ "word": "Magnesium", "note": "鎂" },
@@ -61,7 +66,12 @@
             { "word": "Nucleic acids", "note": "核酸" },{ "word": "Deoxyribonucleic acid", "note": "DNA脫氧核糖核酸" },{ "word": "Ribonucleic acid", "note": "RNA 核糖" },
             { "word": "Light microscope", "note": "光學顯微鏡" },{ "word": "Transmission", "note": "透射電子顯微鏡" },
             { "word": "Electron microscope", "note": "電子顯微鏡" },{ "word": "Scanning electron microscope", "note": "掃描電子顯微鏡" },
-            { "word": "Scanning electron microscope", "note": "掃描電子顯微鏡" }
+            { "word": "Scanning electron microscope", "note": "掃描電子顯微鏡" },
+            {"word":"cell membrane","note":"細胞膜"},{"word":"Differentially permeable","note":"差異透性的"},{"word":"cell cytoplasm","note":"細胞質"},{"word":"mitochondrion","note":"線粒體"},{ "word":"nucleus","note":"細胞核"},{ "word":"rough endoplasmic reticulum","note":"粗糙內質網"},{ "word":"ribosome","note":"核糖體"},{ "word":"vacuole","note":"液泡"},{ "word":"smooth endoplasmic reticulum","note":"光滑內質網"},
+            { "word":"cell wall","note":"細胞壁"},{ "word":"chloroplast","note":"葉綠體"},
+            { "word":"Prokaryotic","note":"原核細胞"},{ "word":"eukaryotic cells","note":"真核細胞"},{ "word":"genetic material","note":"(DNA)遺傳物質"}
+
+            
           ]
       }
     ]
