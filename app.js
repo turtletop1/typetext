@@ -7,20 +7,20 @@
 // =====================================================
 
 const CONFIG = {
-    PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
-    PDF_LINE_HEIGHT_THRESHOLD: 5,
+    PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",   // 設定 PDF.js 所需的 Web Worker 檔案來源
+    PDF_LINE_HEIGHT_THRESHOLD: 5,      // 設定 PDF 文字行的高度判斷閾值
     
-    CHARS_PER_LEVEL: 500,
-    MIN_TEXT_LENGTH: 20,
-    MIN_CUSTOM_TEXT_LENGTH: 5,
+    CHARS_PER_LEVEL: 500,               // 設定每層級/關卡包含字數上限，用於閱讀進度計算或內容分段
+    MIN_TEXT_LENGTH: 20,               // 設定有效文字的最少字數限制
+    MIN_CUSTOM_TEXT_LENGTH: 5,         // 設定自訂文字的最少字數限制
     
-    SPEECH_RATE: 0.9,
-    SPEECH_LANG: "en-US",
+    SPEECH_RATE: 0.9,                  // 設定語音合成TTS朗讀語速
+    SPEECH_LANG: "en-US",               // 設定語音發音與文字朗讀的預設語言
     
-    TRANSLATION_CACHE_SIZE: 100,
+    TRANSLATION_CACHE_SIZE: 100,         // 設定翻譯結果快取的容量上限
     
-    DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",
-    TRANSLATION_API: "https://api.mymemory.translated.net/get",
+    DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",   // 設定英文字典API網址，查詢單字定義、發音與詞性
+    TRANSLATION_API: "https://api.mymemory.translated.net/get",         // 設定MyMemory免費翻譯服務API網址
 };
 
 // Global state to store current selected article object
@@ -31,17 +31,17 @@ let currentSelectedArticle = null;
 // =====================================================
 
 const GameState = {
-    pdfText: "",
-    levels: [],
-    currentLevel: 0,
-    startTime: null,
-    gameFinished: false,
-    currentAnnotations: [], // Stores Chinese annotations for the current article
+    pdfText: "",            // 儲存從 PDF 檔案中提取出來的完整純文字內容
+    levels: [],             // 儲存將文章分割後關卡或章節陣列（如依據字數分成各Level資料）
+    currentLevel: 0,        // 紀錄 目前所在 或 正閱讀關卡index值
+    startTime: null,         // 紀錄活動,閱讀開始時間戳記（null代表尚未開始），可用計算總耗時
+    gameFinished: false,     // 標記遊戲,閱讀測驗 是否已完成 
+    currentAnnotations: [],   // 儲存當前文章所對應 中文註解/翻譯標註清單
     
-    currentAudio: null,
-    currentLookupWord: "",
+    currentAudio: null,         // 儲存當前正在播放的 Audio 物件實例
+    currentLookupWord: "",      // 儲存使用者目前正在點擊或查詢的單字字串
     
-    loadingState: "idle", // "idle" | "loading" | "loaded"
+    loadingState: "idle", // "idle" | "loading" | "loaded"      // 紀錄系統當前資料載入狀態（idle=閒置、loading=載入中、loaded=載入完成)
     loadedPdfDoc: null,
     
     reset() {
@@ -135,28 +135,28 @@ const DOM = {
 // =====================================================
 
 const TranslationCache = (() => {
-    const cache = new Map();
-    const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;
+    const cache = new Map();                  // 建立一個私有的 Map 物件，用來儲存「原文 (Key)」與「翻譯結果 (Value)
+    const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;      // 讀取全域設定檔中的快取數量上限（例如：100 筆）
     
-    return {
-        get(text) {
-            return cache.get(text);
+    return {                           // 回傳一個包含多個操作方法的介面物件
+        get(text) {                     // 根據傳入的原文 text 取出已快取的翻譯結果
+            return cache.get(text);      
         },
-        set(text, translation) {
-            if (cache.size >= MAX_SIZE) {
-                const firstKey = cache.keys().next().value;
-                cache.delete(firstKey);
+        set(text, translation) {                                 // 寫入新的翻譯結果
+            if (cache.size >= MAX_SIZE) {                        // 檢查快取是否已達到上限值
+                const firstKey = cache.keys().next().value;      // 取出 Map 中最早被寫入的第一筆 key
+                cache.delete(firstKey);                        // 刪除最早寫入的那筆資料，以騰出空間給新資料
             }
-            cache.set(text, translation);
+            cache.set(text, translation);               // 將新的原文與翻譯結果存入快取中
         },
-        has(text) {
-            return cache.has(text);
+        has(text) {                       
+            return cache.has(text);          // 檢查指定的原文 text 是否已經存在於快取中 回傳布林值 (true/false)
         },
         clear() {
-            cache.clear();
+            cache.clear();               // 清空整個快取，刪除所有儲存的翻譯資料
         },
         size() {
-            return cache.size;
+            return cache.size;         // 取得當前快取中已儲存資料總筆數
         },
     };
 })();
@@ -165,19 +165,19 @@ const TranslationCache = (() => {
 // 5️⃣ Audio Management System
 // =====================================================
 
-const AudioManager = {
-    currentAudio: null,
+const AudioManager = {                  // 定義一個名為 AudioManager 的物件
+    currentAudio: null,                  // 儲存當前正在使用或準備播放的音訊物件實例
     
-    setAudio(audioUrl, fallbackWord) {
-        this.stopCurrent();
+    setAudio(audioUrl, fallbackWord) {         // 設定新的音訊來源，需傳入音訊檔網址 (audioUrl) 與備用單字 (fallbackWord
+        this.stopCurrent();                     // 在建立新音訊之前，先停止並清除前一次正在播放的語音
         
-        const audioObj = new Audio(audioUrl);
-        this.currentAudio = {
-            element: audioObj,
-            play: () => {
-                audioObj.play().catch(() => {
-                    console.warn("Audio play failed, falling back to Web Speech API");
-                    this.speak(fallbackWord);
+        const audioObj = new Audio(audioUrl);            // 建立原生 HTML5 Audio 物件實例並載入音訊網址
+        this.currentAudio = {                            // 將實例與播放邏輯封裝並賦值給 currentAudio 屬性
+            element: audioObj,                           // 儲存原始的 Audio 元素 reference
+            play: () => {                                // 定義播放方法
+                audioObj.play().catch(() => {            // 嘗試播放音訊檔案
+                    console.warn("Audio play failed, falling back to Web Speech API");      // 若音訊播放失敗
+                    this.speak(fallbackWord);                          // 自動呼叫內建的語音合成（Web Speech API）來朗讀傳入的備用單字
                 });
             }
         };
@@ -270,30 +270,28 @@ function initializeEventListeners() {
     ]);
 }
 
-function initializeWordClickDelegation() {
-    const textDisplay = DOM.textDisplay();
-    if (!textDisplay) return;
+function initializeWordClickDelegation() {   // 初始化單字點擊事件的委派（Event Delegation）監聽器
+    const textDisplay = DOM.textDisplay();   // 取得用於顯示文章內容的 DOM 元素
+    if (!textDisplay) return;               // 若找不到該顯示元素，則直接結束函式以防止報錯
     
-    textDisplay.addEventListener("click", (e) => {
-        if (!e.target.classList.contains("char")) return;
+    textDisplay.addEventListener("click", (e) => {            // 在父層容器上記錄點擊事件（採用事件委派，不必為每個字母個別綁定事件）
+        if (!e.target.classList.contains("char")) return;      // 檢查被點擊的目標元素是否帶有 "char" 類別，若不是則忽視該點擊
         
-        const clickedChar = e.target;
-        let word = "";
-        let current = clickedChar;
+        const clickedChar = e.target;               // 記錄當前被點擊的字母 HTML 元素
+        let word = "";                              // 初始化用於組合完整單字的字串變數
+        let current = clickedChar;                  // 建立指標變數，預設指向點擊的字母元素
         
-        while (current && /^[A-Za-z]$/.test(current.textContent)) {
-            word = current.textContent + word;
-            current = current.previousElementSibling;
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {   // 【第一階段：向左尋找】從被點擊字母開始，往前（左）檢查前一個兄弟節點是否為英文字母
+            word = current.textContent + word;                        // 將字母串接在單字前方（因為是倒回去找）
+            current = current.previousElementSibling;                  // 指標移至前一個 HTML 兄弟元素
         }
-        
-        current = clickedChar;
-        while (current && /^[A-Za-z]$/.test(current.textContent)) {
-            if (current !== clickedChar) word += current.textContent;
-            current = current.nextElementSibling;
+        current = clickedChar;                                             // 重置指標回到被點擊的字母元素
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {         //【第二階段：向右尋找】從被點擊字母開始，往後（右）檢查後一個兄弟節點是否為英文
+            if (current !== clickedChar) word += current.textContent;      // 避免重複計算被點擊的字母（第一階段已計入），將後續字母串接在單字後方
+            current = current.nextElementSibling;                  // 指標移至後一個 HTML 兄弟元素
         }
-        
         if (word) {
-            lookupWord(word.toLowerCase().trim());
+            lookupWord(word.toLowerCase().trim());         // 將單字轉為小寫並去除首尾空白，然後傳給查單字函式 lookupWord
         }
     });
 }
@@ -310,7 +308,6 @@ function initializeFormToggle() {
         toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";
     });
 }
-
 // =====================================================
 // 8️⃣ PDF Processing
 // =====================================================
@@ -349,11 +346,9 @@ function extractPageText(textContent) {
         } else {
             result += " ";
         }
-        
         result += text;
         previousY = currentY;
     }
-    
     return result;
 }
 
@@ -439,24 +434,23 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
 // 9️⃣ Game Core Logic
 // =====================================================
 
-function createLevels(text, charsPerLevel, delimiter = null) {
+function createLevels(text, charsPerLevel, delimiter = null) {      // 定義切分關卡的函式，接收文本 (text)、每關目標字數 (charsPerLevel)，以及可選切分分隔符號
 
-    if (delimiter && text.includes(delimiter)) {        // 如果有指定特定斷點標籤 (例如 [NEXT] 或 \n\n)
+    if (delimiter && text.includes(delimiter)) {        // 若有傳入 delimiter 且文本中包含該分隔符號 (例如 "[NEXT]" 或 "\n\n")
         return text
-            .split(delimiter)
-            .map(chunk => chunk.trim())
-            .filter(chunk => chunk.length > 0);
+            .split(delimiter)                           // 依照分隔符號將文本切分成陣列
+            .map(chunk => chunk.trim())               // 切除每一段落前後的空白字元
+            .filter(chunk => chunk.length > 0);       // 過濾掉空字串，確保只保留有內容的段落 
     }
-    //  否則執行原本的字數/句號拆分演算法
-    const result = [];
-    const cleanText = text.replace(/[ \t]+/g, " ").trim();
-    let start = 0;
+    const result = [];                                             // 儲存最終切分出來的所有關卡文本
+    const cleanText = text.replace(/[ \t]+/g, " ").trim();         // 將多個連續的空格或 Tab 縮排整理成單一空格，並去除全清單首尾空白
+    let start = 0;                                                // 紀錄當前切分的起始字元索引 (Index)
     
-    while (start < cleanText.length) {
-        let end = Math.min(start + charsPerLevel, cleanText.length);
-        if (end < cleanText.length) {
-            const sentenceEnd = cleanText.lastIndexOf(".", end);
-            const questionEnd = cleanText.lastIndexOf("?", end);
+    while (start < cleanText.length) {                                    // 迴圈讀取文本，直到處理完最後一個字元
+        let end = Math.min(start + charsPerLevel, cleanText.length);      // 先計算預設的結束位置（起始位置 + 每關目標字數），但不能超過文本總長度
+        if (end < cleanText.length) {                                     // 如果算出的結束位置尚未到達文本末端，則尋找最佳的「斷句/斷詞」點
+            const sentenceEnd = cleanText.lastIndexOf(".", end);           // 從預設 end 位置往回搜尋最近的句號 (.)、問號 (?) 或驚嘆號 (!)
+            const questionEnd = cleanText.lastIndexOf("?", end);            
             const exclamationEnd = cleanText.lastIndexOf("!", end);
             const bestSentenceEnd = Math.max(sentenceEnd, questionEnd, exclamationEnd);
             const spaceEnd = cleanText.lastIndexOf(" ", end);
