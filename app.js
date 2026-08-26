@@ -124,6 +124,12 @@ const DOM = {
     newTitle: () => document.getElementById("newTitle"),
     newContent: () => document.getElementById("newContent"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
+    
+    newCategory: () => document.getElementById("newCategory"),
+    newCharsPerLevel: () => document.getElementById("newCharsPerLevel"),
+    newDelimiter: () => document.getElementById("newDelimiter"),
+    newAnnotations: () => document.getElementById("newAnnotations"),
+    
 };
 
 // =====================================================
