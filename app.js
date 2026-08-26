@@ -45,31 +45,31 @@ const GameState = {
     loadedPdfDoc: null,
     
     reset() {
-        this.pdfText = "";
-        this.levels = [];
-        this.currentLevel = 0;
-        this.startTime = null;
-        this.gameFinished = false;
-        this.currentLookupWord = "";
-        this.loadingState = "idle";
-        this.currentAnnotations = [];
+        this.pdfText = "";					// 清空儲存的 PDF 完整文章文字
+        this.levels = [];					// 清空分割後的關卡/章節資料陣列
+        this.currentLevel = 0;				// 將當前關卡索引值歸零（回到第一關）
+        this.startTime = null;				// 重置開始時間戳記（設為 null 表示尚未開始計時）
+        this.gameFinished = false;			// 將遊戲/測驗完成狀態重新設定為未完成（false）
+        this.currentLookupWord = "";		// 清空目前正在查詢或標示的單字字串
+        this.loadingState = "idle";		// 將系統載入狀態恢復為閒置狀態（"idle"）
+        this.currentAnnotations = [];		// 清空當前文章對應的中文註解與標註清單
     },
     
     setLoading(state) {
-        this.loadingState = state;
+        this.loadingState = state;		    // 設定並更新系統目前的載入狀態（例如傳入 "idle"、"loading" 或 "loaded"）
     },
     
-    createLevels(text, charsPerLevel) {
-        this.levels = createLevels(text, charsPerLevel);
-        return this.levels;
+    createLevels(text, charsPerLevel) {			    		// 呼叫切分關卡演算法，將文字分成多個關卡並存入state，最後回傳關卡陣列
+        this.levels = createLevels(text, charsPerLevel);		// 呼叫全域/外部createLevels函式進行文字切分，並更新內部levels 屬性
+        return this.levels;								    // 回傳處理好的關卡陣列
     },
     
-    getCurrentText() {
-        return this.levels[this.currentLevel] || "";
+    getCurrentText() {										    // 取得「當前關卡」對應的文字內容
+        return this.levels[this.currentLevel] || "";			// 依據 currentLevel索引值取出陣列內容；若超出範圍(如無資料)回傳空字串 "" 防止報錯
     },
     
-    getTotalLevels() {
-        return this.levels.length;
+    getTotalLevels() {										    // 取得關卡的總數量
+        return this.levels.length;								//回傳levels陣列的總長度
     },
 };
 
@@ -135,17 +135,17 @@ const DOM = {
 // =====================================================
 
 const TranslationCache = (() => {
-    const cache = new Map();                  // 建立一個私有的 Map 物件，用來儲存「原文 (Key)」與「翻譯結果 (Value)
+    const cache = new Map();                  			 //建立個私有Map物件，用來儲存「原文(Key)」與「翻譯結果(Value)
     const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;      // 讀取全域設定檔中的快取數量上限（例如：100 筆）
     
-    return {                           // 回傳一個包含多個操作方法的介面物件
-        get(text) {                     // 根據傳入的原文 text 取出已快取的翻譯結果
+    return {                            // 回傳一個包含多個操作方法的介面物件
+        get(text) {                     // 根據傳入的原文text取出已快取的翻譯結果
             return cache.get(text);      
         },
         set(text, translation) {                                 // 寫入新的翻譯結果
             if (cache.size >= MAX_SIZE) {                        // 檢查快取是否已達到上限值
                 const firstKey = cache.keys().next().value;      // 取出 Map 中最早被寫入的第一筆 key
-                cache.delete(firstKey);                        // 刪除最早寫入的那筆資料，以騰出空間給新資料
+                cache.delete(firstKey);                         // 刪除最早寫入的那筆資料，以騰出空間給新資料
             }
             cache.set(text, translation);               // 將新的原文與翻譯結果存入快取中
         },
@@ -162,13 +162,13 @@ const TranslationCache = (() => {
 })();
 
 // =====================================================
-// 5️⃣ Audio Management System
+// Audio Management System  音訊管理系統
 // =====================================================
 
-const AudioManager = {                  // 定義一個名為 AudioManager 的物件
+const AudioManager = {                 	 // 定義一個名為 AudioManager 的物件
     currentAudio: null,                  // 儲存當前正在使用或準備播放的音訊物件實例
     
-    setAudio(audioUrl, fallbackWord) {         // 設定新的音訊來源，需傳入音訊檔網址 (audioUrl) 與備用單字 (fallbackWord
+    setAudio(audioUrl, fallbackWord) {         	// 設定新的音訊來源，需傳入音訊檔網址 (audioUrl) 與備用單字 (fallbackWord
         this.stopCurrent();                     // 在建立新音訊之前，先停止並清除前一次正在播放的語音
         
         const audioObj = new Audio(audioUrl);            // 建立原生 HTML5 Audio 物件實例並載入音訊網址
@@ -177,21 +177,21 @@ const AudioManager = {                  // 定義一個名為 AudioManager 的�
             play: () => {                                // 定義播放方法
                 audioObj.play().catch(() => {            // 嘗試播放音訊檔案
                     console.warn("Audio play failed, falling back to Web Speech API");      // 若音訊播放失敗
-                    this.speak(fallbackWord);                          // 自動呼叫內建的語音合成（Web Speech API）來朗讀傳入的備用單字
+                    this.speak(fallbackWord);                          // 自動呼叫內建的語音合成(Web Speech API)來朗讀傳入備用單字
                 });
             }
         };
     },
     
-    speak(text) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = CONFIG.SPEECH_LANG;
-            utterance.rate = CONFIG.SPEECH_RATE;
-            window.speechSynthesis.speak(utterance);
+    speak(text) {										// 定義Speak方法，接收欲進行語音朗讀的文字字串(text) 
+        if ('speechSynthesis' in window) {				// 檢查當前使用者瀏覽器是否支援Web Speech API speechSynthesis語音合成功能
+            window.speechSynthesis.cancel();			 // 強制停止/取消當前正播放,排隊中所有語音，避免聲音重疊,積壓
+            const utterance = new SpeechSynthesisUtterance(text);	  // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
+            utterance.lang = CONFIG.SPEECH_LANG;		  		      // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
+            utterance.rate = CONFIG.SPEECH_RATE;					  // 設定朗讀的語言（取自全域設定檔 CONFIG，例如 "en-US"）
+            window.speechSynthesis.speak(utterance);			  	  // 呼叫瀏覽器語音合成服務，開始進行文字語音朗讀
         } else {
-            console.warn("Browser does not support SpeechSynthesis API");
+            console.warn("Browser does not support SpeechSynthesis API");    // 若瀏覽器不支援 SpeechSynthesis API，於控制台印出警告訊息
         }
     },
     
@@ -224,31 +224,34 @@ const AudioManager = {                  // 定義一個名為 AudioManager 的�
 // 6️⃣ Event Manager
 // =====================================================
 
-const EventManager = {
-    listeners: [],
+const EventManager = {			// 定義一個名為 EventManager 的物件，用於統一管理與清理 DOM 事件監聽器
+    listeners: [],			    // 建立私有陣列，用來儲存所有已註冊的事件資訊（包含 DOM 元素、事件類型與處理函式）
     
-    attach(element, event, handler) {
-        if (!element) return;
-        element.addEventListener(event, handler);
-        this.listeners.push({ element, event, handler });
+    attach(element, event, handler) {		     // 單一事件綁定方法：接收DOM元素(element)、事件類型(event)與事件處理函式(handler)
+        if (!element) return;				     // 安全檢查：若傳入的 DOM 元素不存在（null 或 undefined），則直接結束不執行
+        
+        element.addEventListener(event, handler);		        // 替 DOM 元素掛載指定的事件監聽器
+        
+        this.listeners.push({ element, event, handler });	     // 將本次綁定的資訊封裝成物件，存入 listeners 陣列中以便後續追蹤與移除
     },
     
-    attachAll(config) {
-        config.forEach(([element, event, handler]) => {
-            this.attach(element, event, handler);
+    attachAll(config) {			    // 批次事件綁定方法：接收一個包含多個事件設定陣列的設定檔 (config)
+        config.forEach(([element, event, handler]) => {		  // 使用解構賦值(Destructuring)取出每設定項 [element,event,handler]
+            this.attach(element, event, handler);            // 逐一呼叫 attach 方法進行綁定
         });
     },
     
-    removeAll() {
-        this.listeners.forEach(({ element, event, handler }) => {
-            if (element) element.removeEventListener(event, handler);
+    removeAll() {				    										    // 一鍵移除所有已註冊事件的方法
+        this.listeners.forEach(({ element, event, handler }) => {			    // 巡覽 listeners 陣列中的每一個事件紀錄
+            if (element) element.removeEventListener(event, handler);			// 若元素仍然存在於 DOM 中，則將當初綁定的事件監聽器移除
         });
-        this.listeners = [];
+        
+        this.listeners = [];        		// 清空紀錄陣列，釋放記憶體
     }
 };
 
 // =====================================================
-// 7️⃣ Initialization
+// Initialization  初始化
 // =====================================================
 
 function initializeEventListeners() {
@@ -270,25 +273,25 @@ function initializeEventListeners() {
     ]);
 }
 
-function initializeWordClickDelegation() {   // 初始化單字點擊事件的委派（Event Delegation）監聽器
-    const textDisplay = DOM.textDisplay();   // 取得用於顯示文章內容的 DOM 元素
-    if (!textDisplay) return;               // 若找不到該顯示元素，則直接結束函式以防止報錯
+function initializeWordClickDelegation() {   		// 初始化單字點擊事件的委派（Event Delegation）監聽器
+    const textDisplay = DOM.textDisplay();   		// 取得用於顯示文章內容的 DOM 元素
+    if (!textDisplay) return;               		// 若找不到該顯示元素，則直接結束函式以防止報錯
     
-    textDisplay.addEventListener("click", (e) => {            // 在父層容器上記錄點擊事件（採用事件委派，不必為每個字母個別綁定事件）
+    textDisplay.addEventListener("click", (e) => {             // 在父層容器上記錄點擊事件（採用事件委派，不必為每個字母個別綁定事件）
         if (!e.target.classList.contains("char")) return;      // 檢查被點擊的目標元素是否帶有 "char" 類別，若不是則忽視該點擊
         
         const clickedChar = e.target;               // 記錄當前被點擊的字母 HTML 元素
         let word = "";                              // 初始化用於組合完整單字的字串變數
         let current = clickedChar;                  // 建立指標變數，預設指向點擊的字母元素
         
-        while (current && /^[A-Za-z]$/.test(current.textContent)) {   // 【第一階段：向左尋找】從被點擊字母開始，往前（左）檢查前一個兄弟節點是否為英文字母
-            word = current.textContent + word;                        // 將字母串接在單字前方（因為是倒回去找）
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {    // 【第一階段：向左尋找】從被點擊字母開始，往前（左）檢查前一個兄弟節點是否為英文字母
+            word = current.textContent + word;                         // 將字母串接在單字前方（因為是倒回去找）
             current = current.previousElementSibling;                  // 指標移至前一個 HTML 兄弟元素
         }
-        current = clickedChar;                                             // 重置指標回到被點擊的字母元素
-        while (current && /^[A-Za-z]$/.test(current.textContent)) {         //【第二階段：向右尋找】從被點擊字母開始，往後（右）檢查後一個兄弟節點是否為英文
+        current = clickedChar;                                             // 重置指標回到被點擊字母元素
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {        //【第二階段：向右尋找】從被點擊字母開始，往後(右)檢查後個兄弟節點是否英文
             if (current !== clickedChar) word += current.textContent;      // 避免重複計算被點擊的字母（第一階段已計入），將後續字母串接在單字後方
-            current = current.nextElementSibling;                  // 指標移至後一個 HTML 兄弟元素
+            current = current.nextElementSibling;                  			// 指標移至後一個 HTML 兄弟元素
         }
         if (word) {
             lookupWord(word.toLowerCase().trim());         // 將單字轉為小寫並去除首尾空白，然後傳給查單字函式 lookupWord
@@ -436,15 +439,15 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
 
 function createLevels(text, charsPerLevel, delimiter = null) {      // 定義切分關卡的函式，接收文本 (text)、每關目標字數 (charsPerLevel)，以及可選切分分隔符號
 
-    if (delimiter && text.includes(delimiter)) {        // 若有傳入 delimiter 且文本中包含該分隔符號 (例如 "[NEXT]" 或 "\n\n")
+    if (delimiter && text.includes(delimiter)) {        		// 若有傳入 delimiter 且文本中包含該分隔符號 (例如 "[NEXT]" 或 "\n\n")
         return text
             .split(delimiter)                           // 依照分隔符號將文本切分成陣列
-            .map(chunk => chunk.trim())               // 切除每一段落前後的空白字元
-            .filter(chunk => chunk.length > 0);       // 過濾掉空字串，確保只保留有內容的段落 
+            .map(chunk => chunk.trim())               	// 切除每一段落前後的空白字元
+            .filter(chunk => chunk.length > 0);       	// 過濾掉空字串，確保只保留有內容的段落 
     }
     const result = [];                                             // 儲存最終切分出來的所有關卡文本
     const cleanText = text.replace(/[ \t]+/g, " ").trim();         // 將多個連續的空格或 Tab 縮排整理成單一空格，並去除全清單首尾空白
-    let start = 0;                                                // 紀錄當前切分的起始字元索引 (Index)
+    let start = 0;                                                	// 紀錄當前切分的起始字元索引 (Index)
     
     while (start < cleanText.length) {                                    // 迴圈讀取文本，直到處理完最後一個字元
         let end = Math.min(start + charsPerLevel, cleanText.length);      // 先計算預設的結束位置（起始位置 + 每關目標字數），但不能超過文本總長度
