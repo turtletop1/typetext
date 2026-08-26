@@ -874,79 +874,94 @@ async function loadArticlesFromGit() {
     }
 }
 
-function handleStartCustomText() {
-    const input = DOM.customTextInput()?.value.trim();                         // 取得自訂文字輸入框的內容並去除前後空白
-    if (!input || input.length < CONFIG.MIN_CUSTOM_TEXT_LENGTH) {              // 檢查是否有輸入文字，或文字長度是否小於設定的最小字數門檻
-        setStatus("⚠️ 請輸入至少 5 個字元的文章內容！");                         // 若不符合條件，顯示警告提示訊息
-        return;                                                                // 中斷執行
-    }
-    
-    GameState.reset();                                                   // 重置全域遊戲狀態資料（清空舊關卡、分數與時間等）
-    GameState.pdfText = input;                                           // 將驗證通過的輸入文字存入全域狀態的 pdfText 中
-
-
-    if (currentSelectedArticle && currentSelectedArticle.annotations) {      // 檢查目前選取的文章是否存在且帶有中文註解資料 (annotations)
-        GameState.currentAnnotations = currentSelectedArticle.annotations;    // 將該文章對應的中文註解存入全域狀態中
-    } else {
-        GameState.currentAnnotations = [];                                     // 若無註解資料，則清空全域狀態中的註解陣列
-    }
-
-    const customChars = currentSelectedArticle?.charsPerLevel || CONFIG.CHARS_PER_LEVEL;    // 讀取設定：優先使用該文章自訂的每關字數，若無則採用系統預設值
-    const customDelimiter = currentSelectedArticle?.delimiter || null;                     // 讀取設定：取得該文章自訂的分隔符號（如 [NEXT]），若無則為 null
-
-    GameState.levels = createLevels(input, customChars, customDelimiter);                   // 呼叫 createLevels 演算法拆分文章並產生關卡陣列存入全域狀態
-    
-    updateLevelSelect();                                                       // 依據新產生的關卡總數，更新關卡切換下拉選單 (select)
-    const gameArea = DOM.gameArea();                                           // 取得遊戲區域 DOM 元素
-    if (gameArea) gameArea.classList.remove("hidden");                         // 移除 "hidden" 類別，將遊戲打字主區域顯示於畫面上
-    
-    showLevel();                                                               // 載入並渲染當前關卡（第一關）的文字與介面
-    setStatus(`✅已載入自訂文章！共 ${GameState.getTotalLevels()} 個關卡`);      // 於狀態列顯示成功載入訊息與關卡總數
-
-    const articleModePanel = DOM.articleModePanel();                           // 取得文章模式選單/面板 DOM 元素
-    if (articleModePanel) {
-        articleModePanel.classList.add("hidden");                              // 加上 "hidden" 類別，將文章選擇面板隱藏
-    }
-}
-
 async function handleAddAndDownload() {
-    const titleInput = DOM.newTitle();                                   // 取得新文章標題輸入框 DOM 元素
-    const contentInput = DOM.newContent();                               // 取得新文章內容輸入框 DOM 元素
-    
-    const title = titleInput?.value.trim();                              // 取得標題內容並去除前後空白
-    const content = contentInput?.value.trim();                          // 取得文章內容並去除前後空白
-    
-    if (!title || !content) {                                            // 安全檢查：若標題或內容任一為空
-        alert("請填寫標題與內容！");                                       // 跳出警告視窗提示使用者
-        return;                                                          // 中斷執行
+    // 1. 取得 DOM 欄位元素
+    const categoryInput = DOM.newCategory ? DOM.newCategory() : document.getElementById("newCategory");
+    const titleInput = DOM.newTitle();
+    const contentInput = DOM.newContent();
+    const charsInput = DOM.newCharsPerLevel ? DOM.newCharsPerLevel() : document.getElementById("newCharsPerLevel");
+    const delimiterInput = DOM.newDelimiter ? DOM.newDelimiter() : document.getElementById("newDelimiter");
+    const annotationsInput = DOM.newAnnotations ? DOM.newAnnotations() : document.getElementById("newAnnotations");
+
+    // 2. 讀取並整理輸入數值
+    const categoryName = categoryInput?.value.trim() || "未分類";
+    const title = titleInput?.value.trim();
+    const content = contentInput?.value.trim();
+
+    if (!title || !content) {
+        alert("請填寫標題與內容！");
+        return;
     }
+
+    // 解析選填欄位
+    const charsPerLevel = charsInput?.value ? parseInt(charsInput.value, 10) : CONFIG.CHARS_PER_LEVEL;
+    const delimiter = delimiterInput?.value.trim() || undefined;
     
-    let articles = [];                                                               // 初始化文章陣列
+    // 解析註解字串 (格式預設支援每行一個：單字:註解 或單字=註解)
+    let annotations = [];
+    if (annotationsInput?.value.trim()) {
+        annotations = annotationsInput.value.trim().split("\n").map(line => {
+            const parts = line.split(/[:=：=]/);
+            if (parts.length >= 2) {
+                return { word: parts[0].trim(), note: parts[1].trim() };
+            }
+            return null;
+        }).filter(Boolean);
+    }
+
+    // 3. 讀取現有的 JSON 分類結構
+    let categories = [];
     try {
-        const res = await fetch("./articles.json");                                  // 嘗試透過 AJAX (fetch) 讀取現有的 articles.json 檔案
-        if (res.ok) articles = await res.json();                                     // 若成功讀取，將解析後的 JSON 文章陣列存入 articles
+        const res = await fetch("./articles.json");
+        if (res.ok) {
+            categories = await res.json();
+            if (!Array.isArray(categories)) categories = [];
+        }
     } catch (e) {
-        console.warn("Could not load existing articles.json, creating new file.");    // 若讀取失敗，於控制台印出警告並準備建立新檔案
+        console.warn("Could not load existing articles.json, creating new categories file.");
     }
-    
-    const newArticle = {                                                 // 建立全新的文章物件
-        id: "art_" + Date.now(),                                         // 使用當前時間戳記 (Timestamp) 產生獨一無二的文章 ID
-        title: title,                                                    // 寫入文章標題
-        content: content                                                 // 寫入文章內文內容
+
+    // 4. 建立新文章物件 (符合目的 JSON 格式)
+    const newArticle = {
+        id: "art_" + Date.now(),
+        title: title,
+        charsPerLevel: charsPerLevel,
+        ...(delimiter && { delimiter }),
+        content: content,
+        ...(annotations.length > 0 && { annotations })
     };
+
+    // 5. 尋找或建立對應分類，並將文章推入該分類
+    let targetCategory = categories.find(c => c.category === categoryName);
+    if (!targetCategory) {
+        targetCategory = {
+            category: categoryName,
+            articles: []
+        };
+        categories.push(targetCategory);
+    }
+    targetCategory.articles.push(newArticle);
+
+    // 6. 產生 JSON Data URL 並觸發下載
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(categories, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "articles.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    // 7. 清空表單輸入框
+    if (titleInput) titleInput.value = "";
+    if (contentInput) contentInput.value = "";
+    if (charsInput) charsInput.value = "";
+    if (delimiterInput) delimiterInput.value = "";
+    if (annotationsInput) annotationsInput.value = "";
     
-    articles.push(newArticle);                                           // 將新建立的文章物件推入 articles 陣列中
-    
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(articles, null, 2));       // 將文章陣列轉換為縮排的 JSON 字串並編碼為 Data URL
-    const downloadAnchor = document.createElement("a");                     // 動態建立一個隱藏的超連結 <a> DOM 元素
-    downloadAnchor.setAttribute("href", dataStr);                           // 設定超連結的下載目標為剛產生的 Data URL
-    downloadAnchor.setAttribute("download", "articles.json");               // 設定下載觸發時的檔名為 "articles.json"
-    document.body.appendChild(downloadAnchor);                              // 將超連結元素暫時加入至 DOM 樹頁面中
-    downloadAnchor.click();                                                 // 自動模擬點擊動作以觸發瀏覽器的檔案下載流程
-    downloadAnchor.remove();                                                // 下載觸發後，立即將超連結從 DOM 樹中移除以保持頁面整潔
-    
-    if (titleInput) titleInput.value = "";                                  // 清空標題輸入框內容
-    if (contentInput) contentInput.value = "";                              // 清空內容輸入框內容
+    // 重新更新 UI 的分類選單 (若有載入 loadArticlesFromGit 函式)
+    if (typeof loadArticlesFromGit === "function") {
+        loadArticlesFromGit();
+    }
 }
 
 // =====================================================
