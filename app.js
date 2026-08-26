@@ -55,8 +55,8 @@ const GameState = {
         this.loadingState = state;		    // 設定並更新系統目前的載入狀態（例如傳入 "idle"、"loading" 或 "loaded"）
     },
     
-    createLevels(text, charsPerLevel) {			    		    // 呼叫切分關卡演算法，將文字分成多個關卡並存入state，最後回傳關卡陣列
-        this.levels = createLevels(text, charsPerLevel);		 // 呼叫全域/外部createLevels函式進行文字切分，並更新內部levels 屬性
+    createLevels(text, charsPerLevel, delimiter = null) {	// 呼叫切分關卡演算法，將文字分成多個關卡並存入state，最後回傳關卡陣列
+        this.levels = createLevels(text, charsPerLevel, delimiter); // 呼叫全域/外部createLevels函式進行文字切分，並更新內部levels 屬性
         return this.levels;								          // 回傳處理好的關卡陣列
     },
     
@@ -121,9 +121,6 @@ const DOM = {
     
     toggleFormBtn: () => document.getElementById("toggleFormBtn"),
     addArticleContainer: () => document.getElementById("addArticleContainer"),
-    newTitle: () => document.getElementById("newTitle"),
-    newContent: () => document.getElementById("newContent"),
-    addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
     
     newCategory: () => document.getElementById("newCategory"),
     newTitle: () => document.getElementById("newTitle"),
@@ -132,7 +129,6 @@ const DOM = {
     newDelimiter: () => document.getElementById("newDelimiter"),
     newAnnotations: () => document.getElementById("newAnnotations"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
-    
 };
 
 // =====================================================
@@ -314,6 +310,7 @@ function initializeFormToggle() {
         toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";       // 依切換後的狀態更新按鈕文字與圖示
     });
 }
+
 // =====================================================
 // PDF Processing
 // =====================================================
@@ -436,6 +433,7 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
         GameState.setLoading("loaded");                                  // 重置載入狀態為 "loaded"
     }
 }
+
 // =====================================================
 // Game Core Logic
 // =====================================================
@@ -473,6 +471,28 @@ function createLevels(text, charsPerLevel, delimiter = null) {      // 定義切
     }  
     return result;
 }
+
+function processTextToLevels(text) {
+    const charsPerLevel = currentSelectedArticle?.charsPerLevel || CONFIG.CHARS_PER_LEVEL;
+    const delimiter = currentSelectedArticle?.delimiter || null;
+
+    GameState.createLevels(text, charsPerLevel, delimiter);
+
+    if (GameState.getTotalLevels() === 0) {
+        setStatus("❌ 無法建立關卡內容！");
+        return;
+    }
+
+    updateLevelSelect();
+    GameState.currentLevel = 0;
+    
+    const gameArea = DOM.gameArea();
+    if (gameArea) gameArea.classList.remove("hidden");
+    
+    showLevel();
+    setStatus(`✅ 已載入文章！共 ${GameState.getTotalLevels()} 個關卡`);
+}
+
 function showLevel() {
     if (!GameState.getTotalLevels()) return;         // 安全檢查：若目前沒有任何關卡資料，則直接結束不執行
     
@@ -605,6 +625,7 @@ function updateStats() {
         image.style.left = `${currentX}px`;                                                         // 動態更新烏龜圖片的左側距離 (left) 以實作跑道移動效果
     }
 }
+
 function finishLevel() {
     GameState.gameFinished = true;                                                   // 將全域狀態標記為已完成當前關卡 (gameFinished = true)
     const typingInput = DOM.typingInput();                                           // 取得打字輸入框 DOM 元素
@@ -655,6 +676,7 @@ function updateLevelSelect() {
     });
     levelSelect.disabled = false;                                                           // 啟用關卡切換下拉選單，允許使用者自行選關
 }
+
 // =====================================================
 // Dictionary & Translation Logic 字典與翻譯邏輯
 // =====================================================
@@ -791,6 +813,7 @@ function closeDictionary() {
 function playCurrentAudio() {
     AudioManager.play();                                                // 呼叫音訊管理者播放當前單字的語音（真人發音或 TTS）
 }
+
 // =====================================================
 // Article Loader & Custom Text Management 文章載入器和自訂文字管理
 // =====================================================
@@ -898,7 +921,7 @@ function handleStartCustomText() {
     } else {
         GameState.currentAnnotations = [];                                     // 若無註解資料，則清空全域狀態中的註解陣列
     } 
-    processTextToLevels(input);                                              // 補上處理文章分割與開始遊戲的邏輯 (依據你的專案機制調用)
+    processTextToLevels(input);                                              // 處理文章分割與開始遊戲的邏輯
 }
 
 async function handleAddAndDownload() {
