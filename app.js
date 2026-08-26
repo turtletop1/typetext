@@ -1,9 +1,5 @@
-/* =====================================================
-   Typing Game - Complete Optimized Code v2.0
-   ===================================================== */
-
 // =====================================================
-// 1️⃣ Global Configuration
+// Global Configuration
 // =====================================================
 
 const CONFIG = {
@@ -11,31 +7,31 @@ const CONFIG = {
     PDF_LINE_HEIGHT_THRESHOLD: 5,      // 設定 PDF 文字行的高度判斷閾值
     
     CHARS_PER_LEVEL: 500,               // 設定每層級/關卡包含字數上限，用於閱讀進度計算或內容分段
-    MIN_TEXT_LENGTH: 20,               // 設定有效文字的最少字數限制
-    MIN_CUSTOM_TEXT_LENGTH: 5,         // 設定自訂文字的最少字數限制
+    MIN_TEXT_LENGTH: 20,                // 設定有效文字的最少字數限制
+    MIN_CUSTOM_TEXT_LENGTH: 5,          // 設定自訂文字的最少字數限制
     
-    SPEECH_RATE: 0.9,                  // 設定語音合成TTS朗讀語速
+    SPEECH_RATE: 0.9,                   // 設定語音合成TTS朗讀語速
     SPEECH_LANG: "en-US",               // 設定語音發音與文字朗讀的預設語言
     
     TRANSLATION_CACHE_SIZE: 100,         // 設定翻譯結果快取的容量上限
     
     DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",   // 設定英文字典API網址，查詢單字定義、發音與詞性
-    TRANSLATION_API: "https://api.mymemory.translated.net/get",         // 設定MyMemory免費翻譯服務API網址
+    TRANSLATION_API: "https://api.mymemory.translated.net/get",           // 設定MyMemory免費翻譯服務API網址
 };
 
 // Global state to store current selected article object
 let currentSelectedArticle = null;
 
 // =====================================================
-// 2️⃣ Game State Management
+//  Game State Management
 // =====================================================
 
 const GameState = {
-    pdfText: "",            // 儲存從 PDF 檔案中提取出來的完整純文字內容
-    levels: [],             // 儲存將文章分割後關卡或章節陣列（如依據字數分成各Level資料）
-    currentLevel: 0,        // 紀錄 目前所在 或 正閱讀關卡index值
-    startTime: null,         // 紀錄活動,閱讀開始時間戳記（null代表尚未開始），可用計算總耗時
-    gameFinished: false,     // 標記遊戲,閱讀測驗 是否已完成 
+    pdfText: "",              // 儲存從 PDF 檔案中提取出來的完整純文字內容
+    levels: [],               // 儲存將文章分割後關卡或章節陣列（如依據字數分成各Level資料）
+    currentLevel: 0,          // 紀錄 目前所在 或 正閱讀關卡index值
+    startTime: null,          // 紀錄活動,閱讀開始時間戳記（null代表尚未開始），可用計算總耗時
+    gameFinished: false,      // 標記遊戲,閱讀測驗 是否已完成 
     currentAnnotations: [],   // 儲存當前文章所對應 中文註解/翻譯標註清單
     
     currentAudio: null,         // 儲存當前正在播放的 Audio 物件實例
@@ -45,13 +41,13 @@ const GameState = {
     loadedPdfDoc: null,
     
     reset() {
-        this.pdfText = "";					// 清空儲存的 PDF 完整文章文字
-        this.levels = [];					// 清空分割後的關卡/章節資料陣列
+        this.pdfText = "";					   // 清空儲存的 PDF 完整文章文字
+        this.levels = [];					   // 清空分割後的關卡/章節資料陣列
         this.currentLevel = 0;				// 將當前關卡索引值歸零（回到第一關）
         this.startTime = null;				// 重置開始時間戳記（設為 null 表示尚未開始計時）
         this.gameFinished = false;			// 將遊戲/測驗完成狀態重新設定為未完成（false）
         this.currentLookupWord = "";		// 清空目前正在查詢或標示的單字字串
-        this.loadingState = "idle";		// 將系統載入狀態恢復為閒置狀態（"idle"）
+        this.loadingState = "idle";		   // 將系統載入狀態恢復為閒置狀態（"idle"）
         this.currentAnnotations = [];		// 清空當前文章對應的中文註解與標註清單
     },
     
@@ -59,22 +55,22 @@ const GameState = {
         this.loadingState = state;		    // 設定並更新系統目前的載入狀態（例如傳入 "idle"、"loading" 或 "loaded"）
     },
     
-    createLevels(text, charsPerLevel) {			    		// 呼叫切分關卡演算法，將文字分成多個關卡並存入state，最後回傳關卡陣列
-        this.levels = createLevels(text, charsPerLevel);		// 呼叫全域/外部createLevels函式進行文字切分，並更新內部levels 屬性
-        return this.levels;								    // 回傳處理好的關卡陣列
+    createLevels(text, charsPerLevel) {			    		    // 呼叫切分關卡演算法，將文字分成多個關卡並存入state，最後回傳關卡陣列
+        this.levels = createLevels(text, charsPerLevel);		 // 呼叫全域/外部createLevels函式進行文字切分，並更新內部levels 屬性
+        return this.levels;								          // 回傳處理好的關卡陣列
     },
     
-    getCurrentText() {										    // 取得「當前關卡」對應的文字內容
+    getCurrentText() {										          // 取得「當前關卡」對應的文字內容
         return this.levels[this.currentLevel] || "";			// 依據 currentLevel索引值取出陣列內容；若超出範圍(如無資料)回傳空字串 "" 防止報錯
     },
     
-    getTotalLevels() {										    // 取得關卡的總數量
+    getTotalLevels() {										       // 取得關卡的總數量
         return this.levels.length;								//回傳levels陣列的總長度
     },
 };
 
 // =====================================================
-// 3️⃣ DOM Element Selectors
+// DOM Element Selectors
 // =====================================================
 
 const DOM = {
@@ -131,12 +127,12 @@ const DOM = {
 };
 
 // =====================================================
-// 4️⃣ Translation Cache System
+// Translation Cache System
 // =====================================================
 
 const TranslationCache = (() => {
-    const cache = new Map();                  			 //建立個私有Map物件，用來儲存「原文(Key)」與「翻譯結果(Value)
-    const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;      // 讀取全域設定檔中的快取數量上限（例如：100 筆）
+    const cache = new Map();                  			    //建立個私有Map物件，用來儲存「原文(Key)」與「翻譯結果(Value)
+    const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;       // 讀取全域設定檔中的快取數量上限（例如：100 筆）
     
     return {                            // 回傳一個包含多個操作方法的介面物件
         get(text) {                     // 根據傳入的原文text取出已快取的翻譯結果
@@ -145,18 +141,18 @@ const TranslationCache = (() => {
         set(text, translation) {                                 // 寫入新的翻譯結果
             if (cache.size >= MAX_SIZE) {                        // 檢查快取是否已達到上限值
                 const firstKey = cache.keys().next().value;      // 取出 Map 中最早被寫入的第一筆 key
-                cache.delete(firstKey);                         // 刪除最早寫入的那筆資料，以騰出空間給新資料
+                cache.delete(firstKey);                          // 刪除最早寫入的那筆資料，以騰出空間給新資料
             }
             cache.set(text, translation);               // 將新的原文與翻譯結果存入快取中
         },
         has(text) {                       
-            return cache.has(text);          // 檢查指定的原文 text 是否已經存在於快取中 回傳布林值 (true/false)
+            return cache.has(text);                   // 檢查指定的原文 text 是否已經存在於快取中 回傳布林值 (true/false)
         },
         clear() {
-            cache.clear();               // 清空整個快取，刪除所有儲存的翻譯資料
+            cache.clear();                            // 清空整個快取，刪除所有儲存的翻譯資料
         },
         size() {
-            return cache.size;         // 取得當前快取中已儲存資料總筆數
+            return cache.size;                        // 取得當前快取中已儲存資料總筆數
         },
     };
 })();
@@ -165,8 +161,8 @@ const TranslationCache = (() => {
 // Audio Management System  音訊管理系統
 // =====================================================
 
-const AudioManager = {                 	 // 定義一個名為 AudioManager 的物件
-    currentAudio: null,                  // 儲存當前正在使用或準備播放的音訊物件實例
+const AudioManager = {                 	  // 定義一個名為 AudioManager 的物件
+    currentAudio: null,                     // 儲存當前正在使用或準備播放的音訊物件實例
     
     setAudio(audioUrl, fallbackWord) {         	// 設定新的音訊來源，需傳入音訊檔網址 (audioUrl) 與備用單字 (fallbackWord
         this.stopCurrent();                     // 在建立新音訊之前，先停止並清除前一次正在播放的語音
@@ -177,19 +173,19 @@ const AudioManager = {                 	 // 定義一個名為 AudioManager 的�
             play: () => {                                // 定義播放方法
                 audioObj.play().catch(() => {            // 嘗試播放音訊檔案
                     console.warn("Audio play failed, falling back to Web Speech API");      // 若音訊播放失敗
-                    this.speak(fallbackWord);                          // 自動呼叫內建的語音合成(Web Speech API)來朗讀傳入備用單字
+                    this.speak(fallbackWord);                                               // 自動呼叫內建的語音合成(Web Speech API)來朗讀傳入備用單字
                 });
             }
         };
     },
     
-    speak(text) {										// 定義Speak方法，接收欲進行語音朗讀的文字字串(text) 
-        if ('speechSynthesis' in window) {				// 檢查當前使用者瀏覽器是否支援Web Speech API speechSynthesis語音合成功能
-            window.speechSynthesis.cancel();			 // 強制停止/取消當前正播放,排隊中所有語音，避免聲音重疊,積壓
-            const utterance = new SpeechSynthesisUtterance(text);	  // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
-            utterance.lang = CONFIG.SPEECH_LANG;		  		      // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
-            utterance.rate = CONFIG.SPEECH_RATE;					  // 設定朗讀的語言（取自全域設定檔 CONFIG，例如 "en-US"）
-            window.speechSynthesis.speak(utterance);			  	  // 呼叫瀏覽器語音合成服務，開始進行文字語音朗讀
+    speak(text) {										                         // 定義Speak方法，接收欲進行語音朗讀的文字字串(text) 
+        if ('speechSynthesis' in window) {				                // 檢查當前使用者瀏覽器是否支援Web Speech API speechSynthesis語音合成功能
+            window.speechSynthesis.cancel();			                   // 強制停止/取消當前正播放,排隊中所有語音，避免聲音重疊,積壓
+            const utterance = new SpeechSynthesisUtterance(text);	    // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
+            utterance.lang = CONFIG.SPEECH_LANG;		  		          // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
+            utterance.rate = CONFIG.SPEECH_RATE;					       // 設定朗讀的語言（取自全域設定檔 CONFIG，例如 "en-US"）
+            window.speechSynthesis.speak(utterance);			  	       // 呼叫瀏覽器語音合成服務，開始進行文字語音朗讀
         } else {
             console.warn("Browser does not support SpeechSynthesis API");    // 若瀏覽器不支援 SpeechSynthesis API，於控制台印出警告訊息
         }
@@ -221,31 +217,29 @@ const AudioManager = {                 	 // 定義一個名為 AudioManager 的�
 };
 
 // =====================================================
-// 6️⃣ Event Manager
+//  Event Manager
 // =====================================================
 
-const EventManager = {			// 定義一個名為 EventManager 的物件，用於統一管理與清理 DOM 事件監聽器
-    listeners: [],			    // 建立私有陣列，用來儲存所有已註冊的事件資訊（包含 DOM 元素、事件類型與處理函式）
+const EventManager = {			   // 定義一個名為 EventManager 的物件，用於統一管理與清理 DOM 事件監聽器
+    listeners: [],			      // 建立私有陣列，用來儲存所有已註冊的事件資訊（包含 DOM 元素、事件類型與處理函式）
     
     attach(element, event, handler) {		     // 單一事件綁定方法：接收DOM元素(element)、事件類型(event)與事件處理函式(handler)
-        if (!element) return;				     // 安全檢查：若傳入的 DOM 元素不存在（null 或 undefined），則直接結束不執行
+        if (!element) return;				        // 安全檢查：若傳入的 DOM 元素不存在（null 或 undefined），則直接結束不執行
         
-        element.addEventListener(event, handler);		        // 替 DOM 元素掛載指定的事件監聽器
+        element.addEventListener(event, handler);		           // 替 DOM 元素掛載指定的事件監聽器
         
         this.listeners.push({ element, event, handler });	     // 將本次綁定的資訊封裝成物件，存入 listeners 陣列中以便後續追蹤與移除
     },
     
-    attachAll(config) {			    // 批次事件綁定方法：接收一個包含多個事件設定陣列的設定檔 (config)
+    attachAll(config) {			                                // 批次事件綁定方法：接收一個包含多個事件設定陣列的設定檔 (config)
         config.forEach(([element, event, handler]) => {		  // 使用解構賦值(Destructuring)取出每設定項 [element,event,handler]
-            this.attach(element, event, handler);            // 逐一呼叫 attach 方法進行綁定
+            this.attach(element, event, handler);             // 逐一呼叫 attach 方法進行綁定
         });
     },
-    
-    removeAll() {				    										    // 一鍵移除所有已註冊事件的方法
-        this.listeners.forEach(({ element, event, handler }) => {			    // 巡覽 listeners 陣列中的每一個事件紀錄
+    removeAll() {				    										                   // 一鍵移除所有已註冊事件的方法
+        this.listeners.forEach(({ element, event, handler }) => {			       // 巡覽 listeners 陣列中的每一個事件紀錄
             if (element) element.removeEventListener(event, handler);			// 若元素仍然存在於 DOM 中，則將當初綁定的事件監聽器移除
         });
-        
         this.listeners = [];        		// 清空紀錄陣列，釋放記憶體
     }
 };
@@ -275,7 +269,7 @@ function initializeEventListeners() {
 
 function initializeWordClickDelegation() {   		// 初始化單字點擊事件的委派（Event Delegation）監聽器
     const textDisplay = DOM.textDisplay();   		// 取得用於顯示文章內容的 DOM 元素
-    if (!textDisplay) return;               		// 若找不到該顯示元素，則直接結束函式以防止報錯
+    if (!textDisplay) return;               		   // 若找不到該顯示元素，則直接結束函式以防止報錯
     
     textDisplay.addEventListener("click", (e) => {             // 在父層容器上記錄點擊事件（採用事件委派，不必為每個字母個別綁定事件）
         if (!e.target.classList.contains("char")) return;      // 檢查被點擊的目標元素是否帶有 "char" 類別，若不是則忽視該點擊
@@ -294,25 +288,25 @@ function initializeWordClickDelegation() {   		// 初始化單字點擊事件的
             current = current.nextElementSibling;                  			// 指標移至後一個 HTML 兄弟元素
         }
         if (word) {
-            lookupWord(word.toLowerCase().trim());         // 將單字轉為小寫並去除首尾空白，然後傳給查單字函式 lookupWord
+            lookupWord(word.toLowerCase().trim());                        // 將單字轉為小寫並去除首尾空白，然後傳給查單字函式 lookupWord
         }
     });
 }
 
 function initializeFormToggle() {
-    const toggleBtn = DOM.toggleFormBtn();
-    const container = DOM.addArticleContainer();
+    const toggleBtn = DOM.toggleFormBtn();                                        // 取得切換表單顯示/隱藏的按鈕 DOM 元素
+    const container = DOM.addArticleContainer();                                  // 取得新增文章表單容器 DOM 元素
     
-    if (!toggleBtn || !container) return;
+    if (!toggleBtn || !container) return;                                         // 安全檢查：若按鈕或容器任一不存在則直接結束
     
-    toggleBtn.addEventListener("click", () => {
-        const isHidden = container.style.display === "none";
-        container.style.display = isHidden ? "block" : "none";
-        toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";
+    toggleBtn.addEventListener("click", () => {                                   // 為按鈕綁定點擊 (click) 事件監聽器
+        const isHidden = container.style.display === "none";                      // 檢查表單容器目前是否為隱藏狀態 (display === "none")
+        container.style.display = isHidden ? "block" : "none";                    // 切換顯示狀態：若隱藏則顯示 (block)，若顯示則隱藏 (none)
+        toggleBtn.textContent = isHidden ? "✖ 關閉新增表單" : "➕ 新增文章";       // 依切換後的狀態更新按鈕文字與圖示
     });
 }
 // =====================================================
-// 8️⃣ PDF Processing
+// PDF Processing
 // =====================================================
 
 function setupPageRangeUI(totalPages) {
@@ -357,634 +351,606 @@ function extractPageText(textContent) {
 
 function cleanPDFText(text) {
     return text
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .replace(/^\s*\d+\s*$/gm, "")
-        .replace(/^\s*Page\s+\d+\s*$/gim, "")
-        .replace(/^\s*[-–—]\s*\d+\s*[-–—]\s*$/gm, "")
-        .replace(/([A-Za-z])-\s*\n\s*([A-Za-z])/g, "$1$2")
-        .replace(/([a-zA-Z0-9,.;:!?])\n(?=[a-zA-Z0-9])/g, "$1 ")
-        .replace(/[ \t]+/g, " ")
-        .replace(/\n{2,}/g, "\n")
-        .replace(/\s+([,.!?;:])/g, "$1")
-        .replace(/\(\s+/g, "(")
-        .replace(/\s+\)/g, ")")
-        .split("\n")
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .join("\n")
-        .trim();
+        .replace(/\r\n/g, "\n")                                          // 將 Windows 換行符號 (\r\n) 統一替換為標準換行符號 (\n)
+        .replace(/\r/g, "\n")                                            // 將 Mac 舊式換行符號 (\r) 統一替換為標準換行符號 (\n)
+        .replace(/^\s*\d+\s*$/gm, "")                                    // 移除獨立成行的純數字頁碼（例如 "12"）
+        .replace(/^\s*Page\s+\d+\s*$/gim, "")                            // 移除包含 Page 關鍵字的頁碼（例如 "Page 5"，忽略大小寫）
+        .replace(/^\s*[-–—]\s*\d+\s*[-–—]\s*$/gm, "")                    // 移除帶有破折號格式的頁碼（例如 "- 3 -" 或 "— 4 —"）
+        .replace(/([A-Za-z])-\s*\n\s*([A-Za-z])/g, "$1$2")               // 修復跨行連字號：將被換行截斷的英文單字合併（例如 "com-\nputer" 轉為 "computer"）
+        .replace(/([a-zA-Z0-9,.;:!?])\n(?=[a-zA-Z0-9])/g, "$1 ")         // 將段落內不必要的硬換行替換為單一空格，使英文句子恢復連貫
+        .replace(/[ \t]+/g, " ")                                         // 將多個連續的空格或 Tab 縮排整合為單一空格
+        .replace(/\n{2,}/g, "\n")                                        // 將多個連續的換行符號整合為單一換行符號
+        .replace(/\s+([,.!?;:])/g, "$1")                                 // 移除標點符號（逗號、句號等）前多餘的空白
+        .replace(/\(\s+/g, "(")                                          // 移除左括號內側開頭的多餘空白
+        .replace(/\s+\)/g, ")")                                          // 移除右括號內側結尾的多餘空白
+        .split("\n")                                                     // 以換行符號將文字切割為字串陣列
+        .map(line => line.trim())                                        // 切除每一行前後的多餘空白
+        .filter(line => line.length > 0)                                 // 過濾並移除空行
+        .join("\n")                                                      // 將整理後的每一行重新以換行符號連接起來
+        .trim();                                                         // 切除整篇文本首尾的空白字元
 }
 
 async function processPDF(pdf, startPage = 1, endPage = null) {
-    if (GameState.loadingState === "loading") {
-        setStatus("⚠️ PDF 正在加載中，請稍候...");
-        return;
+    if (GameState.loadingState === "loading") {                           // 安全檢查：若目前已有 PDF 正在讀取處理中
+        setStatus("⚠️ PDF 正在加載中，請稍候...");                         // 顯示警告提示訊息
+        return;                                                           // 直接結束不重複執行
     }
     
-    GameState.setLoading("loading");
-    setStatus("🔎 正在提取 PDF 文字...");
-    
+    GameState.setLoading("loading");                                      // 將全域載入狀態設定為 "loading"
+    setStatus("🔎 正在提取 PDF 文字...");                                  // 於狀態列顯示開始讀取提示
+
     try {
-        const maxPages = pdf.numPages;
-        if (!endPage || endPage > maxPages) endPage = maxPages;
-        if (startPage < 1) startPage = 1;
+        const maxPages = pdf.numPages;                                    // 取得該 PDF 檔案的總頁數
+        if (!endPage || endPage > maxPages) endPage = maxPages;           // 若未指定結束頁數或設定超出範圍，則預設讀取到最後一頁
+        if (startPage < 1) startPage = 1;                                 // 確保起始頁數不小於第 1 頁
         
-        let allText = "";
+        let allText = "";                                                 // 初始化用來拼接所有頁面文字的字串變數
         
-        for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
-            setStatus(`🔎 正在讀取第 ${pageNumber} / ${endPage} 頁...`);
-            const page = await pdf.getPage(pageNumber);
-            const textContent = await page.getTextContent();
-            const pageText = extractPageText(textContent);
-            allText += pageText + "\n\n";
+        for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {    // 逐頁讀取 PDF 內容
+            setStatus(`🔎 正在讀取第 ${pageNumber} / ${endPage} 頁...`);           // 更新狀態列顯示當前處理頁數
+            const page = await pdf.getPage(pageNumber);                           // 非同步獲取指定頁碼的頁面物件
+            const textContent = await page.getTextContent();                      // 從頁面物件中解析提取原始文字內容
+            const pageText = extractPageText(textContent);                        // 呼叫自訂函式提取並重組該頁的純文字
+            allText += pageText + "\n\n";                                         // 將該頁文字拼接至總文字字串中（頁與頁之間以換行分隔）
         }
         
-        setStatus("🧹 正在清理 PDF 文字...");
-        GameState.pdfText = cleanPDFText(allText);
+        setStatus("🧹 正在清理 PDF 文字...");                              // 更新狀態列顯示文字清理中
+        GameState.pdfText = cleanPDFText(allText);                        // 呼叫 cleanPDFText 進行格式修復與淨化，並寫入全域狀態
         
-        if (!GameState.pdfText || GameState.pdfText.length < CONFIG.MIN_TEXT_LENGTH) {
-            setStatus("❌ 所選頁數內搵唔到足夠文字。");
-            GameState.setLoading("loaded");
-            return;
+        if (!GameState.pdfText || GameState.pdfText.length < CONFIG.MIN_TEXT_LENGTH) {    // 檢查清理後的文字是否符合最小字數門檻
+            setStatus("❌ 所選頁數內搵唔到足夠文字。");                        // 字數不足時顯示失敗提示
+            GameState.setLoading("loaded");                                  // 重置載入狀態為 "loaded"
+            return;                                                          // 中斷執行
         }
         
-        setStatus("🎮 正在建立遊戲關卡...");
-        GameState.createLevels(GameState.pdfText, CONFIG.CHARS_PER_LEVEL);
+        setStatus("🎮 正在建立遊戲關卡...");                                    // 更新狀態列顯示建立關卡中
+        GameState.createLevels(GameState.pdfText, CONFIG.CHARS_PER_LEVEL);     // 呼叫全域方法依據字數切分並產生關卡列表
         
-        if (GameState.getTotalLevels() === 0) {
-            setStatus("❌ 無法建立遊戲關卡");
-            GameState.setLoading("loaded");
-            return;
+        if (GameState.getTotalLevels() === 0) {                             // 若計算後產生的總關卡數為 0
+            setStatus("❌ 無法建立遊戲關卡");                                // 顯示建立失敗提示
+            GameState.setLoading("loaded");                                 // 重置載入狀態為 "loaded"
+            return;                                                         // 中斷執行
         }
         
-        updateLevelSelect();
-        GameState.currentLevel = 0;
-        const gameArea = DOM.gameArea();
-        if (gameArea) gameArea.classList.remove("hidden");
-        showLevel();
+        updateLevelSelect();                                             // 更新關卡切換下拉選單 (select)
+        GameState.currentLevel = 0;                                      // 將當前關卡重置為第一關（索引 0）
+        const gameArea = DOM.gameArea();                                 // 取得遊戲區域 DOM 元素
+        if (gameArea) gameArea.classList.remove("hidden");               // 移除 "hidden" 類別，顯示打字遊戲主要區域
+        showLevel();                                                     // 載入並渲染第一關的文字與 UI
         
-        setStatus(`✅ 已載入第 ${startPage}-${endPage} 頁！共 ${GameState.getTotalLevels()} 個關卡`);
-        GameState.setLoading("loaded");
+        setStatus(`✅ 已載入第 ${startPage}-${endPage} 頁！共 ${GameState.getTotalLevels()} 個關卡`);    // 於狀態列顯示成功載入頁數與總關卡數
+        GameState.setLoading("loaded");                                                                 // 將全域載入狀態更新為完成 "loaded"
         
-    } catch (error) {
-        console.error("PDF Error:", error);
-        setStatus("❌ PDF 處理失敗：" + error.message);
-        GameState.setLoading("loaded");
+    } catch (error) {                                                    // 捕捉 PDF 解析或處理過程中的非同步錯誤
+        console.error("PDF Error:", error);                              // 於控制台印出錯誤詳細資訊
+        setStatus("❌ PDF 處理失敗：" + error.message);                  // 於 UI 顯示錯誤訊息
+        GameState.setLoading("loaded");                                  // 重置載入狀態為 "loaded"
     }
 }
 // =====================================================
-// 9️⃣ Game Core Logic
+// Game Core Logic
 // =====================================================
 
 function createLevels(text, charsPerLevel, delimiter = null) {      // 定義切分關卡的函式，接收文本 (text)、每關目標字數 (charsPerLevel)，以及可選切分分隔符號
 
     if (delimiter && text.includes(delimiter)) {        		// 若有傳入 delimiter 且文本中包含該分隔符號 (例如 "[NEXT]" 或 "\n\n")
         return text
-            .split(delimiter)                           // 依照分隔符號將文本切分成陣列
-            .map(chunk => chunk.trim())               	// 切除每一段落前後的空白字元
-            .filter(chunk => chunk.length > 0);       	// 過濾掉空字串，確保只保留有內容的段落 
+            .split(delimiter)                              // 依照分隔符號將文本切分成陣列
+            .map(chunk => chunk.trim())               	  // 切除每一段落前後的空白字元
+            .filter(chunk => chunk.length > 0);       	  // 過濾掉空字串，確保只保留有內容的段落 
     }
-    const result = [];                                             // 儲存最終切分出來的所有關卡文本
-    const cleanText = text.replace(/[ \t]+/g, " ").trim();         // 將多個連續的空格或 Tab 縮排整理成單一空格，並去除全清單首尾空白
-    let start = 0;                                                	// 紀錄當前切分的起始字元索引 (Index)
+    const result = [];                                                // 儲存最終切分出來的所有關卡文本
+    const cleanText = text.replace(/[ \t]+/g, " ").trim();            // 將多個連續的空格或 Tab 縮排整理成單一空格，並去除全清單首尾空白
+    let start = 0;                                                	 // 紀錄當前切分的起始字元索引 (Index)
     
-    while (start < cleanText.length) {                                    // 迴圈讀取文本，直到處理完最後一個字元
-        let end = Math.min(start + charsPerLevel, cleanText.length);      // 先計算預設的結束位置（起始位置 + 每關目標字數），但不能超過文本總長度
-        if (end < cleanText.length) {                                     // 如果算出的結束位置尚未到達文本末端，則尋找最佳的「斷句/斷詞」點
-            const sentenceEnd = cleanText.lastIndexOf(".", end);           // 從預設 end 位置往回搜尋最近的句號 (.)、問號 (?) 或驚嘆號 (!)
-            const questionEnd = cleanText.lastIndexOf("?", end);            
+    while (start < cleanText.length) {                                        // 迴圈讀取文本，直到處理完最後一個字元
+        let end = Math.min(start + charsPerLevel, cleanText.length);          // 先計算預設的結束位置（起始位置 + 每關目標字數），但不能超過文本總長度
+        if (end < cleanText.length) {                                         // 如果算出的結束位置尚未到達文本末端，則尋找最佳的「斷句/斷詞」點
+            const sentenceEnd = cleanText.lastIndexOf(".", end);              // 從預設 end 位置往回搜尋最近的句號 (.)、問號 (?) 或驚嘆號 (!)
+            const questionEnd = cleanText.lastIndexOf("?", end);              // 從預設 end 位置往回搜尋最近的問號 (?)
             const exclamationEnd = cleanText.lastIndexOf("!", end);
-            const bestSentenceEnd = Math.max(sentenceEnd, questionEnd, exclamationEnd);
-            const spaceEnd = cleanText.lastIndexOf(" ", end);
+            const bestSentenceEnd = Math.max(sentenceEnd, questionEnd, exclamationEnd);    // 比較並取得最靠後（最接近 end）的句尾標點符號索引值            
+            const spaceEnd = cleanText.lastIndexOf(" ", end);                              // 從預設 end 位置往回搜尋最近的空白鍵（空格）
             
-            if (bestSentenceEnd > start + 300) {
+            if (bestSentenceEnd > start + 300) {         // 【優先權1】：如果在當前關卡區段內（超過 start + 300 字）有找到完美的句尾標點
                 end = bestSentenceEnd + 1;
-            } else if (spaceEnd > start + 300) {
+            } else if (spaceEnd > start + 300) {         // 【優先權2】：若沒有好的標點，但有找到單字間的空格（避免把英文單字從中間切斷
                 end = spaceEnd;
             }
         }  
-        const levelText = cleanText.slice(start, end).trim();
-        if (levelText.length > 0) result.push(levelText);
-        start = end;
+        const levelText = cleanText.slice(start, end).trim();      // 依據計算出的 start 與 end 位置切割出當前關卡的文章段落，並切除首尾多餘空白
+        if (levelText.length > 0) result.push(levelText);          // 只要切割出來的段落含有實際內容，就存入關卡陣列 result 中
+        start = end;                                               // 將下一次切分的起始點 (start) 設定為本次的結束點 (end)
     }  
     return result;
 }
-
-
 function showLevel() {
-    if (!GameState.getTotalLevels()) return;
+    if (!GameState.getTotalLevels()) return;         // 安全檢查：若目前沒有任何關卡資料，則直接結束不執行
     
-    const text = GameState.getCurrentText();
-    
-    const levelDisplay = DOM.levelDisplay();
+    const text = GameState.getCurrentText();         // 從全域狀態中取得當前關卡的文字內容
+   
+    const levelDisplay = DOM.levelDisplay();         // 取得顯示關卡資訊的 DOM 元素（例如："Level 1 / 5"）
     if (levelDisplay) {
-        levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;
+        levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;    // 更新UI顯示目前的關卡進度 (索引值 +1 轉換為使用者習慣的數字)
     }
     
-    const levelSelect = DOM.levelSelect();
-    if (levelSelect) levelSelect.value = GameState.currentLevel.toString();
+    const levelSelect = DOM.levelSelect();                                        // 取得關卡下拉選單 DOM 元素
+    if (levelSelect) levelSelect.value = GameState.currentLevel.toString();       // 將下拉選單的值同步為當前的關卡索引值
     
-    const currentAnnotations = GameState.currentAnnotations || [];      // Pass current level text and Chinese annotations to renderText
-    renderText(text, currentAnnotations);
+    const currentAnnotations = GameState.currentAnnotations || [];                // 取得當前關卡的中文註解資料，若無則預設為空陣列
+    renderText(text, currentAnnotations);       // 呼叫 renderText 渲染文章內容與中文標註到畫面上
     
-    const typingInput = DOM.typingInput();
+    const typingInput = DOM.typingInput();      // 取得打字輸入框 DOM 元素
     if (typingInput) {
-        typingInput.value = "";
-        typingInput.disabled = false;
+        typingInput.value = "";                 // 清空輸入框內容
+        typingInput.disabled = false;           // 啟用輸入框
     }
-    
-    GameState.gameFinished = false;
+    GameState.gameFinished = false;      // 重置遊戲完成狀態與計時器的開始時間
     GameState.startTime = null;
     
-    updateStats();
+    updateStats();                                 // 更新畫面統計數據 (如 WPM 速率、正確率) 與導覽按鈕狀態 (如 上一關/下一關 按鈕)
     updateNavigationButtons();
-    
-    setTimeout(() => { 
+    setTimeout(() => {                             // 延遲 100毫秒後自動游標聚焦到輸入框，方便直接開始打字
         if (typingInput) typingInput.focus(); 
     }, 100);
 }
 
-function renderText(text, annotations = []) {
-    const textDisplay = DOM.textDisplay();
-    if (!textDisplay) return;
-    
-    textDisplay.innerHTML = "";
+function renderText(text, annotations = []) {                  // 將文字渲染到DOM畫面上，包含字元分割與中文標註Ruby text處理
+    const textDisplay = DOM.textDisplay();                     // 取得顯示文章內容 DOM 容器
+    if (!textDisplay) return; 
+   
+    textDisplay.innerHTML = "";                                 // 清空先前的內容
+    const tokens = text.split(/(\s+|[^\w\s]+)/);                // 使用正則表達式拆分文本，同時保留單字、空白及標點符號
+    let globalCharIndex = 0;                                    // 紀錄全域字元索引（用於打字比對與游標位置）
 
-    // Split text keeping words, spaces, and punctuations
-    const tokens = text.split(/(\s+|[^\w\s]+)/);
-
-    let globalCharIndex = 0;
-
-    tokens.forEach(token => {
-        // Find matching Chinese annotation for the current word token
-        const matchedAnnotation = annotations.find(
+    tokens.forEach(token => {                                  // 巡覽每一個拆分出來的 token（單字、空白或標點
+        const matchedAnnotation = annotations.find(            // 尋找當前 token 是否有對應的中文註解（比對時忽略大小寫）
             a => a.word.toLowerCase() === token.toLowerCase()
         );
 
-        // Wrap with <ruby> if annotation exists, otherwise use Fragment
-        const tokenContainer = matchedAnnotation ? document.createElement("ruby") : document.createDocumentFragment();
+        const tokenContainer = matchedAnnotation ? document.createElement("ruby") : document.createDocumentFragment();   // 若有註解，用<ruby>標籤作容器；無則用不產生多餘HTML的DocumentFragment
 
-        for (let j = 0; j < token.length; j++) {
+        for (let j = 0; j < token.length; j++) {               // 巡覽當前 token 中的每一個字元
             const char = token[j];
             const span = document.createElement("span");
-            span.className = "char";
-            span.textContent = char;
+            span.className = "char";                           // 設定基本 class 為 "char"
+            span.textContent = char;                           // 設定字元內容
             
-            span.dataset.index = globalCharIndex;
+            span.dataset.index = globalCharIndex;             // 寫入 HTML5 dataset 屬性記錄字元全域索引  
 
-            if (globalCharIndex === 0) span.classList.add("current");
-            if (/^[A-Za-z]$/.test(char)) span.classList.add("clickable-word");
+            if (globalCharIndex === 0) span.classList.add("current");               // 若第1個字元，加上 "current"類別標記為當前游標位置
+            if (/^[A-Za-z]$/.test(char)) span.classList.add("clickable-word");      // 若為英文字母，加上 "clickable-word" 類別使其可被點擊查單字
 
-            tokenContainer.appendChild(span);
-            globalCharIndex++;
+            tokenContainer.appendChild(span);                                       // 將字元span標籤加入token容器中
+            globalCharIndex++;                                                      // 字元索引累加
         }
 
-        // Add <rt> for displaying Chinese annotation above word
-        if (matchedAnnotation) {
+        if (matchedAnnotation) {                               // 若存在對應註解，建立 <rt> 標籤將中文註解顯示在單字上方
             const rt = document.createElement("rt");
-            rt.className = "word-note";
-            rt.textContent = matchedAnnotation.note;
-            tokenContainer.appendChild(rt);
+            rt.className = "word-note";                        // 設定標註類別
+            rt.textContent = matchedAnnotation.note;           // 設定註解內容（如中文翻譯）
+            tokenContainer.appendChild(rt);                    // 加入 <ruby> 容器中
         }
-
-        textDisplay.appendChild(tokenContainer);
+        textDisplay.appendChild(tokenContainer);               // 將組合完成token容器放入文章顯示區域中
     });
 }
 
 function updateCharacterDisplay(typed, target) {
-    const textDisplay = DOM.textDisplay();
-    if (!textDisplay) return;
-    
-    const chars = textDisplay.querySelectorAll(".char");
-    
-    chars.forEach((char, index) => {
-        char.classList.remove("correct", "incorrect", "current");
-        
-        if (index < typed.length) {
-            char.classList.add(typed[index] === target[index] ? "correct" : "incorrect");
+    const textDisplay = DOM.textDisplay();                                  // 取得顯示文章內容的 DOM 容器
+    if (!textDisplay) return;                                               // 安全檢查：若找不到顯示容器則直接結束
+
+    const chars = textDisplay.querySelectorAll(".char");                    // 取得容器內所有字元 DOM 元素 (帶有 .char 類別)
+
+    chars.forEach((char, index) => {                                        // 巡覽每一個字元元素，比對打字狀態
+        char.classList.remove("correct", "incorrect", "current");           // 清除先前的狀態類別，重置字元樣式
+
+        if (index < typed.length) {                                                             // 【已輸入的位置】：若索引小於輸入長度
+            char.classList.add(typed[index] === target[index] ? "correct" : "incorrect");       // 比對正確加上 "correct"，錯誤加上 "incorrect"
         }
-        
-        if (index === typed.length) {
-            char.classList.add("current");
+        if (index === typed.length) {                                       // 【當前游標位置】：若索引等於輸入長度
+            char.classList.add("current");                                  // 加入 "current" 類別標示為當前輸入焦點
         }
     });
-    
-    const current = textDisplay.querySelector(".current");
-    if (current) {
-        current.scrollIntoView({ behavior: "smooth", block: "center" });
+    const current = textDisplay.querySelector(".current");                  // 取得被標記為當前游標的 DOM 元素
+    if (current) {                                                          // 若找到游標元素
+        current.scrollIntoView({ behavior: "smooth", block: "center" });    // 自動平滑滾動畫面，讓游標維持在垂直中央
     }
 }
 
 function updateStats() {
-    const typingInput = DOM.typingInput();
-    if (!typingInput) return;
-    
-    const typed = typingInput.value;
-    const target = GameState.getCurrentText();
-    
-    let correct = 0;
-    for (let i = 0; i < typed.length && i < target.length; i++) {
-        if (typed[i] === target[i]) correct++;
-    }
-    
-    const accuracy = typed.length > 0 ? (correct / typed.length) * 100 : 100;
-    const accuracyDisplay = DOM.accuracyDisplay();
-    if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;
-    
-    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;
-    const progressDisplay = DOM.progressDisplay();
-    if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(0)}%`;
-    
-    let wpm = 0;
-    if (GameState.startTime !== null && typed.length > 0) {
-        const elapsedMinutes = (Date.now() - GameState.startTime) / 1000 / 60;
-        if (elapsedMinutes > 0) wpm = (correct / 5) / elapsedMinutes;
-    }
-    const wpmDisplay = DOM.wpmDisplay();
-    if (wpmDisplay) wpmDisplay.textContent = Math.round(wpm);
+    const typingInput = DOM.typingInput();                                     // 取得打字輸入框 DOM 元素
+    if (!typingInput) return;                                                  // 安全檢查：若輸入框不存在則直接結束
 
-    const container = document.getElementById('turtle-track');
-    const image = document.getElementById('turtle-display');
-    if (image) {
-        image.src = "img.svg";     
+    const typed = typingInput.value;                                           // 取得使用者目前已輸入的文字內容
+    const target = GameState.getCurrentText();                                 // 取得當前關卡目標要打的文字內容
+
+    let correct = 0;                                                                // 初始化正確字數計數器
+    for (let i = 0; i < typed.length && i < target.length; i++) {                  // 巡覽輸入內容，逐字與目標內容比對
+        if (typed[i] === target[i]) correct++;                                     // 若字元完全吻合，正確字數加 1
     }
-    
+    const accuracy = typed.length > 0 ? (correct / typed.length) * 100 : 100;                             // 計算正確率（百分比），若尚未打字則預設為 100%
+    const accuracyDisplay = DOM.accuracyDisplay();                                                        // 取得顯示正確率的 DOM 元素
+    if (accuracyDisplay) accuracyDisplay.textContent = `${accuracy.toFixed(1)}%`;                         // 將正確率保留小數點後 1 位並更新 UI
+
+    const progress = target.length > 0 ? Math.min((typed.length / target.length) * 100, 100) : 0;         // 計算打字進度百分比，最高限制為 100%
+    const progressDisplay = DOM.progressDisplay();                                                        // 取得顯示進度的 DOM 元素
+    if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(0)}%`;                         // 將進度取整數並更新 UI
+
+    let wpm = 0;                                                                         // 初始化 WPM (Words Per Minute, 每分鐘字數) 速率
+    if (GameState.startTime !== null && typed.length > 0) {                              // 確保已開始計時且使用者已開始打字
+        const elapsedMinutes = (Date.now() - GameState.startTime) / 1000 / 60;           // 計算從開始打字到現在所經過的分鐘數
+        if (elapsedMinutes > 0) wpm = (correct / 5) / elapsedMinutes;                    // 以標準「5 個正確字元 = 1 個單字」公式計算 WPM
+    }
+    const wpmDisplay = DOM.wpmDisplay();                                 // 取得顯示 WPM 的 DOM 元素
+    if (wpmDisplay) wpmDisplay.textContent = Math.round(wpm);            // 將 WPM 四捨五入為整數並更新 UI
+
+    const container = document.getElementById('turtle-track');           // 取得烏龜跑道 (軌道容器) DOM 元素
+    const image = document.getElementById('turtle-display');             // 取得烏龜 (角色圖片) DOM 元素
+    if (image) {
+        image.src = "img.svg";                                           // 設定烏龜圖片的檔案來源為 "img.svg"
+    }    
     if (container && image) {
-        const maxX = container.offsetWidth - image.offsetWidth;
-        const correctRatio = target.length > 0 ? Math.min(correct / target.length, 1) : 0;
-        const currentX = maxX * correctRatio;
-        image.style.left = `${currentX}px`;
+        const maxX = container.offsetWidth - image.offsetWidth;                                     // 計算烏龜能在軌道上移動的最大 X 軸像素距離
+        const correctRatio = target.length > 0 ? Math.min(correct / target.length, 1) : 0;          // 計算正確打字量的比例 (0 到 1 之間)
+        const currentX = maxX * correctRatio;                                                       // 依據正確比例計算烏龜當前應在的 X 軸位置 (px)
+        image.style.left = `${currentX}px`;                                                         // 動態更新烏龜圖片的左側距離 (left) 以實作跑道移動效果
     }
 }
-
 function finishLevel() {
-    GameState.gameFinished = true;
-    const typingInput = DOM.typingInput();
-    if (typingInput) typingInput.disabled = true;
-    
-    updateStats();
-    
-    const image = document.getElementById('turtle-display');
+    GameState.gameFinished = true;                                                   // 將全域狀態標記為已完成當前關卡 (gameFinished = true)
+    const typingInput = DOM.typingInput();                                           // 取得打字輸入框 DOM 元素
+    if (typingInput) typingInput.disabled = true;                                    // 停用打字輸入框，防止關卡完成後繼續輸入
+
+    updateStats();                                                                   // 呼叫更新統計資料函式（最後確認 WPM、正確率與烏龜位置）
+
+    const image = document.getElementById('turtle-display');                         // 取得烏龜圖片/動圖 DOM 元素
     if (image) {
-        image.src = "1f422.gif";     
+        image.src = "1f422.gif";                                                     // 將烏龜圖片替換為慶祝/完成動畫檔 "1f422.gif"
     }
-    
-    const accuracy = DOM.accuracyDisplay()?.textContent || "0%";
-    const wpm = DOM.wpmDisplay()?.textContent || "0";
-    
-    if (GameState.currentLevel < GameState.getTotalLevels() - 1) {
-        setStatus(`🎉 Level ${GameState.currentLevel + 1} 完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);
+    const accuracy = DOM.accuracyDisplay()?.textContent || "0%";                     // 取得當前顯示的正確率字串（若無則預設為 "0%"）
+    const wpm = DOM.wpmDisplay()?.textContent || "0";                                // 取得當前顯示的 WPM 字串（若無則預設為 "0"）
+
+    if (GameState.currentLevel < GameState.getTotalLevels() - 1) {                                            // 判斷是否還有下一關（當前關卡索引未達最後一關）
+        setStatus(`🎉 Level ${GameState.currentLevel + 1} 完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);       // 顯示單關完成訊息與數據
     } else {
-        setStatus(`🏆 全部完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);
+        setStatus(`🏆 全部完成！ Accuracy: ${accuracy} | WPM: ${wpm}`);                                       // 顯示通關完成訊息與總數據
     }
 }
 
 function navigateLevel(direction) {
-    const newLevel = GameState.currentLevel + direction;
-    if (newLevel >= 0 && newLevel < GameState.getTotalLevels()) {
-        GameState.currentLevel = newLevel;
-        showLevel();
+    const newLevel = GameState.currentLevel + direction;                    // 計算目標關卡索引（傳入 1 代表下一關，-1 代表上一關）
+    if (newLevel >= 0 && newLevel < GameState.getTotalLevels()) {           // 檢查目標關卡索引是否在合法範圍內（大於等於 0 且小於總關卡數）
+        GameState.currentLevel = newLevel;                                  // 更新全域狀態中的當前關卡索引值
+        showLevel();                                                        // 呼叫 showLevel 載入並渲染新關卡的內容
     }
 }
 
 function updateNavigationButtons() {
-    const prevBtn = DOM.prevBtn();
-    const nextBtn = DOM.nextBtn();
-    
-    if (prevBtn) prevBtn.disabled = GameState.currentLevel === 0;
-    if (nextBtn) nextBtn.disabled = GameState.currentLevel === GameState.getTotalLevels() - 1;
+    const prevBtn = DOM.prevBtn();                                                                     // 取得「上一關」按鈕 DOM 元素
+    const nextBtn = DOM.nextBtn();                                                                     // 取得「下一關」按鈕 DOM 元素
+
+    if (prevBtn) prevBtn.disabled = GameState.currentLevel === 0;                                      // 若位於第一關 (索引 0)，則停用「上一關」按鈕
+    if (nextBtn) nextBtn.disabled = GameState.currentLevel === GameState.getTotalLevels() - 1;         // 若位於最後一關，則停用「下一關」按鈕
 }
 
 function updateLevelSelect() {
-    const levelSelect = DOM.levelSelect();
-    if (!levelSelect || GameState.getTotalLevels() === 0) return;
-    
-    levelSelect.innerHTML = "";
-    GameState.levels.forEach((_, index) => {
-        const option = document.createElement("option");
-        option.value = index.toString();
-        option.textContent = `Level ${index + 1} / ${GameState.getTotalLevels()}`;
-        levelSelect.appendChild(option);
-    });
-    levelSelect.disabled = false;
-}
+    const levelSelect = DOM.levelSelect();                                                  // 取得關卡切換下拉選單 (select) DOM 元素
+    if (!levelSelect || GameState.getTotalLevels() === 0) return;                           // 若找不到選單或目前總關卡數為 0，則直接結束不執行
 
+    levelSelect.innerHTML = "";                                                             // 清空下拉選單中既有的所有選項 (option)
+    GameState.levels.forEach((_, index) => {                                                // 巡覽關卡陣列，依據關卡總數重建選項列表
+        const option = document.createElement("option");                                    // 建立全新的 <option> DOM 元素
+        option.value = index.toString();                                                    // 設定選項的值為該關卡的索引字串 (例如 "0", "1")
+        option.textContent = `Level ${index + 1} / ${GameState.getTotalLevels()}`;          // 設定選單顯示文字 (例如 "Level 1 / 5")
+        levelSelect.appendChild(option);                                                    // 將選項加入下拉選單中
+    });
+    levelSelect.disabled = false;                                                           // 啟用關卡切換下拉選單，允許使用者自行選關
+}
 // =====================================================
-// 🔟 Dictionary & Translation Logic
+// Dictionary & Translation Logic 字典與翻譯邏輯
 // =====================================================
 
 async function translateToZh(text) {
-    if (TranslationCache.has(text)) {
-        return TranslationCache.get(text);
+    if (TranslationCache.has(text)) {                                    // 檢查快取：若 TranslationCache 中已存有該文字的翻譯結果
+        return TranslationCache.get(text);                               // 直接回傳快取的翻譯結果，避免重複發送 API 請求
     }
-    
     try {
-        const params = new URLSearchParams({
-            q: text,
-            langpair: "en|zh-TW"
+        const params = new URLSearchParams({                                // 建立 URL 查詢參數物件
+            q: text,                                                        // 傳入要翻譯的文字內容 (q)
+            langpair: "en|zh-TW"                                            // 設定翻譯語言對：英文 (en) 轉 繁體中文 (zh-TW)
         });
+        const res = await fetch(`${CONFIG.TRANSLATION_API}?${params}`);     // 透過 fetch 發送非同步 GET 請求至翻譯 API
+        const transData = await res.json();                                 // 將 API 回傳的資料解析為 JSON 物件
+        const result = transData.responseData?.translatedText || "";        // 使用可選鏈運算子取出翻譯後的文字，若無則預設為空字串
         
-        const res = await fetch(`${CONFIG.TRANSLATION_API}?${params}`);
-        const transData = await res.json();
-        const result = transData.responseData?.translatedText || "";
-        
-        TranslationCache.set(text, result);
-        return result;
-    } catch (error) {
-        console.warn("Translation failed:", error);
-        return "";
+        TranslationCache.set(text, result);                                 // 將本次翻譯結果寫入 TranslationCache 快取中
+        return result;                                                      // 回傳翻譯後的中文結果
+    } catch (error) {                                                       // 捕捉網路請求或 JSON 解析過程中的例外錯誤
+        console.warn("Translation failed:", error);                         // 於控制台印出翻譯失敗的警告訊息與錯誤詳情
+        return "";                                                          // 翻譯失敗時回傳空字串作為降級備援
     }
 }
 
 async function lookupWord(word) {
-    word = word.trim().toLowerCase();
-    if (!word) return;
-    
-    GameState.currentLookupWord = word;
-    
-    const dictionaryPopup = DOM.dictionaryPopup();
-    const dictionaryWord = DOM.dictionaryWord();
-    const dictionaryContent = DOM.dictionaryContent();
-    
-    if (!dictionaryPopup || !dictionaryWord || !dictionaryContent) return;
-    
-    dictionaryPopup.classList.remove("hidden");
-    dictionaryWord.textContent = word;
-    
-    const dictionaryPhonetic = DOM.dictionaryPhonetic();
-    if (dictionaryPhonetic) dictionaryPhonetic.textContent = "Loading...";
-    dictionaryContent.innerHTML = "🔎 正在查字典與翻譯...";
-    
-    const dictionaryAudio = DOM.dictionaryAudio();
-    if (dictionaryAudio) dictionaryAudio.disabled = false;
-    
-    AudioManager.speak(word);
-    
+    word = word.trim().toLowerCase();                                   // 整理輸入的單字：去除前後空白並轉為小寫
+    if (!word) return;                                                  // 若單字為空則直接結束
+
+    GameState.currentLookupWord = word;                                 // 將目前查詢的單字記錄到全域狀態中
+
+    const dictionaryPopup = DOM.dictionaryPopup();                       // 取得字典彈出視窗 DOM 元素
+    const dictionaryWord = DOM.dictionaryWord();                         // 取得顯示單字標題的 DOM 元素
+    const dictionaryContent = DOM.dictionaryContent();                   // 取得顯示字典內容/解釋的 DOM 元素
+
+    if (!dictionaryPopup || !dictionaryWord || !dictionaryContent) return;          // 安全檢查：若缺少關鍵 DOM 元素則直接結束
+
+    dictionaryPopup.classList.remove("hidden");                                    // 移除 "hidden" 類別以顯示字典彈出視窗
+    dictionaryWord.textContent = word;                                             // 於標題處顯示當前查詢的單字
+
+    const dictionaryPhonetic = DOM.dictionaryPhonetic();                           // 取得音標顯示 DOM 元素
+    if (dictionaryPhonetic) dictionaryPhonetic.textContent = "Loading...";         // 於音標處顯示載入中狀態
+    dictionaryContent.innerHTML = "🔎 正在查字典與翻譯...";                         // 於內容區顯示查詢中提示文字
+
+    const dictionaryAudio = DOM.dictionaryAudio();                            // 取得發音按鈕 DOM 元素
+    if (dictionaryAudio) dictionaryAudio.disabled = false;                    // 啟用發音按鈕
+
+    AudioManager.speak(word);                                                 // 立即發音：使用 TTS 優先朗讀單字，提供即時語音回饋
+
     try {
-        const response = await fetch(`${CONFIG.DICTIONARY_API}${encodeURIComponent(word)}`);
-        if (!response.ok) throw new Error("Word not found");
-        
-        const data = await response.json();
-        if (!data || !data.length) throw new Error("No dictionary result");
-        
-        const entry = data[0];
-        
-        const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text && p.text.trim())?.text;
-        if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "";
-        
-        const audioData = entry.phonetics?.find(p => p.audio && p.audio.trim().length > 0);
-        if (audioData && audioData.audio) {
-            let audioUrl = audioData.audio;
-            if (audioUrl.startsWith("//")) {
-                audioUrl = "https:" + audioUrl;
+        const response = await fetch(`${CONFIG.DICTIONARY_API}${encodeURIComponent(word)}`);   // 發送 API 請求向字典服務查詢單字
+        if (!response.ok) throw new Error("Word not found");                                   // 若 HTTP 狀態不成功（例如 404）則拋出錯誤
+
+        const data = await response.json();                                                    // 解析 API 回傳的 JSON 資料
+        if (!data || !data.length) throw new Error("No dictionary result");                    // 若回傳資料無內容則拋出錯誤
+
+        const entry = data[0];                                                                 // 取得第一條字典結果 Entry
+
+        const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text && p.text.trim())?.text;    // 取得音標（優先使用主音標，次選 phonetics 陣列中的非空白文字）
+        if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "";                         // 於UI更新音標（若無則顯示空字串）
+
+        const audioData = entry.phonetics?.find(p => p.audio && p.audio.trim().length > 0);           // 尋找含有真人發音音訊檔的項目
+        if (audioData && audioData.audio) {                                                           // 若找到發音檔網址
+            let audioUrl = audioData.audio;                                                           // 取得音訊檔 URL
+            if (audioUrl.startsWith("//")) {                                                          // 若 URL 為相對協定格式（以//開頭）
+                audioUrl = "https:" + audioUrl;                                                       // 補上 https: 協定前綴
             }
-            
-            fetch(audioUrl)
+            fetch(audioUrl)                                                // 下載發音音訊檔案
                 .then(res => {
-                    if (!res.ok) throw new Error("Audio fetch failed");
-                    return res.blob();
+                    if (!res.ok) throw new Error("Audio fetch failed");    // 下載失敗時拋出錯誤
+                    return res.blob();                                     // 將回應轉換為 Blob 二進位物件
                 })
                 .then(blob => {
-                    const blobUrl = URL.createObjectURL(blob);
-                    AudioManager.setAudio(blobUrl, word);
+                    const blobUrl = URL.createObjectURL(blob);             // 為 Blob 建立本地臨時 URL
+                    AudioManager.setAudio(blobUrl, word);                  // 將真人發音設定至 AudioManager 中
                 })
                 .catch(() => {
-                    AudioManager.speak(word);
+                    AudioManager.speak(word);                              // 若真人發音檔載入失敗，降級使用 TTS 發音
                 });
         }
-        
-        dictionaryContent.innerHTML = "";
-        if (!entry.meanings || entry.meanings.length === 0) {
-            dictionaryContent.innerHTML = "<p>❌ 沒有找到解釋。</p>";
-            return;
+        dictionaryContent.innerHTML = "";                                    // 清空查詢中的提示文字，準備填入解釋
+        if (!entry.meanings || entry.meanings.length === 0) {                // 檢查是否有釋義資料
+            dictionaryContent.innerHTML = "<p>❌ 沒有找到解釋。</p>";         // 若無釋義，顯示查無結果訊息
+            return;                                                          // 結束處理
         }
-        
-        for (const meaning of entry.meanings) {
-            const section = document.createElement("div");
-            section.className = "dictionary-definition";
-            
-            const part = document.createElement("div");
-            part.className = "dictionary-part";
-            part.textContent = meaning.partOfSpeech || "Definition";
-            section.appendChild(part);
-            
-            if (meaning.definitions) {
-                const defs = meaning.definitions.slice(0, 3);
-                for (let index = 0; index < defs.length; index++) {
+        for (const meaning of entry.meanings) {                         // 巡覽單字的所有詞性與解釋 (meanings)
+            const section = document.createElement("div");              // 建立詞性區塊容器
+            section.className = "dictionary-definition";                // 設定 CSS 類別
+
+            const part = document.createElement("div");                 // 建立詞性標籤 DOM
+            part.className = "dictionary-part";                         // 設定 CSS 類別
+            part.textContent = meaning.partOfSpeech || "Definition";    // 顯示詞性（例如 noun, verb，若無則顯示 Definition）
+            section.appendChild(part);                                  // 加入至詞性區塊中
+
+            if (meaning.definitions) {                                  // 若存在定義列表
+                const defs = meaning.definitions.slice(0, 3);           // 只取前 3 條主要定義以維持介面簡潔
+                for (let index = 0; index < defs.length; index++) {     // 巡覽每條定義
                     const def = defs[index];
-                    const div = document.createElement("div");
-                    div.className = "dictionary-definition-text";
-                    
-                    (async () => {
-                        const zhText = await translateToZh(def.definition);
-                        const zhDisplay = zhText ? `<br><span style="color: #2b6cb0; font-size: 0.9em;">🇹🇼 ${zhText}</span>` : "";
-                        div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}${zhDisplay}`;
+                    const div = document.createElement("div");          // 建立定義文字容器
+                    div.className = "dictionary-definition-text";       // 設定 CSS 類別
+
+                    (async () => {                                                      // 啟動非同步即時翻譯
+                        const zhText = await translateToZh(def.definition);             // 將英文定義翻譯為繁體中文
+                        const zhDisplay = zhText ? `<br><span style="color: #2b6cb0; font-size: 0.9em;">🇹🇼 ${zhText}</span>` : "";    // 組合中文翻譯 HTML
+                        div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}${zhDisplay}`;                               // 非同步成功後更新含中文翻譯HTML
                     })();
-                    
-                    div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}`;
-                    section.appendChild(div);
-                    
-                    if (def.example) {
-                        const example = document.createElement("div");
-                        example.className = "dictionary-example";
-                        example.textContent = `Example: "${def.example}"`;
-                        section.appendChild(example);
+
+                    div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}`;      // 同步先渲染英文定義內容（確保畫面不延遲）
+                    section.appendChild(div);                                                // 將定義文字容器加入詞性區塊
+
+                    if (def.example) {                                        // 若該條定義附有例句
+                        const example = document.createElement("div");        // 建立例句 DOM 容器
+                        example.className = "dictionary-example";             // 設定 CSS 類別
+                        example.textContent = `Example: "${def.example}"`;    // 設定例句文字內容
+                        section.appendChild(example);                         // 將例句加入詞性區塊
                     }
                 }
             }
-            
-            dictionaryContent.appendChild(section);
+            dictionaryContent.appendChild(section);                     // 將組合完成的詞性區塊加入字典內容容器中
         }
-        
-    } catch (error) {
-        console.warn("Dictionary lookup failed:", error);
-        if (dictionaryPhonetic) dictionaryPhonetic.textContent = "";
-        dictionaryContent.innerHTML = "<p>⚠️ 字典 API 連線異常，仍可點擊發音按鈕收聽語音。</p>";
+
+    } catch (error) {                                                                                // 捕捉字典 API 連線或解析失敗的錯誤
+        console.warn("Dictionary lookup failed:", error);                                            // 控制台印出警告訊息
+        if (dictionaryPhonetic) dictionaryPhonetic.textContent = "";                                 // 清空音標文字
+        dictionaryContent.innerHTML = "<p>⚠️ 字典 API 連線異常，仍可點擊發音按鈕收聽語音。</p>";        // 顯示降級提示訊息
     }
 }
 
 function closeDictionary() {
-    const dictionaryPopup = DOM.dictionaryPopup();
-    if (dictionaryPopup) dictionaryPopup.classList.add("hidden");
+    const dictionaryPopup = DOM.dictionaryPopup();                       // 取得字典彈出視窗 DOM 元素
+    if (dictionaryPopup) dictionaryPopup.classList.add("hidden");        // 加上 "hidden" 類別以關閉/隱藏字典彈出視窗
 }
 
 function playCurrentAudio() {
-    AudioManager.play();
+    AudioManager.play();                                                // 呼叫音訊管理者播放當前單字的語音（真人發音或 TTS）
 }
-
 // =====================================================
-// 1️⃣1️⃣ Article Loader & Custom Text Management
+// Article Loader & Custom Text Management 文章載入器和自訂文字管理
 // =====================================================
 
 async function loadArticlesFromGit() {
-    const categorySelect = DOM.categorySelect();
-    const articleSelect = DOM.articleSelect();
-    const articleContainer = DOM.articleContainer();
-    const customTextInput = DOM.customTextInput();
+    const categorySelect = DOM.categorySelect();                         // 取得文章分類下拉選單 DOM 元素
+    const articleSelect = DOM.articleSelect();                           // 取得文章標題下拉選單 DOM 元素
+    const articleContainer = DOM.articleContainer();                     // 取得文章內容顯示區域 DOM 元素
+    const customTextInput = DOM.customTextInput();                       // 取得自訂文字輸入框 DOM 元素
     
-    if (!categorySelect || !articleSelect) return;
+    if (!categorySelect || !articleSelect) return;                      // 安全檢查：若缺少選單 DOM 元素則直接結束不執行
     
     try {
-        const response = await fetch("./articles.json");
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await fetch("./articles.json");                                  // 透過 AJAX (fetch) 讀取相對路徑下的 articles.json 檔案
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);      // 若 HTTP 狀態碼非 200 OK 則拋出例外錯誤
         
-        const categories = await response.json();
+        const categories = await response.json();                                        // 將取得的 JSON 格式回應解析為 JavaScript 物件/陣列
         
-        // 1. Initialize category options　
-        categorySelect.innerHTML = '<option value="">-- 選擇分類 --</option>';
-        articleSelect.innerHTML = '<option value="">-- 請先選擇分類 --</option>';
-        articleSelect.disabled = true;
+        // 1. Initialize category options 
+        categorySelect.innerHTML = '<option value="">-- 選擇分類 --</option>';          // 初始化分類選單的預設提示選項
+        articleSelect.innerHTML = '<option value="">-- 請先選擇分類 --</option>';       // 初始化文章選單的預設提示選項
+        articleSelect.disabled = true;                                                 // 停用文章選單（需先選擇分類後才啟用）
         
-        categories.forEach((cat, index) => {
-            const option = document.createElement("option");
-            option.value = index;
-            option.textContent = cat.category;
-            categorySelect.appendChild(option);
+        categories.forEach((cat, index) => {                             // 巡覽所有文章分類資料
+            const option = document.createElement("option");             // 建立選單選項 <option> 元素
+            option.value = index;                                        // 設定選項值為該分類在陣列中的索引值
+            option.textContent = cat.category;                           // 設定選項顯示文字為分類名稱
+            categorySelect.appendChild(option);                          // 將分類選項加入分類下拉選單中
         });
         
         // 2. On Category Change: populate article options
-        categorySelect.addEventListener("change", (e) => {
-            const catIndex = e.target.value;
+        categorySelect.addEventListener("change", (e) => {               // 綁定分類選單的變更 (change) 事件
+            const catIndex = e.target.value;                             // 取得使用者選取的分類索引值
             
-            articleSelect.innerHTML = '<option value="">-- 選擇一篇文章 --</option>';
-            if (customTextInput) customTextInput.value = "";
-            if (articleContainer) articleContainer.innerHTML = "";
-            currentSelectedArticle = null;
+            articleSelect.innerHTML = '<option value="">-- 選擇一篇文章 --</option>';    // 清空並重置文章選單的預設選項
+            if (customTextInput) customTextInput.value = "";                            // 重置並清空自訂文字輸入框
+            if (articleContainer) articleContainer.innerHTML = "";                      // 清空文章顯示區域內容
+            currentSelectedArticle = null;                                              // 將當前選取的文章暫存變數歸零 (null)
             
-            if (catIndex === "") {
-                articleSelect.disabled = true;
-                return;
+            if (catIndex === "") {                                       // 若使用者切換回未選擇狀態 (即選擇預設提示項)
+                articleSelect.disabled = true;                           // 保持停用文章選單
+                return;                                                  // 結束處理
             }
             
-            const selectedCategory = categories[catIndex];
-            if (selectedCategory && selectedCategory.articles) {
-                selectedCategory.articles.forEach(article => {
-                    const option = document.createElement("option");
-                    option.value = article.id;
-                    option.textContent = article.title;
-                    articleSelect.appendChild(option);
+            const selectedCategory = categories[catIndex];               // 依據索引取得對應的分類資料物件
+            if (selectedCategory && selectedCategory.articles) {         // 確保該分類存在且包含文章列表 (articles 陣列)
+                selectedCategory.articles.forEach(article => {           // 巡覽該分類下的每篇文章
+                    const option = document.createElement("option");     // 建立選單選項 <option> 元素
+                    option.value = article.id;                           // 設定選項值為文章的唯一識別碼 (id)
+                    option.textContent = article.title;                  // 設定選項顯示文字為文章標題
+                    articleSelect.appendChild(option);                   // 將文章選項加入文章下拉選單中
                 });
-                articleSelect.disabled = false;
+                articleSelect.disabled = false;                          // 成功填入文章後，啟用文章下拉選單
             }
         });
 
-        // 3. On Article Change: load article content and store metadata
-        articleSelect.addEventListener("change", (e) => {
-            const selectedCatIndex = categorySelect.value;
-            const selectedId = e.target.value;
+        articleSelect.addEventListener("change", (e) => {                // 綁定文章選單的變更 (change) 事件
+            const selectedCatIndex = categorySelect.value;               // 取得目前選擇的分類索引值
+            const selectedId = e.target.value;                           // 取得目前選擇的文章 ID
             
-            if (selectedCatIndex === "" || !selectedId) {
-                if (articleContainer) articleContainer.innerHTML = "";
-                if (customTextInput) customTextInput.value = "";
-                currentSelectedArticle = null;
-                return;
+            if (selectedCatIndex === "" || !selectedId) {                // 若分類或文章 ID 未選擇（例如切回預設項）
+                if (articleContainer) articleContainer.innerHTML = "";   // 清空文章顯示區域
+                if (customTextInput) customTextInput.value = "";         // 清空自訂文字輸入框
+                currentSelectedArticle = null;                           // 清空當前選取的文章暫存變數
+                return;                                                  // 結束處理
             }
 
-            const currentArticles = categories[selectedCatIndex].articles || [];
-            const selectedArticle = currentArticles.find(a => a.id === selectedId);
+            const currentArticles = categories[selectedCatIndex].articles || [];       // 取得當前分類下的文章列表陣列
+            const selectedArticle = currentArticles.find(a => a.id === selectedId);    // 依據 ID 搜尋並比對出目標文章物件
             
-            if (selectedArticle) {
-                currentSelectedArticle = selectedArticle;
+            if (selectedArticle) {                                          // 若有找到對應的文章資料
+                currentSelectedArticle = selectedArticle;                   // 將找到的文章物件存入全域/區域暫存變數
                 
-                if (articleContainer) {
+                if (articleContainer) {                                     // 若文章顯示區域存在，渲染文章標題與內文 HTML
                     articleContainer.innerHTML = `
                         <h3>${selectedArticle.title}</h3>
                         <p>${selectedArticle.content}</p>
                     `;
                 }
-                if (customTextInput) {
+                if (customTextInput) {                                      // 若自訂文字輸入框存在，將文章內文填入其中
                     customTextInput.value = selectedArticle.content;
                 }
             }
         });
-        
-    } catch (error) {
-        console.error("Failed to load articles.json:", error);
-        if (articleContainer) {
+    } catch (error) {                                                                // 捕捉非同步讀取或處理過程中的所有例外錯誤
+        console.error("Failed to load articles.json:", error);                       // 於控制台印出錯誤詳細訊息
+        if (articleContainer) {                                                      // 於文章顯示區域呈現載入失敗的提示訊息
             articleContainer.innerHTML = "<p>⚠️ 無法載入 articles.json 檔案路徑。</p>";
         }
     }
 }
 
 function handleStartCustomText() {
-    const input = DOM.customTextInput()?.value.trim();
-    if (!input || input.length < CONFIG.MIN_CUSTOM_TEXT_LENGTH) {
-        setStatus("⚠️ 請輸入至少 5 個字元的文章內容！");
-        return;
+    const input = DOM.customTextInput()?.value.trim();                         // 取得自訂文字輸入框的內容並去除前後空白
+    if (!input || input.length < CONFIG.MIN_CUSTOM_TEXT_LENGTH) {              // 檢查是否有輸入文字，或文字長度是否小於設定的最小字數門檻
+        setStatus("⚠️ 請輸入至少 5 個字元的文章內容！");                         // 若不符合條件，顯示警告提示訊息
+        return;                                                                // 中斷執行
     }
     
-    GameState.reset();
-    GameState.pdfText = input;
+    GameState.reset();                                                   // 重置全域遊戲狀態資料（清空舊關卡、分數與時間等）
+    GameState.pdfText = input;                                           // 將驗證通過的輸入文字存入全域狀態的 pdfText 中
 
 
-    if (currentSelectedArticle && currentSelectedArticle.annotations) {              // 帶入中文註解
-        GameState.currentAnnotations = currentSelectedArticle.annotations;
+    if (currentSelectedArticle && currentSelectedArticle.annotations) {      // 檢查目前選取的文章是否存在且帶有中文註解資料 (annotations)
+        GameState.currentAnnotations = currentSelectedArticle.annotations;    // 將該文章對應的中文註解存入全域狀態中
     } else {
-        GameState.currentAnnotations = [];
+        GameState.currentAnnotations = [];                                     // 若無註解資料，則清空全域狀態中的註解陣列
     }
 
-    const customChars = currentSelectedArticle?.charsPerLevel || CONFIG.CHARS_PER_LEVEL; // 讀取 JSON 設定：優先使用文章自訂字數或斷點，沒有則使用系統預設值
-    const customDelimiter = currentSelectedArticle?.delimiter || null;
+    const customChars = currentSelectedArticle?.charsPerLevel || CONFIG.CHARS_PER_LEVEL;    // 讀取設定：優先使用該文章自訂的每關字數，若無則採用系統預設值
+    const customDelimiter = currentSelectedArticle?.delimiter || null;                     // 讀取設定：取得該文章自訂的分隔符號（如 [NEXT]），若無則為 null
 
-    GameState.levels = createLevels(input, customChars, customDelimiter);        // 產生關卡
+    GameState.levels = createLevels(input, customChars, customDelimiter);                   // 呼叫 createLevels 演算法拆分文章並產生關卡陣列存入全域狀態
     
-    updateLevelSelect();
-    const gameArea = DOM.gameArea();
-    if (gameArea) gameArea.classList.remove("hidden");
+    updateLevelSelect();                                                       // 依據新產生的關卡總數，更新關卡切換下拉選單 (select)
+    const gameArea = DOM.gameArea();                                           // 取得遊戲區域 DOM 元素
+    if (gameArea) gameArea.classList.remove("hidden");                         // 移除 "hidden" 類別，將遊戲打字主區域顯示於畫面上
     
-    showLevel();
-    setStatus(`✅已載入自訂文章！共 ${GameState.getTotalLevels()} 個關卡`);
+    showLevel();                                                               // 載入並渲染當前關卡（第一關）的文字與介面
+    setStatus(`✅已載入自訂文章！共 ${GameState.getTotalLevels()} 個關卡`);      // 於狀態列顯示成功載入訊息與關卡總數
 
-    const articleModePanel = DOM.articleModePanel();
+    const articleModePanel = DOM.articleModePanel();                           // 取得文章模式選單/面板 DOM 元素
     if (articleModePanel) {
-        articleModePanel.classList.add("hidden"); 
+        articleModePanel.classList.add("hidden");                              // 加上 "hidden" 類別，將文章選擇面板隱藏
     }
 }
 
-
 async function handleAddAndDownload() {
-    const titleInput = DOM.newTitle();
-    const contentInput = DOM.newContent();
+    const titleInput = DOM.newTitle();                                   // 取得新文章標題輸入框 DOM 元素
+    const contentInput = DOM.newContent();                               // 取得新文章內容輸入框 DOM 元素
     
-    const title = titleInput?.value.trim();
-    const content = contentInput?.value.trim();
+    const title = titleInput?.value.trim();                              // 取得標題內容並去除前後空白
+    const content = contentInput?.value.trim();                          // 取得文章內容並去除前後空白
     
-    if (!title || !content) {
-        alert("請填寫標題與內容！");
-        return;
+    if (!title || !content) {                                            // 安全檢查：若標題或內容任一為空
+        alert("請填寫標題與內容！");                                       // 跳出警告視窗提示使用者
+        return;                                                          // 中斷執行
     }
     
-    let articles = [];
+    let articles = [];                                                               // 初始化文章陣列
     try {
-        const res = await fetch("./articles.json");
-        if (res.ok) articles = await res.json();
+        const res = await fetch("./articles.json");                                  // 嘗試透過 AJAX (fetch) 讀取現有的 articles.json 檔案
+        if (res.ok) articles = await res.json();                                     // 若成功讀取，將解析後的 JSON 文章陣列存入 articles
     } catch (e) {
-        console.warn("Could not load existing articles.json, creating new file.");
+        console.warn("Could not load existing articles.json, creating new file.");    // 若讀取失敗，於控制台印出警告並準備建立新檔案
     }
     
-    const newArticle = {
-        id: "art_" + Date.now(),
-        title: title,
-        content: content
+    const newArticle = {                                                 // 建立全新的文章物件
+        id: "art_" + Date.now(),                                         // 使用當前時間戳記 (Timestamp) 產生獨一無二的文章 ID
+        title: title,                                                    // 寫入文章標題
+        content: content                                                 // 寫入文章內文內容
     };
     
-    articles.push(newArticle);
+    articles.push(newArticle);                                           // 將新建立的文章物件推入 articles 陣列中
     
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(articles, null, 2));
-    const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "articles.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(articles, null, 2));       // 將文章陣列轉換為縮排的 JSON 字串並編碼為 Data URL
+    const downloadAnchor = document.createElement("a");                     // 動態建立一個隱藏的超連結 <a> DOM 元素
+    downloadAnchor.setAttribute("href", dataStr);                           // 設定超連結的下載目標為剛產生的 Data URL
+    downloadAnchor.setAttribute("download", "articles.json");               // 設定下載觸發時的檔名為 "articles.json"
+    document.body.appendChild(downloadAnchor);                              // 將超連結元素暫時加入至 DOM 樹頁面中
+    downloadAnchor.click();                                                 // 自動模擬點擊動作以觸發瀏覽器的檔案下載流程
+    downloadAnchor.remove();                                                // 下載觸發後，立即將超連結從 DOM 樹中移除以保持頁面整潔
     
-    if (titleInput) titleInput.value = "";
-    if (contentInput) contentInput.value = "";
+    if (titleInput) titleInput.value = "";                                  // 清空標題輸入框內容
+    if (contentInput) contentInput.value = "";                              // 清空內容輸入框內容
 }
 
 // =====================================================
-// 1️⃣2️⃣ Event Handlers & Utility Functions
+// Event Handlers & Utility Functions 事件處理程序和實用函數
 // =====================================================
 
 async function handlePDFUpload(event) {
@@ -993,11 +959,11 @@ async function handlePDFUpload(event) {
     if (!file) return;
 
     if (file.type !== "application/pdf") {
-        setStatus("❌ 請選擇 PDF 檔案");
+        setStatus("請選擇 PDF 檔案");
         return;
     }
     try {
-        setStatus("📖 正在讀取 PDF...");
+        setStatus("正在讀取 PDF...");
         const arrayBuffer = await file.arrayBuffer();
         const loadedPdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         
@@ -1012,7 +978,7 @@ async function handlePDFUpload(event) {
         await processPDF(loadedPdfDoc, 1, loadedPdfDoc.numPages);
     } catch (error) {
         console.error("PDF Error:", error);
-        setStatus("❌ PDF 讀取失敗：" + error.message);
+        setStatus("PDF 讀取失敗：" + error.message);
     }
 }
 
@@ -1021,17 +987,17 @@ async function handleLoadURL() {
     const url = pdfUrl?.value?.trim();
     
     if (!url) {
-        setStatus("⚠️ 請輸入 PDF URL");
+        setStatus(" 請輸入 PDF URL");
         return;
     }
     try {
         new URL(url);
     } catch {
-        setStatus("❌ URL 格式不正確");
+        setStatus("URL 格式不正確");
         return;
     }
     try {
-        setStatus("🌐 正在載入 PDF...");
+        setStatus(" 正在載入 PDF...");
         const loadedPdfDoc = await pdfjsLib.getDocument({ url }).promise;
         
         GameState.loadedPdfDoc = loadedPdfDoc;
@@ -1136,7 +1102,7 @@ function getFileNameFromURL(url) {
 }
 
 // =====================================================
-// 1️⃣3️⃣ App Initialization Trigger
+// App Initialization Trigger  應用初始化觸發器
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
