@@ -893,14 +893,13 @@ function handleStartCustomText() {
     GameState.reset();                                                   // 重置全域遊戲狀態資料（清空舊關卡、分數與時間等）
     GameState.pdfText = input;                                           // 將驗證通過的輸入文字存入全域狀態的 pdfText 中
 
-
     if (currentSelectedArticle && currentSelectedArticle.annotations) {      // 檢查目前選取的文章是否存在且帶有中文註解資料 (annotations)
         GameState.currentAnnotations = currentSelectedArticle.annotations;    // 將該文章對應的中文註解存入全域狀態中
     } else {
         GameState.currentAnnotations = [];                                     // 若無註解資料，則清空全域狀態中的註解陣列
-
-        
-// 請在 DOM 物件中補充新增的欄位選取器：
+    } 
+    processTextToLevels(input);                                              // 補上處理文章分割與開始遊戲的邏輯 (依據你的專案機制調用)
+}
 
 async function handleAddAndDownload() {
     // 1. 取得 DOM 欄位元素
