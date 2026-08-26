@@ -831,7 +831,7 @@ async function loadArticlesFromGit() {
         
         const categories = await response.json();
         
-        // 1. Initialize category options
+        // 1. Initialize category options　
         categorySelect.innerHTML = '<option value="">-- 選擇分類 --</option>';
         articleSelect.innerHTML = '<option value="">-- 請先選擇分類 --</option>';
         articleSelect.disabled = true;
