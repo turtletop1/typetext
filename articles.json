@@ -8,12 +8,12 @@
         "title": "Artificial Intelligence Basics",
         "charsPerLevel": 150,
         "delimiter": "[NEXT]",               
-        "content": "Artificial Intelligence is very powerful. Artificial Intelligence Basic",   
+        "content": "Artificial Intelligence is very powerful. test this sentence",   
         "annotations": [
           { "word": "Artificial", "note": "人造的" },
           { "word": "Intelligence", "note": "智慧" },
           { "word": "powerful", "note": "強大的" },
-          { "word": "Basic", "note": "人工智慧基礎" }
+          { "word": "test this sentence", "note": "測試這句話" }
         ]
       },
       {
