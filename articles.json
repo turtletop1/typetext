@@ -1,4 +1,3 @@
-
 [
   {
     "category": "基礎科技",
@@ -7,13 +6,25 @@
         "id": "art_101",
         "title": "Artificial Intelligence Basics",
         "charsPerLevel": 150,
-        "delimiter": "[NEXT]",               
-        "content": "Artificial Intelligence is very powerful. test this sentence",   
+        "delimiter": "[NEXT]",
+        "content": "Artificial Intelligence is very powerful. test this sentence",
         "annotations": [
-          { "word": "Artificial", "note": "人造的" },
-          { "word": "Intelligence", "note": "智慧" },
-          { "word": "powerful", "note": "強大的" },
-          { "word": "test this sentence", "note": "測試這句話" }
+          {
+            "word": "Artificial",
+            "note": "人造的"
+          },
+          {
+            "word": "Intelligence",
+            "note": "智慧"
+          },
+          {
+            "word": "powerful",
+            "note": "強大的"
+          },
+          {
+            "word": "test this sentence",
+            "note": "測試這句話"
+          }
         ]
       },
       {
@@ -23,57 +34,215 @@
       }
     ]
   },
-
-  
   {
     "category": "生物",
     "articles": [
       {
         "id": "art_201",
         "title": "1 Introducing biology",
-        "content": ["Anatomy - the structure of organisms",
-                    "Cytology - the basic unit of organisms — cells,",
-                    "Ecology - interactions between organisms and their environment,",
-                    "Genetics - the ways in which characteristics of organisms are passed on from one generation to the next, ",
-                    "Genetics - the basic unit of organisms — cells"
-                  ]
+        "content": [
+          "Anatomy - the structure of organisms",
+          "Cytology - the basic unit of organisms — cells,",
+          "Ecology - interactions between organisms and their environment,",
+          "Genetics - the ways in which characteristics of organisms are passed on from one generation to the next, ",
+          "Genetics - the basic unit of organisms — cells"
+        ]
       },
-       {
+      {
         "id": "art_202",
         "title": "2 The cell as the basic unit of life",
         "delimiter": "[NEXT]",
         "content": [
-                    "Nitrate,Magnesium,Calcium,Iron\n",
-                    "Biomolecules",
-                    "Carbohydrates - Glucose, Starch, Cellulose\n",
-                    "Lipids -Triglycerides, Phospholipids \n",
-                    "Proteins - Structural proteins , Enzymes , Antibodies \n",
-                    "Nucleic acids - Deoxyribonucleic acid , Ribonucleic acid",
-                    "[NEXT]",
-                    "Light microscope , Transmission , Electron microscope , Scanning electron microscope",
-                    "[NEXT]",
-                    "animal cells - cell membrane-(Differentially permeable) ,cell cytoplasm ,  mitochondrion , nucleus ,rough endoplasmic reticulum , ribosome , vacuole , smooth endoplasmic reticulum \n",
-                    "plant cells - cell wall ,chloroplast",
-                    "[NEXT]",
-                    "Prokaryotic , eukaryotic cells ,genetic material"
-                  ],
-          "annotations": [
-            { "word": "Nitrate", "note": "硝酸鹽" },{ "word": "Magnesium", "note": "鎂" },
-            { "word": "Calcium", "note": "鈣" },{ "word": "Iron", "note": "鐵" },
-            { "word": "Biomolecules", "note": "生物分子" },{ "word": "Carbohydrates", "note": "碳水化合物" },
-            { "word": "Glucose", "note": "葡萄糖" },{ "word": "Starch", "note": "澱粉" },{ "word": "Cellulose", "note": "纖維素" },
-            { "word": "Lipids", "note": "脂質" },{ "word": "Triglycerides", "note": "甘油三酯" },{ "word": "Phospholipids", "note": "磷脂" },
-            { "word": "Proteins", "note": "蛋白質" },{ "word": "Structural proteins ", "note": "結構蛋白質" },{ "word": "Enzymes", "note": "酶" },{ "word": "Antibodies", "note": "抗體" },
-            { "word": "Nucleic acids", "note": "核酸" },{ "word": "Deoxyribonucleic acid", "note": "DNA脫氧核糖核酸" },{ "word": "Ribonucleic acid", "note": "RNA 核糖" },
-            { "word": "Light microscope", "note": "光學顯微鏡" },{ "word": "Transmission", "note": "透射電子顯微鏡" },
-            { "word": "Electron microscope", "note": "電子顯微鏡" },{ "word": "Scanning electron microscope", "note": "掃描電子顯微鏡" },
-            { "word": "Scanning electron microscope", "note": "掃描電子顯微鏡" },
-            {"word":"cell membrane","note":"細胞膜"},{"word":"Differentially permeable","note":"差異透性的"},{"word":"cell cytoplasm","note":"細胞質"},{"word":"mitochondrion","note":"線粒體"},{ "word":"nucleus","note":"細胞核"},{ "word":"rough endoplasmic reticulum","note":"粗糙內質網"},{ "word":"ribosome","note":"核糖體"},{ "word":"vacuole","note":"液泡"},{ "word":"smooth endoplasmic reticulum","note":"光滑內質網"},
-            { "word":"cell wall","note":"細胞壁"},{ "word":"chloroplast","note":"葉綠體"},
-            { "word":"Prokaryotic","note":"原核細胞"},{ "word":"eukaryotic cells","note":"真核細胞"},{ "word":"genetic material","note":"(DNA)遺傳物質"}
-
-            
-          ]
+          "Nitrate,Magnesium,Calcium,Iron\n",
+          "Biomolecules",
+          "Carbohydrates - Glucose, Starch, Cellulose\n",
+          "Lipids -Triglycerides, Phospholipids \n",
+          "Proteins - Structural proteins , Enzymes , Antibodies \n",
+          "Nucleic acids - Deoxyribonucleic acid , Ribonucleic acid",
+          "[NEXT]",
+          "Light microscope , Transmission , Electron microscope , Scanning electron microscope",
+          "[NEXT]",
+          "animal cells - cell membrane-(Differentially permeable) ,cell cytoplasm ,  mitochondrion , nucleus ,rough endoplasmic reticulum , ribosome , vacuole , smooth endoplasmic reticulum \n",
+          "plant cells - cell wall ,chloroplast",
+          "[NEXT]",
+          "Prokaryotic , eukaryotic cells ,genetic material"
+        ],
+        "annotations": [
+          {
+            "word": "Nitrate",
+            "note": "硝酸鹽"
+          },
+          {
+            "word": "Magnesium",
+            "note": "鎂"
+          },
+          {
+            "word": "Calcium",
+            "note": "鈣"
+          },
+          {
+            "word": "Iron",
+            "note": "鐵"
+          },
+          {
+            "word": "Biomolecules",
+            "note": "生物分子"
+          },
+          {
+            "word": "Carbohydrates",
+            "note": "碳水化合物"
+          },
+          {
+            "word": "Glucose",
+            "note": "葡萄糖"
+          },
+          {
+            "word": "Starch",
+            "note": "澱粉"
+          },
+          {
+            "word": "Cellulose",
+            "note": "纖維素"
+          },
+          {
+            "word": "Lipids",
+            "note": "脂質"
+          },
+          {
+            "word": "Triglycerides",
+            "note": "甘油三酯"
+          },
+          {
+            "word": "Phospholipids",
+            "note": "磷脂"
+          },
+          {
+            "word": "Proteins",
+            "note": "蛋白質"
+          },
+          {
+            "word": "Structural proteins ",
+            "note": "結構蛋白質"
+          },
+          {
+            "word": "Enzymes",
+            "note": "酶"
+          },
+          {
+            "word": "Antibodies",
+            "note": "抗體"
+          },
+          {
+            "word": "Nucleic acids",
+            "note": "核酸"
+          },
+          {
+            "word": "Deoxyribonucleic acid",
+            "note": "DNA脫氧核糖核酸"
+          },
+          {
+            "word": "Ribonucleic acid",
+            "note": "RNA 核糖"
+          },
+          {
+            "word": "Light microscope",
+            "note": "光學顯微鏡"
+          },
+          {
+            "word": "Transmission",
+            "note": "透射電子顯微鏡"
+          },
+          {
+            "word": "Electron microscope",
+            "note": "電子顯微鏡"
+          },
+          {
+            "word": "Scanning electron microscope",
+            "note": "掃描電子顯微鏡"
+          },
+          {
+            "word": "Scanning electron microscope",
+            "note": "掃描電子顯微鏡"
+          },
+          {
+            "word": "cell membrane",
+            "note": "細胞膜"
+          },
+          {
+            "word": "Differentially permeable",
+            "note": "差異透性的"
+          },
+          {
+            "word": "cell cytoplasm",
+            "note": "細胞質"
+          },
+          {
+            "word": "mitochondrion",
+            "note": "線粒體"
+          },
+          {
+            "word": "nucleus",
+            "note": "細胞核"
+          },
+          {
+            "word": "rough endoplasmic reticulum",
+            "note": "粗糙內質網"
+          },
+          {
+            "word": "ribosome",
+            "note": "核糖體"
+          },
+          {
+            "word": "vacuole",
+            "note": "液泡"
+          },
+          {
+            "word": "smooth endoplasmic reticulum",
+            "note": "光滑內質網"
+          },
+          {
+            "word": "cell wall",
+            "note": "細胞壁"
+          },
+          {
+            "word": "chloroplast",
+            "note": "葉綠體"
+          },
+          {
+            "word": "Prokaryotic",
+            "note": "原核細胞"
+          },
+          {
+            "word": "eukaryotic cells",
+            "note": "真核細胞"
+          },
+          {
+            "word": "genetic material",
+            "note": "(DNA)遺傳物質"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "category": "English word",
+    "articles": [
+      {
+        "id": "art_1787754531858",
+        "title": "Transport",
+        "charsPerLevel": 500,
+        "delimiter": "[next]",
+        "content": "(priority seat)\\n\nlittle awareness of offering seats\\n\npretended to not notice other passengers\\n\nfelt embarrassed\\n\nfelt offended\\n\npregnant woman\\n\npersons with disabilities\\n\nfilmed by a bystander/patron\\n\nposted online and circulated widely\\n\nthe video went viral on the internet\\n\npointed the finger at you\\n\nled to a public trial\\n\na source of humiliation\\n\nan online petition\\n\ngathered more than 5000 signatures\\n\ncalled for public trial against you on Facebook\\n\\n\nbe under pressure to avoid priority seat\\n\nraise public awareness of offering seats\\n\nvoluntarily offer your seats\n[next]\n(MTR)\npassenger\\n\ncommuter\\n",
+        "annotations": [
+          {"word": "bystander/patron","note": "旁觀者"},
+          {"word": "circulated widely","note": "廣泛流傳"},
+          {"word": "pointed the finger at you","note": "被人指責你"},
+          {"word": "led to a public trial","note": "導致公開審判"},
+          {"word": "humiliation","note": "屈辱/羞辱"},
+          {"word": "petition","note": "請願"},
+          {"word": "raise public awareness of offering seats","note": "提高公眾對提供座位嘅認識"},
+          {"word": "voluntarily","note": "自願地(ad)"},{"word": "commuter","note": "上下班乘客/通勤者"}
+        ]
       }
     ]
   }
