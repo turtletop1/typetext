@@ -126,9 +126,12 @@ const DOM = {
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
     
     newCategory: () => document.getElementById("newCategory"),
+    newTitle: () => document.getElementById("newTitle"),
+    newContent: () => document.getElementById("newContent"),
     newCharsPerLevel: () => document.getElementById("newCharsPerLevel"),
     newDelimiter: () => document.getElementById("newDelimiter"),
     newAnnotations: () => document.getElementById("newAnnotations"),
+    addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
     
 };
 
