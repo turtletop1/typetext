@@ -883,6 +883,25 @@ async function loadArticlesFromGit() {
     }
 }
 
+function handleStartCustomText() {
+    const input = DOM.customTextInput()?.value.trim();                         // 取得自訂文字輸入框的內容並去除前後空白
+    if (!input || input.length < CONFIG.MIN_CUSTOM_TEXT_LENGTH) {              // 檢查是否有輸入文字，或文字長度是否小於設定的最小字數門檻
+        setStatus("⚠️ 請輸入至少 5 個字元的文章內容！");                         // 若不符合條件，顯示警告提示訊息
+        return;                                                                // 中斷執行
+    }
+    
+    GameState.reset();                                                   // 重置全域遊戲狀態資料（清空舊關卡、分數與時間等）
+    GameState.pdfText = input;                                           // 將驗證通過的輸入文字存入全域狀態的 pdfText 中
+
+
+    if (currentSelectedArticle && currentSelectedArticle.annotations) {      // 檢查目前選取的文章是否存在且帶有中文註解資料 (annotations)
+        GameState.currentAnnotations = currentSelectedArticle.annotations;    // 將該文章對應的中文註解存入全域狀態中
+    } else {
+        GameState.currentAnnotations = [];                                     // 若無註解資料，則清空全域狀態中的註解陣列
+
+        
+// 請在 DOM 物件中補充新增的欄位選取器：
+
 async function handleAddAndDownload() {
     // 1. 取得 DOM 欄位元素
     const categoryInput = DOM.newCategory ? DOM.newCategory() : document.getElementById("newCategory");
