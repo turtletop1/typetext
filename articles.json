@@ -254,8 +254,27 @@
           "\nvoluntarily offer your seats[next]",
           "\n(MTR)",
           "\npassenger",
-          "\ncommuter"
-          
+          "\ncommuter",
+          "\nparallel-goods trader",
+          "\nmore convenient",
+          "\ntrains are mostly on time",
+          "\ntravel to different corners of the city",
+          "\njam-packed MTR trains",
+          "\ncaused chaos during rush hours",
+          "\nMTR was crippled by control signal malfunction",
+          "\nelectrical fault",
+          "\nfirebomb attack",
+          "\ninstall CCTV on train cars",
+          "\nan invasion of individuals' privacy",
+          "\narguing over the priority seat",
+          "\ncarrying oversized luggage on MTR trains",
+          "\nthe constant fare increase",
+          "\nlate for class because of train delays",
+          "\nthe expansion of other MTR lines",
+          "\nremind people not to eat and drink in the train[next]",
+          "\nTaxi",
+          "\ntaxi driver/cabbie",
+          "\ndifficult to get a cab"
         ],
         "annotations": [
           {"word": "bystander/patron","note": "旁觀者"},
@@ -264,7 +283,15 @@
           {"word": "led","note": "導致"},{"word": "public","note": "公開"},{"word": "trial","note": "審判"},
           {"word": "humiliation","note": "屈辱/羞辱"},
           {"word": "petition","note": "請願"},
-          {"word": "voluntarily","note": "自願地(ad)"},{"word": "commuter","note": "上下班乘客/通勤者"}
+          {"word": "voluntarily","note": "自願地(ad)"},{"word": "commuter","note": "上下班乘客/通勤者"},
+          {"word": "parallel-goods","note": "水貨"},{"word": "parallel-goods","note": "客"},
+          {"word": "jam-packed","note": "擠擁嘅"},{"word": "chaos","note": "混亂"},
+          {"word": "crippled","note": "殘疾,癱瘓"},
+          {"word": "firebomb","note": "燃燒彈"},
+          {"word": "invasion","note": "入侵"},{"word": "privacy","note": "隱私權"},
+          {"word": "constant","note": "持續嘅"},{"word": "fare","note": "票價"},{"word": "increase","note": "上漲"},
+          {"word": "cabbie","note": "計程車司機"},
+          {"word": "cab","note": "計程車"}
         ]
       }
     ]
