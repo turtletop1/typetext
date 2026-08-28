@@ -260,28 +260,47 @@ function initializeEventListeners() {
     ]);
 }
 
-function initializeWordClickDelegation() {   		// 初始化單字點擊事件的委派（Event Delegation）監聽器
-    const textDisplay = DOM.textDisplay();   		// 取得用於顯示文章內容的 DOM 元素
-    if (!textDisplay) return;               		   // 若找不到該顯示元素，則直接結束函式以防止報錯
+function initializeWordClickDelegation() {   		
+    const textDisplay = DOM.textDisplay();   		
+    if (!textDisplay) return;               		   
     
-    textDisplay.addEventListener("click", (e) => {             // 在父層容器上記錄點擊事件（採用事件委派，不必為每個字母個別綁定事件）
-        if (!e.target.classList.contains("char")) return;      // 檢查被點擊的目標元素是否帶有 "char" 類別，若不是則忽視該點擊
+    textDisplay.addEventListener("click", (e) => {             
+        if (!e.target.classList.contains("char")) return;      
         
-        const clickedChar = e.target;               // 記錄當前被點擊的字母 HTML 元素
-        let word = "";                              // 初始化用於組合完整單字的字串變數
-        let current = clickedChar;                  // 建立指標變數，預設指向點擊的字母元素
+        const clickedChar = e.target;               
+        let word = "";                              
+        let current = clickedChar;                  
         
-        while (current && /^[A-Za-z]$/.test(current.textContent)) {    // 【第一階段：向左尋找】從被點擊字母開始，往前（左）檢查前一個兄弟節點是否為英文字母
-            word = current.textContent + word;                         // 將字母串接在單字前方（因為是倒回去找）
-            current = current.previousElementSibling;                  // 指標移至前一個 HTML 兄弟元素
+        // 1. 往前與往後組合出點擊到的「單字」
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {    
+            word = current.textContent + word;                         
+            current = current.previousElementSibling;                  
         }
-        current = clickedChar;                                             // 重置指標回到被點擊字母元素
-        while (current && /^[A-Za-z]$/.test(current.textContent)) {        //【第二階段：向右尋找】從被點擊字母開始，往後(右)檢查後個兄弟節點是否英文
-            if (current !== clickedChar) word += current.textContent;      // 避免重複計算被點擊的字母（第一階段已計入），將後續字母串接在單字後方
-            current = current.nextElementSibling;                  			// 指標移至後一個 HTML 兄弟元素
+        current = clickedChar;                                             
+        while (current && /^[A-Za-z]$/.test(current.textContent)) {        
+            if (current !== clickedChar) word += current.textContent;      
+            current = current.nextElementSibling;                  			
         }
-        if (word) {
-            lookupWord(word.toLowerCase().trim());                        // 將單字轉為小寫並去除首尾空白，然後傳給查單字函式 lookupWord
+
+        if (!word) return;
+
+        const cleanWord = word.toLowerCase().trim();
+        const annotations = GameState.currentAnnotations || [];
+
+        // 2. 檢查點擊的單字是否屬於某個多字片語 (例如 "scanning electron microscope")
+        const matchedPhrase = annotations.find(item => {
+            if (!item || !item.word) return false;
+            const targetWord = item.word.toLowerCase();
+            // 檢查點擊的單字是否包含在片語註解裡面
+            const wordsInPhrase = targetWord.split(/\s+/);
+            return wordsInPhrase.includes(cleanWord);
+        });
+
+        // 若找到對應片語註解則帶入片語完整字串，否則帶入單字
+        if (matchedPhrase) {
+            lookupWord(matchedPhrase.word);
+        } else {
+            lookupWord(cleanWord);
         }
     });
 }
@@ -440,7 +459,7 @@ function createLevels(text, charsPerLevel, delimiter = null) {      // 定義切
             const questionEnd = cleanText.lastIndexOf("?", end);              // 從預設 end 位置往回搜尋最近的問號 (?)
             const exclamationEnd = cleanText.lastIndexOf("!", end);
             const bestSentenceEnd = Math.max(sentenceEnd, questionEnd, exclamationEnd);    // 比較並取得最靠後（最接近 end）的句尾標點符號索引值            
-            const spaceEnd = cleanText.lastIndexOf(" ", end);                              // 從預設 end 位置往回搜尋最近的空白鍵（空格）
+            const spaceEnd = cleanText.lastIndexOf(",", end);                              // 從預設 end 位置往回搜尋最近的空白鍵（空格）
             
             if (bestSentenceEnd > start + 300) {         // 【優先權1】：如果在當前關卡區段內（超過 start + 300 字）有找到完美的句尾標點
                 end = bestSentenceEnd + 1;
@@ -661,31 +680,70 @@ function updateLevelSelect() {
 }
 
 // ===================Dictionary Logic 字典邏輯===================
-
 function lookupWord(word) {
-    word = word.trim().toLowerCase();                                   // 整理輸入的單字
-    if (!word) return;                                                  // 若單字為空則直接結束
+    word = word.trim().toLowerCase();                                   
+    if (!word) return;                                                  
 
-    GameState.currentLookupWord = word;                                 // 紀錄目前查詢單字
+    GameState.currentLookupWord = word;                                 
 
-    const dictionaryPopup = DOM.dictionaryPopup();                       // 取得 DOM 元素
+    const dictionaryPopup = DOM.dictionaryPopup();                       
     const dictionaryWord = DOM.dictionaryWord(); 
     const dictionaryPhonetic = DOM.dictionaryPhonetic();
     const dictionaryContent = DOM.dictionaryContent(); 
 
-    if (!dictionaryPopup || !dictionaryWord) return;                    // 安全檢查
+    if (!dictionaryPopup || !dictionaryWord) return;                    
 
-    dictionaryPopup.classList.remove("hidden");                         // 顯示字典視窗
+    dictionaryPopup.classList.remove("hidden");                         
     dictionaryWord.textContent = word; 
 
-    // 只保留 dictionaryPhonetic 框填入單字名稱
     if (dictionaryPhonetic) {
         dictionaryPhonetic.textContent = word; 
     }
 
-    // 清空詳細內容區域
+    // 讀取 articles.json annotations 中的文字與圖片內容
+
     if (dictionaryContent) {
-        dictionaryContent.innerHTML = "";
+        dictionaryContent.innerHTML = "";   // 先清空舊內容
+
+        const annotations = GameState.currentAnnotations || [];
+        
+        // 尋找匹配的 annotation（支援單字與片語比對）
+        const matched = annotations.find(item => {
+            if (!item || !item.word) return false;
+            const target = item.word.trim().toLowerCase();
+            return target === word || target.includes(word);
+        });
+
+        if (matched) {
+            
+            const contentText = matched["dict-content"] || matched.note || "暫無詳細解釋"; // 取得文字內容（支援 dict-content 或 note）
+            const imageUrl = matched["image"] || matched["dict-image"] || null; // 取得圖片網址（支援 image 或 dict-image）
+
+            const container = document.createElement("div");    // 建立容器
+            container.className = "dict-annotation-result";
+            
+            // 拼接 HTML（包含文字與圖片）
+            let htmlContent = `
+                <div style="font-size: 1.1em; color: #2c3e50; font-weight: bold; margin-bottom: 8px;">
+                </div>
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #3498db; font-size: 1em; line-height: 1.4; margin-bottom: 10px;">
+                    ${contentText}
+                </div>
+            `;
+
+            if (imageUrl) {         // 如果有圖片，加入 <img> 標籤
+                htmlContent += `
+                    <div class="dict-image-container" style="text-align: center; margin-top: 10px;">
+                        <img src="${imageUrl}" alt="${matched.word}" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); object-fit: contain;" onError="this.style.display='none';">
+                    </div>
+                `;
+            }
+
+            container.innerHTML = htmlContent;
+            dictionaryContent.appendChild(container);
+        } else {
+            dictionaryContent.innerHTML = `<p style="color: #888;">未能在文章註解中搵到 「${word}」 的對應內容。</p>`;
+        }
     }
 }
 
@@ -891,6 +949,23 @@ async function handleAddAndDownload() {
     if (typeof loadArticlesFromGit === "function") {
         loadArticlesFromGit();
     }
+
+    if (annotationsInput?.value.trim()) {
+        annotations = annotationsInput.value.trim().split("\n").map(line => {
+            const parts = line.split(/[:=：]/);
+            if (parts.length >= 2) {
+                const item = {
+                    word: parts[0].trim(),
+                    "dict-content": parts[1].trim()
+                };
+                if (parts[2] && parts[2].trim()) {
+                    item.image = parts[2].trim();
+                }
+                return item;
+            }
+            return null;
+        }).filter(Boolean);
+    }
 }
 
 // =====================================================
@@ -1076,10 +1151,7 @@ function getFileNameFromURL(url) {
         return "Document.pdf";
     }
 }
-
-// =====================================================
 // App Initialization Trigger  應用初始化觸發器
-// =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
