@@ -102,7 +102,6 @@ const DOM = {
     
     dictionaryPopup: () => document.getElementById("dictionary-popup"),
     dictionaryWord: () => document.getElementById("dictionary-word"),
-    dictionaryPhonetic: () => document.getElementById("dictionary-phonetic"),
     dictionaryAudio: () => document.getElementById("dictionary-audio"),
     dictionaryContent: () => document.getElementById("dictionary-content"),
     dictionaryClose: () => document.getElementById("dictionary-close"),
@@ -162,74 +161,81 @@ const TranslationCache = (() => {
 const AudioManager = {
     currentAudio: null,
 
-    async speakWord(word) {
-        if (!word) return;
-        
+    async speak(text) {             // 核心朗讀邏輯（優先使用 Puter.js，失敗時降級使用原生 SpeechSynthesis）
+        if (!text) return;
+
+        this.stopCurrent();         // 停止之前的播放
+        try {
+            if (typeof puter !== 'undefined' && puter.ai && puter.ai.txt2speech) {      // 檢查 Puter.js 是否載入成功
+                const audio = await puter.ai.txt2speech(text);                          // 調用 Puter.js 文字轉語音 API
+                
+                this.currentAudio = {   // 儲存目前音訊物件，方便追蹤與停止
+                    element: audio,
+                    type: 'puter'
+                };
+                
+                await audio.play();
+                return;
+            }
+        } catch (error) {
+            console.warn("TTS 播放失敗，降級使用原生 Web Speech API:", error);
+        }
+        this.fallbackSpeak(text);               // Fallback: 當 Puter API 失敗或未引入時，使用瀏覽器原生發音
+    },
+    fallbackSpeak(text) {                       // 專門處理瀏覽器原生的 TTS 降級備案
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = "en-US";
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = (typeof CONFIG !== 'undefined' && CONFIG.SPEECH_LANG) || "en-US";
+            utterance.rate = (typeof CONFIG !== 'undefined' && CONFIG.SPEECH_RATE) || 0.9;
             window.speechSynthesis.speak(utterance);
         }
     },
-
-    stopCurrent() {
-        if (this.currentAudio?.element) {
+    async speakWord(word) {                         // 單字朗讀介面
+        await this.speak(word);
+    },
+    stopCurrent() {                                 // 停止目前播放（不論是 Puter Audio 還是原生 SpeechSynthesis）
+        if (this.currentAudio?.element) {           // 停止 Puter audio 播放
             this.currentAudio.element.pause();
             this.currentAudio.element.currentTime = 0;
         }
         this.currentAudio = null;
-    },
 
+        if ('speechSynthesis' in window) {          // 停止原生 Web Speech
+            window.speechSynthesis.cancel();
+        }
+    },
     play() {
-        if (this.currentAudio?.element) {
-            this.currentAudio.element.play().catch(() => {
-                if (GameState.currentLookupWord) {
-                    this.speak(GameState.currentLookupWord);
-                }
-            });
-        } else if (GameState.currentLookupWord) {
+        if (typeof GameState !== 'undefined' && GameState.currentLookupWord) {      // 播放 GameState 紀錄的單字
             this.speak(GameState.currentLookupWord);
         }
     },
 
-    speak(text) {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = CONFIG.SPEECH_LANG || "en-US";
-            utterance.rate = CONFIG.SPEECH_RATE || 0.9;
-            window.speechSynthesis.speak(utterance);
-        }
-    },
-
-    destroy() {
+    destroy() {     // 銷毀與清理資源
         this.stopCurrent();
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
     }
 };
 
-//  ======================Event Manager=====================
+// ======================Event Manager=====================
 
 const EventManager = {			   // 定義一個名為 EventManager 的物件，用於統一管理與清理 DOM 事件監聽器
-    listeners: [],			      // 建立私有陣列，用來儲存所有已註冊的事件資訊（包含 DOM 元素、事件類型與處理函式）
+    listeners: [],			       // 建立私有陣列，用來儲存所有已註冊的事件資訊（包含 DOM 元素、事件類型與處理函式）
     
     attach(element, event, handler) {		     // 單一事件綁定方法：接收DOM元素(element)、事件類型(event)與事件處理函式(handler)
-        if (!element) return;				        // 安全檢查：若傳入的 DOM 元素不存在（null 或 undefined），則直接結束不執行
+        if (!element) return;				     // 安全檢查：若傳入的 DOM 元素不存在（null 或 undefined），則直接結束不執行
         
-        element.addEventListener(event, handler);		           // 替 DOM 元素掛載指定的事件監聽器
+        element.addEventListener(event, handler);		         // 替 DOM 元素掛載指定的事件監聽器
         
         this.listeners.push({ element, event, handler });	     // 將本次綁定的資訊封裝成物件，存入 listeners 陣列中以便後續追記與移除
     },
     
     attachAll(config) {			                                // 批次事件綁定方法：接收一個包含多個事件設定陣列的設定檔 (config)
-        config.forEach(([element, event, handler]) => {		  // 使用解構賦值(Destructuring)取出每設定項 [element,event,handler]
-            this.attach(element, event, handler);             // 逐一呼叫 attach 方法進行綁定
+        config.forEach(([element, event, handler]) => {		    // 使用解構賦值(Destructuring)取出每設定項 [element,event,handler]
+            this.attach(element, event, handler);               // 逐一呼叫 attach 方法進行綁定
         });
     },
-    removeAll() {				    										                   // 一鍵移除所有已註冊事件的方法
-        this.listeners.forEach(({ element, event, handler }) => {			       // 巡覽 listeners 陣列中的每一個事件紀錄
+    removeAll() {				    										    // 一鍵移除所有已註冊事件的方法
+        this.listeners.forEach(({ element, event, handler }) => {			    // 巡覽 listeners 陣列中的每一個事件紀錄
             if (element) element.removeEventListener(event, handler);			// 若元素仍然存在於 DOM 中，則將當初綁定的事件監聽器移除
         });
         this.listeners = [];        		// 清空紀錄陣列，釋放記憶體
@@ -270,17 +276,14 @@ function initializeWordClickDelegation() {
         const clickedIndex = parseInt(e.target.dataset.index, 10);
         if (isNaN(clickedIndex)) return;
 
-        // 取得當前關卡完整的純文字
-        const fullText = GameState.getCurrentText();
+        const fullText = GameState.getCurrentText();    // 取得當前關卡完整的純文字
         
-        // 合併當前註解與全域預設註解
-        const currentAnn = GameState.currentAnnotations || [];
+        const currentAnn = GameState.currentAnnotations || [];      // 合併當前註解與全域預設註解
         const combinedAnnotations = [...currentAnn, ...(typeof defaultGlobalAnnotations !== 'undefined' ? defaultGlobalAnnotations : [])];
 
-        // 優先尋找涵蓋點擊位置嘅多字片語註解
-        let matchedPhrase = null;
+        let matchedPhrase = null;       // 優先尋找涵蓋點擊位置嘅多字片語註解
 
-        // 將註記按長度排序（長片語優先）
+            // 將註記按長度排序（長片語優先）
         const sortedAnn = [...combinedAnnotations].sort((a, b) => (b.word?.length || 0) - (a.word?.length || 0));
 
         for (const ann of sortedAnn) {
@@ -726,7 +729,6 @@ function lookupWord(word) {
 
     const dictionaryPopup = DOM.dictionaryPopup();                       
     const dictionaryWord = DOM.dictionaryWord(); 
-    const dictionaryPhonetic = DOM.dictionaryPhonetic();
     const dictionaryContent = DOM.dictionaryContent(); 
 
     if (!dictionaryPopup || !dictionaryWord) return;                    
@@ -734,9 +736,6 @@ function lookupWord(word) {
     dictionaryPopup.classList.remove("hidden");                         
     dictionaryWord.textContent = word; 
 
-    if (dictionaryPhonetic) {
-        dictionaryPhonetic.textContent = word; 
-    }
 
     if (dictionaryContent) {                    
         dictionaryContent.innerHTML = "";       
@@ -751,21 +750,30 @@ function lookupWord(word) {
         });
 
         if (matched) {
-            const contentText = matched["dict-content"] || matched.note || "暫無詳細解釋";
+            const phoneticText = matched["dict-phonetic"] 
+            const contentText =  matched["dict-content"] || matched.note || "暫無詳細解釋";
             const imageUrl = matched["image"] || matched["dict-image"] || null;
 
             const container = document.createElement("div");
             container.className = "dict-annotation-result";
             
-            let htmlContent = `
-                <div style="font-size: 1.1em; color: #2c3e50; font-weight: bold; margin-bottom: 8px;">
-                    📌 註解釋義：
-                </div>
-                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #3498db; font-size: 1em; line-height: 1.4; margin-bottom: 10px;">
-                    ${contentText}
-                </div>
-            `;
+            let htmlContent = ''
 
+            if (phoneticText) {
+                htmlContent += `
+                    <div style="color: #7f8c8d; margin-bottom: 12px;">${phoneticText}</div>
+                `;
+            }
+            if (contentText) {
+                htmlContent += `
+                    <div style="font-size: 1.1em; color: #2c3e50; font-weight: bold; margin-bottom: 8px;">
+                        📌句子：
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #3498db; font-size: 1em; line-height: 1.4; margin-bottom: 10px;">
+                        ${contentText}
+                    </div>
+                `;
+            }
             if (imageUrl) {
                 htmlContent += `
                     <div class="dict-image-container" style="text-align: center; margin-top: 10px;">
