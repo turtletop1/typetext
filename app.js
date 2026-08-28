@@ -48,21 +48,17 @@ const GameState = {
         this.autoSpeakEnabled = false;
         this.lastSpokenWordIndex = -1;
     },
-    
     setLoading(state) {
         this.loadingState = state;		    // 設定並更新系統目前的載入狀態（例如傳入 "idle"、"loading" 或 "loaded"）
     },
-    
     createLevels(text, charsPerLevel, delimiter = null) {	// 呼叫切分關卡演算法，將文字分成多個關卡並存入state，最後回傳關卡陣列
-        this.levels = createLevels(text, charsPerLevel, delimiter); // 呼叫全域/外部createLevels函式進行文字切分，並更新內部levels 屬性
-        return this.levels;								          // 回傳處理好的關卡陣列
+        this.levels = createLevels(text, charsPerLevel, delimiter);     // 呼叫全域/外部createLevels函式進行文字切分，並更新內部levels 屬性
+        return this.levels;								                // 回傳處理好的關卡陣列
     },
-    
-    getCurrentText() {										          // 取得「當前關卡」對應的文字內容
+    getCurrentText() {										    // 取得「當前關卡」對應的文字內容
         return this.levels[this.currentLevel] || "";			// 依據 currentLevel索引值取出陣列內容；若超出範圍(如無資料)回傳空字串 "" 防止報錯
     },
-    
-    getTotalLevels() {										       // 取得關卡的總數量
+    getTotalLevels() {										    // 取得關卡的總數量
         return this.levels.length;								//回傳levels陣列的總長度
     },
 };
@@ -210,7 +206,6 @@ const AudioManager = {
             this.speak(GameState.currentLookupWord);
         }
     },
-
     destroy() {     // 銷毀與清理資源
         this.stopCurrent();
     }
