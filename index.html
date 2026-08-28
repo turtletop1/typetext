@@ -5,11 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF & Article Typing Game</title>
-
+    
     <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
+    
     <link rel="stylesheet" href="style.css">
+    
 </head>
 
 <body>
@@ -60,9 +61,10 @@
 
             <!-- 頁數選擇區域 -->
             <div id="page-range-container" class="hidden" style="display: flex; align-items: center; gap: 8px; font-size: 0.95em;">
-                <label>頁數範圍：</label>
+                <label for="pdf-start-page">頁數範圍（起始）：</label>
                 <input type="number" id="pdf-start-page" min="1" value="1" style="width: 65px; padding: 4px; text-align: center;">
                 <span>至</span>
+                <label for="pdf-end-page" class="sr-only">頁數範圍（結束）：</label>
                 <input type="number" id="pdf-end-page" min="1" value="1" style="width: 65px; padding: 4px; text-align: center;">
                 <button id="apply-page-range-btn" class="secondary-btn" style="padding: 4px 10px;">套用頁數</button>
             </div>
@@ -109,15 +111,15 @@
             <label for="newCategory">文章分類（可手動輸入或使用現有）：</label><br>
             <input type="text" id="newCategory" placeholder="例如: 基礎科技、進階閱讀" style="width: 100%; margin-bottom: 10px; padding: 6px; box-sizing: border-box;"><br>
 
-            <!-- 2. 文章標題 -->
+            <!-- 文章標題 -->
             <label for="newTitle">文章標題：</label><br>
             <input type="text" id="newTitle" placeholder="例如: Artificial Intelligence Basics" style="width: 100%; margin-bottom: 10px; padding: 6px; box-sizing: border-box;"><br>
 
-            <!-- 3. 文章內容 -->
+            <!-- 文章內容 -->
             <label for="newContent">文章內容：</label><br>
             <textarea id="newContent" rows="5" placeholder="輸入文章內文..." style="width: 100%; margin-bottom: 10px; padding: 6px; box-sizing: border-box;"></textarea><br>
 
-            <!-- 4. 進階設定 (雙欄排列) -->
+            <!-- 進階設定 (雙欄排列) -->
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <div style="flex: 1;">
                     <label for="newCharsPerLevel">每關字數 (charsPerLevel)：</label>
@@ -129,7 +131,7 @@
                 </div>
             </div>
 
-            <!-- 5. 單字註解 -->
+            <!-- 單字註解 -->
             <label for="newAnnotations">單字註解 (Annotations)：</label><br>
             <textarea id="newAnnotations" rows="3" placeholder="每行一組單字與註解，格式：單字:翻譯&#10;例如：&#10;Artificial:人造的&#10;Intelligence:智慧" style="width: 100%; margin-bottom: 15px; padding: 6px; box-sizing: border-box;"></textarea><br>
 
@@ -153,17 +155,15 @@
         </div>
 
         <p id="article-status" class="status">
-            貼上文章後點擊「開始打字練習」即可生成關卡。
+            貼上文章後點擊「開始打字練習」即可生成關卡
         </p>
     </section>
 
-    <!-- =================================================
-         GAME AREA
-    ================================================== -->
+    <!-- ==========================GAME AREA============================ -->
 
     <section id="game-area" class="game-area hidden">
 
-        <!-- 1. 關卡切換列 -->
+        <!-- 關卡切換列 -->
         <div class="level-bar">
             <button id="prev-btn" class="secondary-btn">⬅ Previous</button>
             <select id="level-select" class="level-select" disabled>
@@ -173,25 +173,30 @@
             <button id="next-btn" class="secondary-btn">Next ➡</button>
         </div>
 
-        <!-- 2. 烏龜跑道 -->
+        <!-- 烏龜跑道 -->
         <div class="turtle-track" id="turtle-track">
             <img class="turtle-display" id="turtle-display" src="img.svg" alt="Interactive Logo" width="50">
             <img class="flag" src="flag.png" alt="Interactive Logo" width="50">
         </div>
 
-        <!-- 3. 文章來源資訊 -->
+        <div class="auto-speak-toggle" style="margin: 10px 0; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="auto-speak-checkbox">
+            <label for="auto-speak-checkbox" style="cursor: pointer; user-select: none;">🔊自動朗讀(Auto TTS)</label>
+        </div>
+
+        <!-- 文章來源資訊 
         <div class="source-info">
             <div>
                 <strong id="content-title">Content</strong>
                 <span id="content-source">Source</span>
             </div>
             <a id="original-link" href="#" target="_blank" rel="noopener noreferrer">View Original</a>
-        </div>
+        </div>-->
 
-        <!-- 4. 文字顯示區 -->
+        <!-- 文字顯示區 -->
         <div id="text-display" class="text-display"></div>
 
-        <!-- 5. 字典彈窗 -->
+        <!-- 字典彈窗 -->
         <div id="dictionary-popup" class="dictionary-popup hidden">
             <button id="dictionary-close" class="dictionary-close">✕</button>
             <h2 id="dictionary-word">Word</h2>
@@ -200,7 +205,7 @@
             <div id="dictionary-content">正在載入...</div>
         </div>
 
-        <!-- 6. 打字輸入框 -->
+        <!-- 打字輸入框 -->
         <textarea
             id="typing-input"
             class="typing-input"
@@ -212,14 +217,14 @@
             style="white-space:pre-wrap;"
         ></textarea>
 
-        <!-- 7. 數據統計列 -->
+        <!-- 數據統計列 -->
         <div class="stats">
             <div>🎯 Accuracy <strong id="accuracy">100%</strong></div>
             <div>⚡ WPM <strong id="wpm">0</strong></div>
             <div>📝 Progress <strong id="progress">0%</strong></div>
         </div>
 
-        <!-- 8. 重來按鈕 -->
+        <!-- 重來按鈕 -->
         <button id="restart-btn" class="restart-btn">🔄 Restart Level</button>
 
     </section>
