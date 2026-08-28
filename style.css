@@ -292,11 +292,11 @@ button {
     border: 1px solid #e5e8eb;
     border-radius: 10px;
     min-height: 200px;
-    max-height: 380px;
+    max-height: 450px;
     overflow-y: auto;
-    font-size: 20px;
+    font-size: 18px;
     white-space: pre-wrap !important;
-    line-height: 1.7;
+    line-height: 1.6;
     word-break: break-word;
 }
 
@@ -470,12 +470,6 @@ rt.word-note {
     background: none;
     font-size: 20px;
     color: #777;
-}
-
-
-#dictionary-phonetic {
-    color: #7f8c8d;
-    margin-bottom: 12px;
 }
 
 
