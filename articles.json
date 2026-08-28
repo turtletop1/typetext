@@ -297,5 +297,22 @@
         ]
       }
     ]
+  },
+  {
+   "category": "Default",
+    "articles": [
+      {
+        "id": "Default",
+        "title": "Default Global Article",
+        "content": "discharge",
+        "annotations": [
+          {
+            "word": "discharge",
+            "note": "釋放",
+            "dict-content": "釋放"
+          }
+        ]
+      }
+    ]
   }
 ]
