@@ -11,7 +11,9 @@
         "annotations": [
           {
             "word": "Artificial",
-            "note": "人造的"
+            "note": "人造的",
+            "dict-content": "掃描電子顯微鏡（簡稱 SEM)，利用電子束掃描樣品表面獲得高解析度 3D 影像 ",
+            "image": "https://picsum.photos/200/300"
           },
           {
             "word": "Intelligence",
