@@ -42,33 +42,13 @@
       {
         "id": "art_201",
         "title": "1 Introducing biology",
-        "content": [
-          "Anatomy - the structure of organisms",
-          "Cytology - the basic unit of organisms — cells,",
-          "Ecology - interactions between organisms and their environment,",
-          "Genetics - the ways in which characteristics of organisms are passed on from one generation to the next, ",
-          "Genetics - the basic unit of organisms — cells"
-        ]
+        "content": "Anatomy - the structure of organisms\nCytology - the basic unit of organisms — cells,\nEcology - interactions between organisms and their environment,\nGenetics - the ways in which characteristics of organisms are passed on from one generation to the next,\nGenetics - the basic unit of organisms — cells"
       },
       {
         "id": "art_202",
         "title": "2 The cell as the basic unit of life",
         "delimiter": "[NEXT]",
-        "content": [
-          "Nitrate,Magnesium,Calcium,Iron\n",
-          "Biomolecules",
-          "Carbohydrates - Glucose, Starch, Cellulose\n",
-          "Lipids -Triglycerides, Phospholipids \n",
-          "Proteins - Structural proteins , Enzymes , Antibodies \n",
-          "Nucleic acids - Deoxyribonucleic acid , Ribonucleic acid",
-          "[NEXT]",
-          "Light microscope , Transmission , Electron microscope , Scanning electron microscope",
-          "[NEXT]",
-          "animal cells - cell membrane-(Differentially permeable) ,cell cytoplasm ,  mitochondrion , nucleus ,rough endoplasmic reticulum , ribosome , vacuole , smooth endoplasmic reticulum \n",
-          "plant cells - cell wall ,chloroplast",
-          "[NEXT]",
-          "Prokaryotic , eukaryotic cells ,genetic material"
-        ],
+        "content": "Nitrate,Magnesium,Calcium,Iron\n\nBiomolecules\nCarbohydrates - Glucose, Starch, Cellulose\n\nLipids -Triglycerides, Phospholipids \n\nProteins - Structural proteins , Enzymes , Antibodies \n\nNucleic acids - Deoxyribonucleic acid , Ribonucleic acid\n[NEXT]\nLight microscope , Transmission , Electron microscope , Scanning electron microscope\n[NEXT]\nanimal cells - cell membrane-(Differentially permeable) ,cell cytoplasm ,  mitochondrion , nucleus ,rough endoplasmic reticulum , ribosome , vacuole , smooth endoplasmic reticulum \n\nplant cells - cell wall ,chloroplast\n[NEXT]\nProkaryotic , eukaryotic cells ,genetic material",
         "annotations": [
           {
             "word": "Nitrate",
@@ -123,7 +103,7 @@
             "note": "蛋白質"
           },
           {
-            "word": "Structural proteins ",
+            "word": "Structural proteins",
             "note": "結構蛋白質"
           },
           {
@@ -157,10 +137,6 @@
           {
             "word": "Electron microscope",
             "note": "電子顯微鏡"
-          },
-          {
-            "word": "Scanning electron microscope",
-            "note": "掃描電子顯微鏡"
           },
           {
             "word": "Scanning electron microscope",
@@ -278,22 +254,30 @@
           "\ntaxi driver/cabbie",
           "\ndifficult to get a cab"
         ],
-        "annotations": [
+          "annotations": [
           {"word": "bystander/patron","note": "旁觀者"},
           {"word": "circulated widely","note": "廣泛流傳"},
-          {"word": "pointed","note": "被人"},{"word": "finger","note": "指責"},
-          {"word": "led","note": "導致"},{"word": "public","note": "公開"},{"word": "trial","note": "審判"},
+          {"word": "pointed the finger at you","note": "被人指責"},
+          {"word": "led","note": "導致"},{"word": "public","note": "公開"},
+          {"word": "trial","note": "審判"},
           {"word": "humiliation","note": "屈辱/羞辱"},
           {"word": "petition","note": "請願"},
-          {"word": "voluntarily","note": "自願地(ad)"},{"word": "commuter","note": "上下班乘客/通勤者"},
-          {"word": "parallel-goods","note": "水貨"},{"word": "parallel-goods","note": "客"},
-          {"word": "jam-packed","note": "擠擁嘅"},{"word": "chaos","note": "混亂"},
+          {"word": "voluntarily","note": "自願地(ad)"},
+          {"word": "commuter","note": "上下班乘客/通勤者"},
+          {"word": "parallel-goods","note": "水貨"},
+          {"word": "trader","note": "客"},
+          {"word": "jam-packed","note": "擠擁嘅"},
+          {"word": "chaos","note": "混亂"},
           {"word": "crippled","note": "殘疾,癱瘓"},
           {"word": "firebomb","note": "燃燒彈"},
-          {"word": "invasion","note": "入侵"},{"word": "privacy","note": "隱私權"},
-          {"word": "constant","note": "持續嘅"},{"word": "fare","note": "票價"},{"word": "increase","note": "上漲"},
+          {"word": "invasion","note": "入侵"},
+          {"word": "privacy","note": "隱私權"},
+          {"word": "constant","note": "持續嘅"},
+          {"word": "fare","note": "票價"},
+          {"word": "increase","note": "上漲"},
           {"word": "cabbie","note": "計程車司機"},
           {"word": "cab","note": "計程車"}
+          
         ]
       }
     ]
@@ -304,12 +288,23 @@
       {
         "id": "Default",
         "title": "Default Global Article",
-        "content": "discharge",
+        "content": [
+            "discharge",
+            "contaminate"
+          ],
         "annotations": [
           {
             "word": "discharge",
-            "note": "釋放",
-            "dict-content": "釋放"
+            "note": "釋放/流出",
+            "dict-content": "the river discharges into the sea five miles down the coast <br>那條河在海岸以南5英里處流出大海",
+            "dict-phonetic":"dis·charge"
+          },
+          {
+            "word": "contaminate",
+            "note": "污染",
+            "dict-content": "Much of the coast has been contaminated by nuclear waste.<br>大部分海岸已受到核廢料污染",
+            "dict-phonetic":"con·tam·i·nate",
+            "image": "https://ts.idictionary.co.kr/files/pd/word_sub_img/420x420/1466954703_25.jpg"
           }
         ]
       }
