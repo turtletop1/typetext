@@ -1,4 +1,3 @@
-
 const CONFIG = {
     PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",   // 設定 PDF.js 所需的 Web Worker 檔案來源
     PDF_LINE_HEIGHT_THRESHOLD: 5,      // 設定 PDF 文字行的高度判斷閾值
@@ -64,7 +63,6 @@ const GameState = {
 };
 
 // ===================DOM Element Selectors===================
-
 const DOM = {
     pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
     articleModeBtn: () => document.getElementById("article-mode-btn"),
@@ -121,10 +119,10 @@ const DOM = {
     newAnnotations: () => document.getElementById("newAnnotations"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
     autoSpeakCheckbox: () => document.getElementById("auto-speak-checkbox"),
+    boldSetting: () => document.getElementById("bold-setting"),
 };
 
 // ===================Translation Cache System===================
-
 const TranslationCache = (() => {
     const cache = new Map();                  			    //建立個私有Map物件，用來儲存「原文(Key)」與「翻譯結果(Value)
     const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;       // 讀取全域設定檔中的快取數量上限（例如：100 筆）
@@ -258,6 +256,14 @@ function initializeEventListeners() {
         [DOM.autoSpeakCheckbox(), "change", (e) => {
             GameState.autoSpeakEnabled = e.target.checked;
         }],
+        [DOM.boldSetting(), "change", (e) => {
+            renderText.boldSettingEnabled = e.target.checked;
+            const currentText = GameState?.currentText || DOM.customTextInput()?.value || "";
+            const currentAnnotations = GameState?.currentAnnotations || [];
+            if (currentText) {
+                renderText(currentText, currentAnnotations);
+            }
+        }]
     ]);
 }
 
@@ -546,6 +552,29 @@ function showLevel() {
     }, 100);
 }
 
+
+function formatBionicText(text) {       // 將傳入的文字轉換成「字頭加粗」的 HTML 格式
+    if (!text) return '';
+
+    return text.replace(/\b([a-zA-Z0-9]+)\b/g, (match) => {      // 使用正規表達式匹配所有英文單字 (\b\w+\b)
+        const length = match.length;
+        
+        let boldLength = 1;                      // 根據單字長度決定加粗字數,-3個字母加粗1個字，4-6個字母加粗2個字，其餘加粗約一半長度
+        if (length > 3 && length <= 6) {
+            boldLength = 2;
+        } else if (length > 6) {
+            boldLength = Math.ceil(length * 0.4);
+        }
+
+        const boldPart = match.slice(0, boldLength);
+        const restPart = match.slice(boldLength);
+
+        return `<b>${boldPart}</b>${restPart}`;
+    });
+}
+
+
+
 function renderText(text, annotations = []) {                  
     const textDisplay = DOM.textDisplay();                     
     if (!textDisplay) return; 
@@ -553,10 +582,8 @@ function renderText(text, annotations = []) {
     textDisplay.innerHTML = "";                                 
     let globalCharIndex = 0;
 
-    // 將 annotations 依據 word 長度由長到短排序（優先匹配較長嘅片語）
     const sortedAnnotations = [...annotations].sort((a, b) => (b.word?.trim().length || 0) - (a.word?.trim().length || 0));
 
-    // 【修復】正則轉義，防止包含 / 或 ? 等字元導致斷裂
     const patternParts = sortedAnnotations    
         .filter(a => a.word && a.word.trim().length > 0)
         .map(a => a.word.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); 
@@ -569,13 +596,23 @@ function renderText(text, annotations = []) {
     }
 
     const tokens = text.split(regex).filter(Boolean);
+    const boldSettingEnabled = renderText.boldSettingEnabled ?? false;
 
     tokens.forEach(token => {                                  
         const matchedAnnotation = annotations.find(          
             a => a.word && a.word.trim().toLowerCase() === token.trim().toLowerCase()
         );
-
         const tokenContainer = matchedAnnotation ? document.createElement("ruby") : document.createDocumentFragment();   
+
+        const isWord = /^[a-zA-Z0-9]+$/.test(token.trim());
+        let boldLength = 0;
+
+        if (isWord && boldSettingEnabled) {          // 當為單字且設定開啟時計算加粗長度
+            const len = token.length;
+            if (len <= 3) boldLength = 1;
+            else if (len <= 6) boldLength = 2;
+            else boldLength = Math.ceil(len * 0.4);
+        }
 
         for (let j = 0; j < token.length; j++) {               
             const char = token[j];
@@ -588,10 +625,13 @@ function renderText(text, annotations = []) {
             if (globalCharIndex === 0) span.classList.add("current");               
             if (/^[A-Za-z ]$/.test(char)) span.classList.add("clickable-word");      
 
+            if (isWord && j < boldLength) {            
+                span.classList.add("bionic-bold");
+            }
+
             tokenContainer.appendChild(span);                                       
             globalCharIndex++;                                                      
         }
-
         if (matchedAnnotation) {                               
             const rt = document.createElement("rt");
             rt.className = "word-note";                        
@@ -601,6 +641,9 @@ function renderText(text, annotations = []) {
         textDisplay.appendChild(tokenContainer);               
     });
 }
+
+//renderText.boldSettingEnabled = false;
+
 
 function updateCharacterDisplay(typed, target) {
     const textDisplay = DOM.textDisplay();                                  
@@ -1160,7 +1203,6 @@ function handleTyping(event) {
             }
         }
     }
-
     updateCharacterDisplay(typed, target);
     updateStats();
     
@@ -1168,7 +1210,6 @@ function handleTyping(event) {
         finishLevel();
     }
 }
-
 function handleLevelSelect(e) {
     const levelIndex = parseInt(e.target.value, 10);
     if (!isNaN(levelIndex) && levelIndex >= 0 && levelIndex < GameState.getTotalLevels()) {
@@ -1176,7 +1217,6 @@ function handleLevelSelect(e) {
         showLevel();
     }
 }
-
 function switchMode(mode) {
     const pdfPanel = DOM.pdfModePanel();
     const articlePanel = DOM.articleModePanel();
@@ -1195,14 +1235,12 @@ function switchMode(mode) {
         if (articleBtn) articleBtn.classList.add("active");
     }
 }
-
 function setStatus(msg) {
     const pdfStatus = DOM.pdfStatus();
     const articleStatus = DOM.articleStatus();
     if (pdfStatus) pdfStatus.textContent = msg;
     if (articleStatus) articleStatus.textContent = msg;
 }
-
 function getFileNameFromURL(url) {
     try {
         const pathname = new URL(url).pathname;
@@ -1211,9 +1249,7 @@ function getFileNameFromURL(url) {
         return "Document.pdf";
     }
 }
-
 // App Initialization Trigger  應用初始化觸發器
-
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
