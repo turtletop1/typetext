@@ -1,6 +1,4 @@
-// =====================================================
-// Global Configuration
-// =====================================================
+// ===================Global Configuration===================
 
 const CONFIG = {
     PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",   // 設定 PDF.js 所需的 Web Worker 檔案來源
@@ -14,17 +12,12 @@ const CONFIG = {
     SPEECH_LANG: "en-US",               // 設定語音發音與文字朗讀的預設語言
     
     TRANSLATION_CACHE_SIZE: 100,         // 設定翻譯結果快取的容量上限
-    
-    DICTIONARY_API: "https://api.dictionaryapi.dev/api/v2/entries/en/",   // 設定英文字典API網址，查詢單字定義、發音與詞性
-    TRANSLATION_API: "https://api.mymemory.translated.net/get",           // 設定MyMemory免費翻譯服務API網址
 };
 
 // Global state to store current selected article object
 let currentSelectedArticle = null;
 
-// =====================================================
-//  Game State Management
-// =====================================================
+//  ===================Game State Management===================
 
 const GameState = {
     pdfText: "",              // 儲存從 PDF 檔案中提取出來的完整純文字內容
@@ -39,6 +32,9 @@ const GameState = {
     
     loadingState: "idle", // "idle" | "loading" | "loaded"      // 紀錄系統當前資料載入狀態（idle=閒置、loading=載入中、loaded=載入完成)
     loadedPdfDoc: null,
+
+    autoSpeakEnabled: false, // 預設關閉自動發音
+    lastSpokenWordIndex: -1, // 避免同一個單字重複觸發發音
     
     reset() {
         this.pdfText = "";					   // 清空儲存的 PDF 完整文章文字
@@ -49,6 +45,8 @@ const GameState = {
         this.currentLookupWord = "";		// 清空目前正在查詢或標示的單字字串
         this.loadingState = "idle";		   // 將系統載入狀態恢復為閒置狀態（"idle"）
         this.currentAnnotations = [];		// 清空當前文章對應的中文註解與標註清單
+        this.autoSpeakEnabled = false;
+        this.lastSpokenWordIndex = -1;
     },
     
     setLoading(state) {
@@ -69,9 +67,7 @@ const GameState = {
     },
 };
 
-// =====================================================
-// DOM Element Selectors
-// =====================================================
+// ===================DOM Element Selectors===================
 
 const DOM = {
     pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
@@ -129,11 +125,10 @@ const DOM = {
     newDelimiter: () => document.getElementById("newDelimiter"),
     newAnnotations: () => document.getElementById("newAnnotations"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
+    autoSpeakCheckbox: () => document.getElementById("auto-speak-checkbox"),
 };
 
-// =====================================================
-// Translation Cache System
-// =====================================================
+// ===================Translation Cache System===================
 
 const TranslationCache = (() => {
     const cache = new Map();                  			    //建立個私有Map物件，用來儲存「原文(Key)」與「翻譯結果(Value)
@@ -162,57 +157,51 @@ const TranslationCache = (() => {
     };
 })();
 
-// =====================================================
-// Audio Management System  音訊管理系統
-// =====================================================
+// ===================Audio Management System  音訊管理系統===================
 
-const AudioManager = {                 	  // 定義一個名為 AudioManager 的物件
-    currentAudio: null,                     // 儲存當前正在使用或準備播放的音訊物件實例
-    
-    setAudio(audioUrl, fallbackWord) {         	// 設定新的音訊來源，需傳入音訊檔網址 (audioUrl) 與備用單字 (fallbackWord
-        this.stopCurrent();                     // 在建立新音訊之前，先停止並清除前一次正在播放的語音
+const AudioManager = {
+    currentAudio: null,
+
+    async speakWord(word) {
+        if (!word) return;
         
-        const audioObj = new Audio(audioUrl);            // 建立原生 HTML5 Audio 物件實例並載入音訊網址
-        this.currentAudio = {                            // 將實例與播放邏輯封裝並賦值給 currentAudio 屬性
-            element: audioObj,                           // 儲存原始的 Audio 元素 reference
-            play: () => {                                // 定義播放方法
-                audioObj.play().catch(() => {            // 嘗試播放音訊檔案
-                    console.warn("Audio play failed, falling back to Web Speech API");      // 若音訊播放失敗
-                    this.speak(fallbackWord);                                               // 自動呼叫內建的語音合成(Web Speech API)來朗讀傳入備用單字
-                });
-            }
-        };
-    },
-    
-    speak(text) {										                         // 定義Speak方法，接收欲進行語音朗讀的文字字串(text) 
-        if ('speechSynthesis' in window) {				                // 檢查當前使用者瀏覽器是否支援Web Speech API speechSynthesis語音合成功能
-            window.speechSynthesis.cancel();			                   // 強制停止/取消當前正播放,排隊中所有語音，避免聲音重疊,積壓
-            const utterance = new SpeechSynthesisUtterance(text);	    // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
-            utterance.lang = CONFIG.SPEECH_LANG;		  		          // 建立新語音朗讀物件Obj (SpeechSynthesisUtterance)，並帶入要發音文字
-            utterance.rate = CONFIG.SPEECH_RATE;					       // 設定朗讀的語言（取自全域設定檔 CONFIG，例如 "en-US"）
-            window.speechSynthesis.speak(utterance);			  	       // 呼叫瀏覽器語音合成服務，開始進行文字語音朗讀
-        } else {
-            console.warn("Browser does not support SpeechSynthesis API");    // 若瀏覽器不支援 SpeechSynthesis API，於控制台印出警告訊息
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = "en-US";
+            window.speechSynthesis.speak(utterance);
         }
     },
-    
-    play() {
-        if (this.currentAudio?.play) {
-            this.currentAudio.play();
-        } else if (GameState.currentLookupWord) {
-            this.speak(GameState.currentLookupWord);
-        }
-    },
-    
+
     stopCurrent() {
         if (this.currentAudio?.element) {
             this.currentAudio.element.pause();
             this.currentAudio.element.currentTime = 0;
-            this.currentAudio.element.src = "";
         }
         this.currentAudio = null;
     },
-    
+
+    play() {
+        if (this.currentAudio?.element) {
+            this.currentAudio.element.play().catch(() => {
+                if (GameState.currentLookupWord) {
+                    this.speak(GameState.currentLookupWord);
+                }
+            });
+        } else if (GameState.currentLookupWord) {
+            this.speak(GameState.currentLookupWord);
+        }
+    },
+
+    speak(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = CONFIG.SPEECH_LANG || "en-US";
+            utterance.rate = CONFIG.SPEECH_RATE || 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+    },
+
     destroy() {
         this.stopCurrent();
         if ('speechSynthesis' in window) {
@@ -221,9 +210,7 @@ const AudioManager = {                 	  // 定義一個名為 AudioManager 的
     }
 };
 
-// =====================================================
-//  Event Manager
-// =====================================================
+//  ======================Event Manager=====================
 
 const EventManager = {			   // 定義一個名為 EventManager 的物件，用於統一管理與清理 DOM 事件監聽器
     listeners: [],			      // 建立私有陣列，用來儲存所有已註冊的事件資訊（包含 DOM 元素、事件類型與處理函式）
@@ -249,9 +236,7 @@ const EventManager = {			   // 定義一個名為 EventManager 的物件，用�
     }
 };
 
-// =====================================================
-// Initialization  初始化
-// =====================================================
+// ===================Initialization  初始化===================
 
 function initializeEventListeners() {
     EventManager.attachAll([
@@ -269,6 +254,9 @@ function initializeEventListeners() {
         [DOM.pdfModeBtn(), "click", () => switchMode("pdf")],
         [DOM.articleModeBtn(), "click", () => switchMode("article")],
         [DOM.addAndDownloadBtn(), "click", handleAddAndDownload],
+        [DOM.autoSpeakCheckbox(), "change", (e) => {
+            GameState.autoSpeakEnabled = e.target.checked;
+        }],
     ]);
 }
 
@@ -311,10 +299,7 @@ function initializeFormToggle() {
     });
 }
 
-// =====================================================
-// PDF Processing
-// =====================================================
-
+// ===================PDF Processing===================
 function setupPageRangeUI(totalPages) {
     const startInput = DOM.pdfStartPageInput();
     const endInput = DOM.pdfEndPageInput();
@@ -434,9 +419,7 @@ async function processPDF(pdf, startPage = 1, endPage = null) {
     }
 }
 
-// =====================================================
-// Game Core Logic
-// =====================================================
+// ===================Game Core Logic===================
 
 function createLevels(text, charsPerLevel, delimiter = null) {      // 定義切分關卡的函式，接收文本 (text)、每關目標字數 (charsPerLevel)，以及可選切分分隔符號
 
@@ -514,7 +497,7 @@ function showLevel() {
         typingInput.value = "";                 // 清空輸入框內容
         typingInput.disabled = false;           // 啟用輸入框
     }
-    GameState.gameFinished = false;      // 重置遊戲完成狀態與計時器的開始時間
+    GameState.gameFinished = false;             // 重置遊戲完成狀態與計時器的開始時間
     GameState.startTime = null;
     
     updateStats();                                 // 更新畫面統計數據 (如 WPM 速率、正確率) 與導覽按鈕狀態 (如 上一關/下一關 按鈕)
@@ -677,131 +660,32 @@ function updateLevelSelect() {
     levelSelect.disabled = false;                                                           // 啟用關卡切換下拉選單，允許使用者自行選關
 }
 
-// =====================================================
-// Dictionary & Translation Logic 字典與翻譯邏輯
-// =====================================================
+// ===================Dictionary Logic 字典邏輯===================
 
-async function translateToZh(text) {
-    if (TranslationCache.has(text)) {                                    // 檢查快取：若 TranslationCache 中已存有該文字的翻譯結果
-        return TranslationCache.get(text);                               // 直接回傳快取的翻譯結果，避免重複發送 API 請求
-    }
-    try {
-        const params = new URLSearchParams({                                // 建立 URL 查詢參數物件
-            q: text,                                                        // 傳入要翻譯的文字內容 (q)
-            langpair: "en|zh-TW"                                            // 設定翻譯語言對：英文 (en) 轉 繁體中文 (zh-TW)
-        });
-        const res = await fetch(`${CONFIG.TRANSLATION_API}?${params}`);     // 透過 fetch 發送非同步 GET 請求至翻譯 API
-        const transData = await res.json();                                 // 將 API 回傳的資料解析為 JSON 物件
-        const result = transData.responseData?.translatedText || "";        // 使用可選鏈運算子取出翻譯後的文字，若無則預設為空字串
-        
-        TranslationCache.set(text, result);                                 // 將本次翻譯結果寫入 TranslationCache 快取中
-        return result;                                                      // 回傳翻譯後的中文結果
-    } catch (error) {                                                       // 捕捉網路請求或 JSON 解析過程中的例外錯誤
-        console.warn("Translation failed:", error);                         // 於控制台印出翻譯失敗的警告訊息與錯誤詳情
-        return "";                                                          // 翻譯失敗時回傳空字串作為降級備援
-    }
-}
-
-async function lookupWord(word) {
-    word = word.trim().toLowerCase();                                   // 整理輸入的單字：去除前後空白並轉為小寫
+function lookupWord(word) {
+    word = word.trim().toLowerCase();                                   // 整理輸入的單字
     if (!word) return;                                                  // 若單字為空則直接結束
 
-    GameState.currentLookupWord = word;                                 // 將目前查詢的單字記錄到全域狀態中
+    GameState.currentLookupWord = word;                                 // 紀錄目前查詢單字
 
-    const dictionaryPopup = DOM.dictionaryPopup();                       // 取得字典彈出視窗 DOM 元素
-    const dictionaryWord = DOM.dictionaryWord();                         // 取得顯示單字標題的 DOM 元素
-    const dictionaryContent = DOM.dictionaryContent();                   // 取得顯示字典內容/解釋的 DOM 元素
+    const dictionaryPopup = DOM.dictionaryPopup();                       // 取得 DOM 元素
+    const dictionaryWord = DOM.dictionaryWord(); 
+    const dictionaryPhonetic = DOM.dictionaryPhonetic();
+    const dictionaryContent = DOM.dictionaryContent(); 
 
-    if (!dictionaryPopup || !dictionaryWord || !dictionaryContent) return;          // 安全檢查：若缺少關鍵 DOM 元素則直接結束
+    if (!dictionaryPopup || !dictionaryWord) return;                    // 安全檢查
 
-    dictionaryPopup.classList.remove("hidden");                                    // 移除 "hidden" 類別以顯示字典彈出視窗
-    dictionaryWord.textContent = word;                                             // 於標題處顯示當前查詢的單字
+    dictionaryPopup.classList.remove("hidden");                         // 顯示字典視窗
+    dictionaryWord.textContent = word; 
 
-    const dictionaryPhonetic = DOM.dictionaryPhonetic();                           // 取得音標顯示 DOM 元素
-    if (dictionaryPhonetic) dictionaryPhonetic.textContent = "Loading...";         // 於音標處顯示載入中狀態
-    dictionaryContent.innerHTML = "🔎 正在查字典與翻譯...";                         // 於內容區顯示查詢中提示文字
+    // 只保留 dictionaryPhonetic 框填入單字名稱
+    if (dictionaryPhonetic) {
+        dictionaryPhonetic.textContent = word; 
+    }
 
-    const dictionaryAudio = DOM.dictionaryAudio();                            // 取得發音按鈕 DOM 元素
-    if (dictionaryAudio) dictionaryAudio.disabled = false;                    // 啟用發音按鈕
-
-    AudioManager.speak(word);                                                 // 立即發音：使用 TTS 優先朗讀單字，提供即時語音回饋
-
-    try {
-        const response = await fetch(`${CONFIG.DICTIONARY_API}${encodeURIComponent(word)}`);   // 發送 API 請求向字典服務查詢單字
-        if (!response.ok) throw new Error("Word not found");                                   // 若 HTTP 狀態不成功（例如 404）則拋出錯誤
-
-        const data = await response.json();                                                    // 解析 API 回傳的 JSON 資料
-        if (!data || !data.length) throw new Error("No dictionary result");                    // 若回傳資料無內容則拋出錯誤
-
-        const entry = data[0];                                                                 // 取得第一條字典結果 Entry
-
-        const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text && p.text.trim())?.text;    // 取得音標（優先使用主音標，次選 phonetics 陣列中的非空白文字）
-        if (dictionaryPhonetic) dictionaryPhonetic.textContent = phonetic || "";                         // 於UI更新音標（若無則顯示空字串）
-
-        const audioData = entry.phonetics?.find(p => p.audio && p.audio.trim().length > 0);           // 尋找含有真人發音音訊檔的項目
-        if (audioData && audioData.audio) {                                                           // 若找到發音檔網址
-            let audioUrl = audioData.audio;                                                           // 取得音訊檔 URL
-            if (audioUrl.startsWith("//")) {                                                          // 若 URL 為相對協定格式（以//開頭）
-                audioUrl = "https:" + audioUrl;                                                       // 補上 https: 協定前綴
-            }
-            fetch(audioUrl)                                                // 下載發音音訊檔案
-                .then(res => {
-                    if (!res.ok) throw new Error("Audio fetch failed");    // 下載失敗時拋出錯誤
-                    return res.blob();                                     // 將回應轉換為 Blob 二進位物件
-                })
-                .then(blob => {
-                    const blobUrl = URL.createObjectURL(blob);             // 為 Blob 建立本地臨時 URL
-                    AudioManager.setAudio(blobUrl, word);                  // 將真人發音設定至 AudioManager 中
-                })
-                .catch(() => {
-                    AudioManager.speak(word);                              // 若真人發音檔載入失敗，降級使用 TTS 發音
-                });
-        }
-        dictionaryContent.innerHTML = "";                                    // 清空查詢中的提示文字，準備填入解釋
-        if (!entry.meanings || entry.meanings.length === 0) {                // 檢查是否有釋義資料
-            dictionaryContent.innerHTML = "<p>❌ 沒有找到解釋。</p>";         // 若無釋義，顯示查無結果訊息
-            return;                                                          // 結束處理
-        }
-        for (const meaning of entry.meanings) {                         // 巡覽單字的所有詞性與解釋 (meanings)
-            const section = document.createElement("div");              // 建立詞性區塊容器
-            section.className = "dictionary-definition";                // 設定 CSS 類別
-
-            const part = document.createElement("div");                 // 建立詞性標籤 DOM
-            part.className = "dictionary-part";                         // 設定 CSS 類別
-            part.textContent = meaning.partOfSpeech || "Definition";    // 顯示詞性（例如 noun, verb，若無則顯示 Definition）
-            section.appendChild(part);                                  // 加入至詞性區塊中
-
-            if (meaning.definitions) {                                  // 若存在定義列表
-                const defs = meaning.definitions.slice(0, 3);           // 只取前 3 條主要定義以維持介面簡潔
-                for (let index = 0; index < defs.length; index++) {     // 巡覽每條定義
-                    const def = defs[index];
-                    const div = document.createElement("div");          // 建立定義文字容器
-                    div.className = "dictionary-definition-text";       // 設定 CSS 類別
-
-                    (async () => {                                                      // 啟動非同步即時翻譯
-                        const zhText = await translateToZh(def.definition);             // 將英文定義翻譯為繁體中文
-                        const zhDisplay = zhText ? `<br><span style="color: #2b6cb0; font-size: 0.9em;">🇹🇼 ${zhText}</span>` : "";    // 組合中文翻譯 HTML
-                        div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}${zhDisplay}`;                               // 非同步成功後更新含中文翻譯HTML
-                    })();
-
-                    div.innerHTML = `<strong>${index + 1}.</strong> ${def.definition}`;      // 同步先渲染英文定義內容（確保畫面不延遲）
-                    section.appendChild(div);                                                // 將定義文字容器加入詞性區塊
-
-                    if (def.example) {                                        // 若該條定義附有例句
-                        const example = document.createElement("div");        // 建立例句 DOM 容器
-                        example.className = "dictionary-example";             // 設定 CSS 類別
-                        example.textContent = `Example: "${def.example}"`;    // 設定例句文字內容
-                        section.appendChild(example);                         // 將例句加入詞性區塊
-                    }
-                }
-            }
-            dictionaryContent.appendChild(section);                     // 將組合完成的詞性區塊加入字典內容容器中
-        }
-
-    } catch (error) {                                                                                // 捕捉字典 API 連線或解析失敗的錯誤
-        console.warn("Dictionary lookup failed:", error);                                            // 控制台印出警告訊息
-        if (dictionaryPhonetic) dictionaryPhonetic.textContent = "";                                 // 清空音標文字
-        dictionaryContent.innerHTML = "<p>⚠️ 字典 API 連線異常，仍可點擊發音按鈕收聽語音。</p>";        // 顯示降級提示訊息
+    // 清空詳細內容區域
+    if (dictionaryContent) {
+        dictionaryContent.innerHTML = "";
     }
 }
 
@@ -811,12 +695,10 @@ function closeDictionary() {
 }
 
 function playCurrentAudio() {
-    AudioManager.play();                                                // 呼叫音訊管理者播放當前單字的語音（真人發音或 TTS）
+    AudioManager.play();                                                // 呼叫音訊管理者播放當前單字的語音（TTS）
 }
 
-// =====================================================
 // Article Loader & Custom Text Management 文章載入器和自訂文字管理
-// =====================================================
 
 async function loadArticlesFromGit() {
     const categorySelect = DOM.categorySelect();                         // 取得文章分類下拉選單 DOM 元素
@@ -925,7 +807,7 @@ function handleStartCustomText() {
 }
 
 async function handleAddAndDownload() {
-    // 1. 取得 DOM 欄位元素
+    // 取得 DOM 欄位元素
     const categoryInput = DOM.newCategory ? DOM.newCategory() : document.getElementById("newCategory");
     const titleInput = DOM.newTitle();
     const contentInput = DOM.newContent();
@@ -933,7 +815,7 @@ async function handleAddAndDownload() {
     const delimiterInput = DOM.newDelimiter ? DOM.newDelimiter() : document.getElementById("newDelimiter");
     const annotationsInput = DOM.newAnnotations ? DOM.newAnnotations() : document.getElementById("newAnnotations");
 
-    // 2. 讀取並整理輸入數值
+    // 讀取並整理輸入數值
     const categoryName = categoryInput?.value.trim() || "未分類";
     const title = titleInput?.value.trim();
     const content = contentInput?.value.trim();
@@ -959,8 +841,7 @@ async function handleAddAndDownload() {
         }).filter(Boolean);
     }
 
-    // 3. 讀取現有的 JSON 分類結構
-    let categories = [];
+    let categories = [];         // 讀取現有的 JSON 分類結構
     try {
         const res = await fetch("./articles.json");
         if (res.ok) {
@@ -971,8 +852,7 @@ async function handleAddAndDownload() {
         console.warn("Could not load existing articles.json, creating new categories file.");
     }
 
-    // 4. 建立新文章物件 (符合目的 JSON 格式)
-    const newArticle = {
+    const newArticle = {            // 建立新文章物件 (符合目的 JSON 格式)
         id: "art_" + Date.now(),
         title: title,
         charsPerLevel: charsPerLevel,
@@ -981,8 +861,7 @@ async function handleAddAndDownload() {
         ...(annotations.length > 0 && { annotations })
     };
 
-    // 5. 尋找或建立對應分類，並將文章推入該分類
-    let targetCategory = categories.find(c => c.category === categoryName);
+    let targetCategory = categories.find(c => c.category === categoryName);    // 尋找或建立對應分類，並將文章推入該分類
     if (!targetCategory) {
         targetCategory = {
             category: categoryName,
@@ -992,7 +871,7 @@ async function handleAddAndDownload() {
     }
     targetCategory.articles.push(newArticle);
 
-    // 6. 產生 JSON Data URL 並觸發下載
+    // 產生 JSON Data URL 並觸發下載
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(categories, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
@@ -1001,7 +880,7 @@ async function handleAddAndDownload() {
     downloadAnchor.click();
     downloadAnchor.remove();
 
-    // 7. 清空表單輸入框
+    // 清空表單輸入框
     if (titleInput) titleInput.value = "";
     if (contentInput) contentInput.value = "";
     if (charsInput) charsInput.value = "";
@@ -1107,6 +986,7 @@ async function handleApplyPageRange() {
 }
 
 function handleTyping(event) {
+
     if (GameState.gameFinished) return;
     
     const typed = event.target.value;
@@ -1115,6 +995,37 @@ function handleTyping(event) {
     if (GameState.startTime === null && typed.length > 0) {
         GameState.startTime = Date.now();
     }
+
+    if (GameState.autoSpeakEnabled && typed.length > 0) {    // 自動單字發音檢查邏輯
+        const targetText = GameState.getCurrentText();
+        
+        const lastTypedIdx = typed.length - 1;       // 檢查剛才打完的位置
+        
+        const isDelimiter = /[\s,.!?;:]/.test(typed[lastTypedIdx]);    // 判斷剛才輸入是否為分隔符(如空格、句號、逗號)，或已到達文本結尾
+        const isEnd = typed.length === targetText.length;
+        
+        if (isDelimiter || isEnd) {
+            let searchIdx = isDelimiter ? lastTypedIdx - 1 : lastTypedIdx;   // 往前提取剛才打完的英文字母單字
+            let word = "";
+            
+            while (searchIdx >= 0 && /^[A-Za-z]$/.test(targetText[searchIdx])) {
+                word = targetText[searchIdx] + word;
+                searchIdx--;
+            }
+            
+            const wordStartIndex = searchIdx + 1;   // 確保提取到了有效的單字，且該單字位置尚未發音過，並且輸入字元完全正確
+
+            if (word.length > 0 && GameState.lastSpokenWordIndex !== wordStartIndex) {
+
+                const typedWordPart = typed.slice(wordStartIndex, wordStartIndex + word.length); // 比對該單字區段使用者是否全部打對
+                if (typedWordPart.toLowerCase() === word.toLowerCase()) {
+                    AudioManager.speak(word);                               // 觸發語音朗讀
+                    GameState.lastSpokenWordIndex = wordStartIndex;         // 紀錄已發音的單字位置
+                }
+            }
+        }
+    }
+
     updateCharacterDisplay(typed, target);
     updateStats();
     
