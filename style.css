@@ -598,5 +598,7 @@ rt.word-note {
   pointer-events: none;
 }
 
-
-
+.char.bionic-bold {
+    font-weight: 700;
+    color: #000; /* 或你想突顯的深色 */
+}
