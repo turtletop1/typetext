@@ -1,3 +1,4 @@
+
 const CONFIG = {
     PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",   // 設定 PDF.js 所需的 Web Worker 檔案來源
     PDF_LINE_HEIGHT_THRESHOLD: 5,      // 設定 PDF 文字行的高度判斷閾值
@@ -63,6 +64,7 @@ const GameState = {
 };
 
 // ===================DOM Element Selectors===================
+
 const DOM = {
     pdfModeBtn: () => document.getElementById("pdf-mode-btn"),
     articleModeBtn: () => document.getElementById("article-mode-btn"),
@@ -123,6 +125,7 @@ const DOM = {
 };
 
 // ===================Translation Cache System===================
+
 const TranslationCache = (() => {
     const cache = new Map();                  			    //建立個私有Map物件，用來儲存「原文(Key)」與「翻譯結果(Value)
     const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;       // 讀取全域設定檔中的快取數量上限（例如：100 筆）
@@ -596,7 +599,9 @@ function renderText(text, annotations = []) {
     }
 
     const tokens = text.split(regex).filter(Boolean);
-    const boldSettingEnabled = renderText.boldSettingEnabled ?? false;
+
+    // 雙重保險：優先讀取 renderText.boldSettingEnabled，若無則直接從 DOM 元素獲取 checked 狀態
+    const boldSettingEnabled = renderText.boldSettingEnabled ?? (DOM.boldSetting()?.checked || false);
 
     tokens.forEach(token => {                                  
         const matchedAnnotation = annotations.find(          
@@ -607,7 +612,7 @@ function renderText(text, annotations = []) {
         const isWord = /^[a-zA-Z0-9]+$/.test(token.trim());
         let boldLength = 0;
 
-        if (isWord && boldSettingEnabled) {          // 當為單字且設定開啟時計算加粗長度
+        if (isWord && boldSettingEnabled) {          
             const len = token.length;
             if (len <= 3) boldLength = 1;
             else if (len <= 6) boldLength = 2;
@@ -641,9 +646,7 @@ function renderText(text, annotations = []) {
         textDisplay.appendChild(tokenContainer);               
     });
 }
-
-//renderText.boldSettingEnabled = false;
-
+renderText.boldSettingEnabled = false;
 
 function updateCharacterDisplay(typed, target) {
     const textDisplay = DOM.textDisplay();                                  
@@ -1175,7 +1178,6 @@ function handleTyping(event) {
     if (GameState.startTime === null && typed.length > 0) {
         GameState.startTime = Date.now();
     }
-
     if (GameState.autoSpeakEnabled && typed.length > 0) {    
         const targetText = GameState.getCurrentText();
         const lastTypedIdx = typed.length - 1;       
@@ -1191,7 +1193,6 @@ function handleTyping(event) {
                 word = targetText[searchIdx] + word;
                 searchIdx--;
             }
-            
             const wordStartIndex = searchIdx + 1;   
 
             if (word.length > 0 && GameState.lastSpokenWordIndex !== wordStartIndex) {
@@ -1203,6 +1204,7 @@ function handleTyping(event) {
             }
         }
     }
+
     updateCharacterDisplay(typed, target);
     updateStats();
     
@@ -1210,6 +1212,7 @@ function handleTyping(event) {
         finishLevel();
     }
 }
+
 function handleLevelSelect(e) {
     const levelIndex = parseInt(e.target.value, 10);
     if (!isNaN(levelIndex) && levelIndex >= 0 && levelIndex < GameState.getTotalLevels()) {
@@ -1217,6 +1220,7 @@ function handleLevelSelect(e) {
         showLevel();
     }
 }
+
 function switchMode(mode) {
     const pdfPanel = DOM.pdfModePanel();
     const articlePanel = DOM.articleModePanel();
@@ -1235,12 +1239,14 @@ function switchMode(mode) {
         if (articleBtn) articleBtn.classList.add("active");
     }
 }
+
 function setStatus(msg) {
     const pdfStatus = DOM.pdfStatus();
     const articleStatus = DOM.articleStatus();
     if (pdfStatus) pdfStatus.textContent = msg;
     if (articleStatus) articleStatus.textContent = msg;
 }
+
 function getFileNameFromURL(url) {
     try {
         const pathname = new URL(url).pathname;
@@ -1249,12 +1255,16 @@ function getFileNameFromURL(url) {
         return "Document.pdf";
     }
 }
+
 // App Initialization Trigger  應用初始化觸發器
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
     }
-    
+        const boldCheckbox = DOM.boldSetting();
+    if (boldCheckbox) {
+        renderText.boldSettingEnabled = boldCheckbox.checked;
+    }
     initializeEventListeners();
     initializeWordClickDelegation();
     initializeFormToggle();
