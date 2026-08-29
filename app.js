@@ -578,29 +578,26 @@ function formatBionicText(text) {       // 將傳入的文字轉換成「字頭�
 
 
 
-function renderText(text, annotations = []) {                  
+function renderText(text, annotations = []) {       // 入 text ,同 JSON 中annotations
     const textDisplay = DOM.textDisplay();                     
     if (!textDisplay) return; 
    
     textDisplay.innerHTML = "";                                 
     let globalCharIndex = 0;
+            
+    const sortedAnno = [...annotations].sort((a,b) => (b.word?.trim().length || 0) - (a.word?.trim().length || 0));
 
-    const sortedAnnotations = [...annotations].sort((a, b) => (b.word?.trim().length || 0) - (a.word?.trim().length || 0));
-
-    const patternParts = sortedAnnotations    
-        .filter(a => a.word && a.word.trim().length > 0)
-        .map(a => a.word.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); 
-
+    const patternParts =  sortedAnno.filter(a => a.word && a.word.trim().length > 0)   
+                                    .map(a => a.word.trim()                   
+                                    .replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));   
     let regex;
     if (patternParts.length > 0) {
         regex = new RegExp(`(${patternParts.join('|')}|\\s+|[^\\w\\s]+)`, 'gi');  
     } else {
         regex = /(\s+|[^\w\s]+)/g;
     }
-
     const tokens = text.split(regex).filter(Boolean);
 
-    // 雙重保險：優先讀取 renderText.boldSettingEnabled，若無則直接從 DOM 元素獲取 checked 狀態
     const boldSettingEnabled = renderText.boldSettingEnabled ?? (DOM.boldSetting()?.checked || false);
 
     tokens.forEach(token => {                                  
@@ -1178,6 +1175,7 @@ function handleTyping(event) {
     if (GameState.startTime === null && typed.length > 0) {
         GameState.startTime = Date.now();
     }
+
     if (GameState.autoSpeakEnabled && typed.length > 0) {    
         const targetText = GameState.getCurrentText();
         const lastTypedIdx = typed.length - 1;       
@@ -1193,6 +1191,7 @@ function handleTyping(event) {
                 word = targetText[searchIdx] + word;
                 searchIdx--;
             }
+            
             const wordStartIndex = searchIdx + 1;   
 
             if (word.length > 0 && GameState.lastSpokenWordIndex !== wordStartIndex) {
@@ -1257,6 +1256,7 @@ function getFileNameFromURL(url) {
 }
 
 // App Initialization Trigger  應用初始化觸發器
+
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
@@ -1265,6 +1265,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (boldCheckbox) {
         renderText.boldSettingEnabled = boldCheckbox.checked;
     }
+    
     initializeEventListeners();
     initializeWordClickDelegation();
     initializeFormToggle();
