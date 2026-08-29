@@ -9,7 +9,8 @@ const CONFIG = {
     
     SPEECH_RATE: 0.9,                   // 設定語音合成TTS朗讀語速
     SPEECH_LANG: "en-US",               // 設定語音發音與文字朗讀的預設語言
-    
+    //SPEECH_NAME: "Chrome OS US English 2",  
+
     TRANSLATION_CACHE_SIZE: 100,         // 設定翻譯結果快取的容量上限
 };
 
@@ -30,13 +31,15 @@ const GameState = {
     currentAudio: null,         // 儲存當前正在播放的 Audio 物件實例
     currentLookupWord: "",      // 儲存使用者目前正在點擊或查詢的單字字串
     
-    loadingState: "idle", // "idle" | "loading" | "loaded"      // 紀錄系統當前資料載入狀態（idle=閒置、loading=載入中、loaded=載入完成)
+    loadingState: "idle",       // "idle" | "loading" | "loaded"   紀錄系統當前資料載入狀態（idle=閒置、loading=載入中、loaded=載入完成)
     loadedPdfDoc: null,
 
-    autoSpeakEnabled: false, // 預設關閉自動發音
+    autoSpeakEnabled: false,    // 預設關閉自動發音
     boldSettingEnabled :false,
+    audioSelectValue : "audio2",
+    
 
-    lastSpokenWordIndex: -1, // 避免同一個單字重複觸發發音
+    lastSpokenWordIndex: -1,    // 避免同一個單字重複觸發發音
     
     reset() {
         this.pdfText = "";					   // 清空儲存的 PDF 完整文章文字
@@ -48,6 +51,7 @@ const GameState = {
         this.loadingState = "idle";		   // 將系統載入狀態恢復為閒置狀態（"idle"）
         this.currentAnnotations = [];		// 清空當前文章對應的中文註解與標註清單
         this.autoSpeakEnabled = false;
+        this.audioSelectValue = "audio2";
         this.boldSettingEnabled = false;
         this.lastSpokenWordIndex = -1;
     },
@@ -125,6 +129,7 @@ const DOM = {
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
     autoSpeakCheckbox: () => document.getElementById("auto-speak-checkbox"),
     boldSetting: () => document.getElementById("bold-setting"),
+    audioSelect: () => document.getElementById("audio-select"),
 };
 
 // ===================Translation Cache System===================
@@ -132,7 +137,6 @@ const DOM = {
 const TranslationCache = (() => {
     const cache = new Map();                  			    //建立個私有Map物件，用來儲存「原文(Key)」與「翻譯結果(Value)
     const MAX_SIZE = CONFIG.TRANSLATION_CACHE_SIZE;       // 讀取全域設定檔中的快取數量上限（例如：100 筆）
-    
     return {                            // 回傳一個包含多個操作方法的介面物件
         get(text) {                     // 根據傳入的原文text取出已快取的翻譯結果
             return cache.get(text);      
@@ -158,37 +162,59 @@ const TranslationCache = (() => {
 
 // ===================Audio Management System  音訊管理系統===================
 
+function populateVoiceList() {
+    const voiceSelect = document.querySelector('#voiceSelect');
+    if (voiceSelect) {
+        const voices = window.speechSynthesis.getVoices();     
+        if (voiceSelect.children.length === 0 && voices.length > 0) {   // 只有選單係空嘅時候先填入，避免重複洗掉使用者已揀嘅 Voice
+        voiceSelect.innerHTML = '';
+            for (const voicew of voices) {
+                let option = document.createElement('option');
+                option.textContent = `${voicew.name} (${voicew.lang})`;
+                option.value = voicew.name;                     // 用 name 做 value
+
+                if (voicew.default) option.selected = true;
+                voiceSelect.appendChild(option);
+            }
+        }
+    }
+}
+
 const AudioManager = {
     currentAudio: null,
-
     async speak(text) {             // 核心朗讀邏輯（優先使用 Puter.js，失敗時降級使用原生 SpeechSynthesis）
         if (!text) return;
-
         this.stopCurrent();         // 停止之前的播放
-        try {
-            if (typeof puter !== 'undefined' && puter.ai && puter.ai.txt2speech) {      // 檢查 Puter.js 是否載入成功
-                const audio = await puter.ai.txt2speech(text);                          // 調用 Puter.js 文字轉語音 API
-                
-                this.currentAudio = {   // 儲存目前音訊物件，方便追蹤與停止
-                    element: audio,
-                    type: 'puter'
-                };
-                
-                await audio.play();
-                return;
+        if(GameState.audioSelectValue == "audio1"){
+            try {
+
+                if (typeof puter !== 'undefined' && puter.ai && puter.ai.txt2speech) {      // 檢查 Puter.js 是否載入成功
+                    const audio = await puter.ai.txt2speech(text);                          // 調用 Puter.js 文字轉語音 API
+                    
+                    this.currentAudio = { element: audio,type: 'puter'};      // 儲存目前音訊物件，方便追蹤與停止
+                    await audio.play();
+                    return;
+                }
+            } catch (error) {
+                console.warn("TTS 播放失敗，降級使用原生 Web Speech API:", error);
             }
-        } catch (error) {
-            console.warn("TTS 播放失敗，降級使用原生 Web Speech API:", error);
         }
-        this.fallbackSpeak(text);               // Fallback: 當 Puter API 失敗或未引入時，使用瀏覽器原生發音
-    },
-    fallbackSpeak(text) {                       // 專門處理瀏覽器原生的 TTS 降級備案
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = (typeof CONFIG !== 'undefined' && CONFIG.SPEECH_LANG) || "en-US";
-            utterance.rate = (typeof CONFIG !== 'undefined' && CONFIG.SPEECH_RATE) || 0.9;
-            window.speechSynthesis.speak(utterance);
+        else if (GameState.audioSelectValue == "audio2") {
+
+            if ('speechSynthesis' in window) {
+
+                window.speechSynthesis.cancel();        // 停止之前的語音
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voices = window.speechSynthesis.getVoices();
+                const selectedVoiceName = voiceSelect?.value || (typeof CONFIG !== 'undefined');
+                const targetVoice = voices.find(v => v.name === selectedVoiceName);     // 喺voices清單內尋找對應嘅 Voice 物件
+                if (targetVoice) {
+                    utterance.voice = targetVoice; 
+                }
+                utterance.lang = (typeof CONFIG !== 'undefined' && CONFIG.SPEECH_LANG) || "en-US";
+                utterance.rate = (typeof CONFIG !== 'undefined' && CONFIG.SPEECH_RATE) || 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
         }
     },
     async speakWord(word) {                         // 單字朗讀介面
@@ -259,6 +285,24 @@ function initializeEventListeners() {
         [DOM.pdfModeBtn(), "click", () => switchMode("pdf")],
         [DOM.articleModeBtn(), "click", () => switchMode("article")],
         [DOM.addAndDownloadBtn(), "click", handleAddAndDownload],
+        [DOM.audioSelect(), "click", (e) => {
+            GameState.audioSelectValue = e.target.value;
+
+            let voiceSelect = document.getElementById("voiceSelect");
+
+            if (GameState.audioSelectValue === "audio2") {
+                if (!voiceSelect) {                 // 如果係 audio2，但頁面上仲未有，先建立並加落 DOM
+                    voiceSelect = document.createElement("SELECT");
+                    voiceSelect.setAttribute("id", "voiceSelect");
+                    document.getElementById("audio-select-div").appendChild(voiceSelect);
+                    populateVoiceList();
+                }
+            } else {
+                if (voiceSelect) {                  // 如果唔係 audio2，而且頁面上存在，就將舊有嗰個移除
+                    voiceSelect.remove();
+                }
+            }
+        }],
         [DOM.autoSpeakCheckbox(), "change", (e) => {
             GameState.autoSpeakEnabled = e.target.checked;
         }],
@@ -267,6 +311,8 @@ function initializeEventListeners() {
         }]
     ]);
 }
+
+
 
 function initializeWordClickDelegation() {   		
     const textDisplay = DOM.textDisplay();   		
@@ -1246,7 +1292,6 @@ function getFileNameFromURL(url) {
 }
 
 // App Initialization Trigger  應用初始化觸發器
-
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
