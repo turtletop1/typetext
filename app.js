@@ -34,6 +34,8 @@ const GameState = {
     loadedPdfDoc: null,
 
     autoSpeakEnabled: false, // 預設關閉自動發音
+    boldSettingEnabled :false,
+
     lastSpokenWordIndex: -1, // 避免同一個單字重複觸發發音
     
     reset() {
@@ -46,6 +48,7 @@ const GameState = {
         this.loadingState = "idle";		   // 將系統載入狀態恢復為閒置狀態（"idle"）
         this.currentAnnotations = [];		// 清空當前文章對應的中文註解與標註清單
         this.autoSpeakEnabled = false;
+        this.boldSettingEnabled = false;
         this.lastSpokenWordIndex = -1;
     },
     setLoading(state) {
@@ -260,12 +263,7 @@ function initializeEventListeners() {
             GameState.autoSpeakEnabled = e.target.checked;
         }],
         [DOM.boldSetting(), "change", (e) => {
-            renderText.boldSettingEnabled = e.target.checked;
-            const currentText = GameState?.currentText || DOM.customTextInput()?.value || "";
-            const currentAnnotations = GameState?.currentAnnotations || [];
-            if (currentText) {
-                renderText(currentText, currentAnnotations);
-            }
+            GameState.boldSettingEnabled = e.target.checked; 
         }]
     ]);
 }
@@ -533,7 +531,6 @@ function showLevel() {
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${GameState.currentLevel + 1} / ${GameState.getTotalLevels()}`;    
     }
-    
     const levelSelect = DOM.levelSelect();                                        
     if (levelSelect) levelSelect.value = GameState.currentLevel.toString();       
     
@@ -561,22 +558,10 @@ function formatBionicText(text) {       // 將傳入的文字轉換成「字頭�
 
     return text.replace(/\b([a-zA-Z0-9]+)\b/g, (match) => {      // 使用正規表達式匹配所有英文單字 (\b\w+\b)
         const length = match.length;
-        
-        let boldLength = 1;                      // 根據單字長度決定加粗字數,-3個字母加粗1個字，4-6個字母加粗2個字，其餘加粗約一半長度
-        if (length > 3 && length <= 6) {
-            boldLength = 2;
-        } else if (length > 6) {
-            boldLength = Math.ceil(length * 0.4);
-        }
 
-        const boldPart = match.slice(0, boldLength);
-        const restPart = match.slice(boldLength);
 
-        return `<b>${boldPart}</b>${restPart}`;
-    });
+        });
 }
-
-
 
 function renderText(text, annotations = []) {       // 入 text ,同 JSON 中annotations
     const textDisplay = DOM.textDisplay();                     
@@ -598,8 +583,6 @@ function renderText(text, annotations = []) {       // 入 text ,同 JSON 中ann
     }
     const tokens = text.split(regex).filter(Boolean);
 
-    const boldSettingEnabled = renderText.boldSettingEnabled ?? (DOM.boldSetting()?.checked || false);
-
     tokens.forEach(token => {                                  
         const matchedAnnotation = annotations.find(          
             a => a.word && a.word.trim().toLowerCase() === token.trim().toLowerCase()
@@ -609,13 +592,13 @@ function renderText(text, annotations = []) {       // 入 text ,同 JSON 中ann
         const isWord = /^[a-zA-Z0-9]+$/.test(token.trim());
         let boldLength = 0;
 
-        if (isWord && boldSettingEnabled) {          
+        if (isWord && GameState.boldSettingEnabled) {          
             const len = token.length;
             if (len <= 3) boldLength = 1;
             else if (len <= 6) boldLength = 2;
             else boldLength = Math.ceil(len * 0.4);
         }
-
+        
         for (let j = 0; j < token.length; j++) {               
             const char = token[j];
             const span = document.createElement("span");
@@ -630,7 +613,6 @@ function renderText(text, annotations = []) {       // 入 text ,同 JSON 中ann
             if (isWord && j < boldLength) {            
                 span.classList.add("bionic-bold");
             }
-
             tokenContainer.appendChild(span);                                       
             globalCharIndex++;                                                      
         }
@@ -643,7 +625,6 @@ function renderText(text, annotations = []) {       // 入 text ,同 JSON 中ann
         textDisplay.appendChild(tokenContainer);               
     });
 }
-renderText.boldSettingEnabled = false;
 
 function updateCharacterDisplay(typed, target) {
     const textDisplay = DOM.textDisplay();                                  
@@ -666,6 +647,7 @@ function updateCharacterDisplay(typed, target) {
         current.scrollIntoView({ behavior: "smooth", block: "center" });    
     }
 }
+
 
 function updateStats() {
     const typingInput = DOM.typingInput();                                     
@@ -1107,6 +1089,7 @@ async function handlePDFUpload(event) {
     }
 }
 
+
 async function handleLoadURL() {
     const pdfUrl = DOM.pdfUrl();
     const url = pdfUrl?.value?.trim();
@@ -1141,6 +1124,7 @@ async function handleLoadURL() {
     }
 }
 
+
 async function handleApplyPageRange() {
     const startInput = DOM.pdfStartPageInput();
     const endInput = DOM.pdfEndPageInput();
@@ -1149,7 +1133,6 @@ async function handleApplyPageRange() {
         setStatus("⚠️ 請先載入 PDF 檔案！");
         return;
     }
-    
     let start = parseInt(startInput?.value || "1", 10);
     let end = parseInt(endInput?.value || GameState.loadedPdfDoc.numPages, 10);
     const total = GameState.loadedPdfDoc.numPages;
@@ -1166,7 +1149,8 @@ async function handleApplyPageRange() {
     await processPDF(GameState.loadedPdfDoc, start, end);
 }
 
-function handleTyping(event) {
+
+function handleTyping(event) {              //打緊字時
     if (GameState.gameFinished) return;
     
     const typed = event.target.value;
@@ -1174,6 +1158,14 @@ function handleTyping(event) {
     
     if (GameState.startTime === null && typed.length > 0) {
         GameState.startTime = Date.now();
+    }
+    const currentAnnotations = GameState.currentAnnotations || [];
+    
+    if(GameState.boldSettingEnabled){
+        renderText(target, currentAnnotations);
+    }else{
+        GameState.boldSettingEnabled = false;
+        renderText(target, currentAnnotations);
     }
 
     if (GameState.autoSpeakEnabled && typed.length > 0) {    
@@ -1191,7 +1183,6 @@ function handleTyping(event) {
                 word = targetText[searchIdx] + word;
                 searchIdx--;
             }
-            
             const wordStartIndex = searchIdx + 1;   
 
             if (word.length > 0 && GameState.lastSpokenWordIndex !== wordStartIndex) {
@@ -1203,7 +1194,6 @@ function handleTyping(event) {
             }
         }
     }
-
     updateCharacterDisplay(typed, target);
     updateStats();
     
@@ -1260,10 +1250,6 @@ function getFileNameFromURL(url) {
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
-    }
-        const boldCheckbox = DOM.boldSetting();
-    if (boldCheckbox) {
-        renderText.boldSettingEnabled = boldCheckbox.checked;
     }
     
     initializeEventListeners();
