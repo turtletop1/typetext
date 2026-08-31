@@ -1,4 +1,3 @@
-
 const CONFIG = {
     PDF_WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",   // 設定 PDF.js 所需的 Web Worker 檔案來源
     PDF_LINE_HEIGHT_THRESHOLD: 5,      // 設定 PDF 文字行的高度判斷閾值
@@ -9,9 +8,12 @@ const CONFIG = {
     
     SPEECH_RATE: 0.9,                   // 設定語音合成TTS朗讀語速
     SPEECH_LANG: "en-US",               // 設定語音發音與文字朗讀的預設語言
-    //SPEECH_NAME: "Chrome OS US English 2",  
 
     TRANSLATION_CACHE_SIZE: 100,         // 設定翻譯結果快取的容量上限
+
+    DICTIONARY_API_URL: "https://freedictionaryapi.com/api/v1/entries/en",  // 線上英文字典 API（查唔到 article.json 註解時用嚟後備查詢）
+    TRANSLATE_API_URL: "https://api.mymemory.translated.net/get",           // MyMemory 翻譯 API，用嚟將英文翻做中文
+    TRANSLATE_LANGPAIR: "en|zh-CN",                                        // 翻譯語言對：英文 -> 簡體中文（如想用繁體可改做 "en|zh-TW"）
 };
 
 // Global state to store current selected article object
@@ -36,9 +38,8 @@ const GameState = {
 
     autoSpeakEnabled: false,    // 預設關閉自動發音
     boldSettingEnabled :false,
-    audioSelectValue : "audio2",
+    audioSelectValue : "audio1",
     
-
     lastSpokenWordIndex: -1,    // 避免同一個單字重複觸發發音
     
     reset() {
@@ -51,7 +52,7 @@ const GameState = {
         this.loadingState = "idle";		   // 將系統載入狀態恢復為閒置狀態（"idle"）
         this.currentAnnotations = [];		// 清空當前文章對應的中文註解與標註清單
         this.autoSpeakEnabled = false;
-        this.audioSelectValue = "audio2";
+        this.audioSelectValue = "audio1";
         this.boldSettingEnabled = false;
         this.lastSpokenWordIndex = -1;
     },
@@ -130,6 +131,7 @@ const DOM = {
     autoSpeakCheckbox: () => document.getElementById("auto-speak-checkbox"),
     boldSetting: () => document.getElementById("bold-setting"),
     audioSelect: () => document.getElementById("audio-select"),
+    
 };
 
 // ===================Translation Cache System===================
@@ -187,7 +189,6 @@ const AudioManager = {
         this.stopCurrent();         // 停止之前的播放
         if(GameState.audioSelectValue == "audio1"){
             try {
-
                 if (typeof puter !== 'undefined' && puter.ai && puter.ai.txt2speech) {      // 檢查 Puter.js 是否載入成功
                     const audio = await puter.ai.txt2speech(text);                          // 調用 Puter.js 文字轉語音 API
                     
@@ -200,9 +201,7 @@ const AudioManager = {
             }
         }
         else if (GameState.audioSelectValue == "audio2") {
-
             if ('speechSynthesis' in window) {
-
                 window.speechSynthesis.cancel();        // 停止之前的語音
                 const utterance = new SpeechSynthesisUtterance(text);
                 const voices = window.speechSynthesis.getVoices();
@@ -599,16 +598,6 @@ function showLevel() {
 }
 
 
-function formatBionicText(text) {       // 將傳入的文字轉換成「字頭加粗」的 HTML 格式
-    if (!text) return '';
-
-    return text.replace(/\b([a-zA-Z0-9]+)\b/g, (match) => {      // 使用正規表達式匹配所有英文單字 (\b\w+\b)
-        const length = match.length;
-
-
-        });
-}
-
 function renderText(text, annotations = []) {       // 入 text ,同 JSON 中annotations
     const textDisplay = DOM.textDisplay();                     
     if (!textDisplay) return; 
@@ -734,7 +723,6 @@ function updateStats() {
         image.style.left = `${currentX}px`;                                                         
     }
 }
-
 function finishLevel() {
     GameState.gameFinished = true;                                                   
     const typingInput = DOM.typingInput();                                           
@@ -763,15 +751,12 @@ function navigateLevel(direction) {
         showLevel();                                                        
     }
 }
-
 function updateNavigationButtons() {
     const prevBtn = DOM.prevBtn();                                                                     
     const nextBtn = DOM.nextBtn();                                                                     
-
     if (prevBtn) prevBtn.disabled = GameState.currentLevel === 0;                                      
     if (nextBtn) nextBtn.disabled = GameState.currentLevel === GameState.getTotalLevels() - 1;         
 }
-
 function updateLevelSelect() {
     const levelSelect = DOM.levelSelect();                                                  
     if (!levelSelect || GameState.getTotalLevels() === 0) return;                           
@@ -786,8 +771,126 @@ function updateLevelSelect() {
     levelSelect.disabled = false;                                                           
 }
 
+// ===================External Dictionary & Translation APIs===================
+// 當單字未能在 article.json 嘅 annotations 搵到對應內容時，
+// 改用 freedictionaryapi.com 查英文釋義，再用 MyMemory API 翻譯做中文
+
+async function fetchDictionaryEntry(word) {                     // 呼叫 freedictionaryapi.com 查詢單字嘅英文釋義
+    try {
+        const res = await fetch(`${CONFIG.DICTIONARY_API_URL}/${encodeURIComponent(word)}`);
+        if (!res.ok) return null;                               // 例如 404 代表搵唔到呢個字
+        const data = await res.json();
+        if (!data || !Array.isArray(data.entries) || data.entries.length === 0) return null;
+        return data;                                             // 回傳格式：{ word, entries: [...], source }
+    } catch (error) {
+        console.warn("Dictionary API 查詢失敗:", error);
+        return null;
+    }
+}
+
+async function translateToChinese(text) {                        // 呼叫 MyMemory API 將英文文字翻譯做中文，並用 TranslationCache 快取結果
+    if (!text) return "";
+    if (TranslationCache.has(text)) {
+        return TranslationCache.get(text);                       // 快取入面已經有就直接用，慳返一次 API request
+    }
+    try {
+        const url = `${CONFIG.TRANSLATE_API_URL}?q=${encodeURIComponent(text)}&langpair=${CONFIG.TRANSLATE_LANGPAIR}`;
+        const res = await fetch(url);
+        if (!res.ok) return "";
+        const data = await res.json();
+        const translated = data?.responseData?.translatedText || "";
+        if (translated) {
+            TranslationCache.set(text, translated);               // 寫入快取，下次同一段文字就唔使再叫 API
+        }
+        return translated;
+    } catch (error) {
+        console.warn("翻譯失敗:", error);
+        return "";
+    }
+}
+
+async function lookupWordFromAPI(word, dictionaryContent) {      // 當 annotations 搵唔到單字時嘅後備查詢流程：線上字典 + 中文翻譯
+    dictionaryContent.innerHTML = `<p style="color:#888;">🔍 正在查詢字典及翻譯「${word}」...</p>`;
+
+    const dictData = await fetchDictionaryEntry(word);
+
+    // 如果使用者喺 API 回應返嚟之前已經改咗去查其他字，就唔好覆蓋新內容
+    if (GameState.currentLookupWord !== word) return;
+
+    if (!dictData) {
+        dictionaryContent.innerHTML = `<p style="color: #888;">未能在註解庫及線上字典搵到 「${word}」 的對應內容。</p>`;
+        return;
+    }
+
+    const entry = dictData.entries[0];
+    const sense = entry.senses?.[0];
+    const definition = sense?.definition || "";
+    const phonetic = entry.pronunciations?.[0]?.text || "";
+    const partOfSpeech = entry.partOfSpeech || "";
+    const example = sense?.examples?.[0] || "";
+
+    const [wordZh, definitionZh, exampleZh] = await Promise.all([    // 平行翻譯單字、釋義、例句，減少等待時間
+        translateToChinese(word),
+        translateToChinese(definition),
+        example ? translateToChinese(example) : Promise.resolve(""),
+    ]);
+
+    if (GameState.currentLookupWord !== word) return;                // 再檢查一次，防止翻譯期間使用者切換咗查詢單字
+
+    const container = document.createElement("div");
+    container.className = "dict-api-result";
+
+    let htmlContent = "";
+
+    if (phonetic || partOfSpeech) {
+        htmlContent += `
+            <div style="color: #7f8c8d; margin-bottom: 12px;">
+                ${phonetic ? phonetic + "&nbsp;&nbsp;" : ""}${partOfSpeech ? `<em>${partOfSpeech}</em>` : ""}
+            </div>
+        `;
+    }
+    if (wordZh) {
+        htmlContent += `
+            <div style="font-size: 1.2em; color: #2c3e50; font-weight: bold; margin-bottom: 10px;">
+                中文：${wordZh}
+            </div>
+        `;
+    }
+    if (definition) {
+        htmlContent += `
+            <div style="font-size: 1.1em; color: #2c3e50; font-weight: bold; margin-bottom: 8px;">
+                📖 Definition：
+            </div>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #3498db; font-size: 1em; line-height: 1.4; margin-bottom: 10px;">
+                ${definition}
+                ${definitionZh ? `<div style="color: #2980b9; margin-top: 6px;">${definitionZh}</div>` : ""}
+            </div>
+        `;
+    }
+    if (example) {
+        htmlContent += `
+            <div style="font-size: 1em; color: #2c3e50; font-weight: bold; margin-bottom: 8px;">
+                📌 Example：
+            </div>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #27ae60; font-size: 1em; line-height: 1.4; margin-bottom: 10px;">
+                ${example}
+                ${exampleZh ? `<div style="color: #2980b9; margin-top: 6px;">${exampleZh}</div>` : ""}
+            </div>
+        `;
+    }
+    htmlContent += `
+        <div style="font-size: 0.75em; color: #aaa; margin-top: 10px;">
+            來源：Free Dictionary API + MyMemory Translation
+        </div>
+    `;
+
+    container.innerHTML = htmlContent;
+    dictionaryContent.appendChild(container);
+}
+
 // ===================Dictionary Logic 字典邏輯===================
-function lookupWord(word) {
+
+async function lookupWord(word) {
     word = word.trim().toLowerCase();                                   
     if (!word) return;                                                  
 
@@ -808,13 +911,11 @@ function lookupWord(word) {
 
         const currentAnn = GameState.currentAnnotations || [];
         const combinedAnnotations = [...currentAnn, ...defaultGlobalAnnotations];
-        
         const matched = combinedAnnotations.find(item => {
             if (!item || !item.word || item.word.trim() === "") return false;
             const target = item.word.trim().toLowerCase();
             return target === word || target.includes(word);
         });
-
         if (matched) {
             const phoneticText = matched["dict-phonetic"] 
             const contentText =  matched["dict-content"] || matched.note || "暫無詳細解釋";
@@ -847,11 +948,11 @@ function lookupWord(word) {
                     </div>
                 `;
             }
-
             container.innerHTML = htmlContent;
             dictionaryContent.appendChild(container);
         } else {
-            dictionaryContent.innerHTML = `<p style="color: #888;">未能在註解庫中搵到 「${word}」 的對應內容。</p>`;
+            // article.json 嘅 annotations 搵唔到 -> 改用線上字典 API 查釋義，再用 MyMemory 翻譯做中文
+            await lookupWordFromAPI(word, dictionaryContent);
         }
     }
 }
@@ -871,17 +972,14 @@ async function loadArticlesFromGit() {
     const articleSelect = DOM.articleSelect();                           
     const articleContainer = DOM.articleContainer();                     
     const customTextInput = DOM.customTextInput();                       
-    
     if (!categorySelect || !articleSelect) return;                      
-    
     try {
         const response = await fetch("./articles.json");                                  
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);      
         
         const categories = await response.json();                                        
         
-        // 1. 清空與設定預設全域註解
-        defaultGlobalAnnotations = [];
+        defaultGlobalAnnotations = [];  // 清空與設定預設全域註解
         categories.forEach(cat => {
             if (cat.articles) {
                 cat.articles.forEach(art => {
@@ -892,7 +990,6 @@ async function loadArticlesFromGit() {
             }
         });
 
-        // 2. 建立 Category 下拉選單
         categorySelect.innerHTML = '<option value="">-- 選擇分類 --</option>';          
         articleSelect.innerHTML = '<option value="">-- 請先選擇分類 --</option>';       
         
@@ -906,20 +1003,17 @@ async function loadArticlesFromGit() {
         // 尋找是否有 "Default" 類別與文章
         const defaultCatIndex = categories.findIndex(c => c.category === "Default" || c.category === "");
         let defaultArticle = null;
-
         if (defaultCatIndex !== -1) {
             const defaultCat = categories[defaultCatIndex];
             defaultArticle = defaultCat.articles?.find(a => a.id === "Default" || a.id === "") || defaultCat.articles?.[0];
         }
-
-        // 🎯 核心邏輯：載入 Default 註解，但清空 textarea
-        const applyDefaultArticle = () => {
+        
+        const applyDefaultArticle = () => {     // 核心邏輯：載入 Default 註解，但清空 textarea
             if (defaultArticle) {
                 currentSelectedArticle = defaultArticle;
                 GameState.currentAnnotations = defaultArticle.annotations || [];
                 
-                // 註解與全域狀態已載入，但保持 textarea 為空字串
-                if (customTextInput) customTextInput.value = "";
+                if (customTextInput) customTextInput.value = "";        // 註解與全域狀態已載入，但保持 textarea 為空字串
                 if (articleContainer) articleContainer.innerHTML = "";
             } else {
                 currentSelectedArticle = null;
@@ -929,22 +1023,18 @@ async function loadArticlesFromGit() {
             }
         };
 
-        // 頁面初次載入時自動套用（載入 Default 註解，清空 textarea）
-        applyDefaultArticle();
+        applyDefaultArticle();       // 頁面初次載入時自動套用（載入Default註解，清空textarea）
         
-        // 3. Category 切換事件處理
-        categorySelect.addEventListener("change", (e) => {               
+        categorySelect.addEventListener("change", (e) => {         //  Category 切換事件處理          
             const catIndex = e.target.value;                             
             
             articleSelect.innerHTML = '<option value="">-- 選擇一篇文章 --</option>';    
             
             if (catIndex === "") {                                       
-                // 取消選擇分類時，自動重置回到 Default 註解並清空 textarea
-                articleSelect.disabled = true;                           
+                articleSelect.disabled = true;      // 取消選擇分類時，自動重置回到Default註解並清空textarea                      
                 applyDefaultArticle();
                 return;                                                  
             }
-            
             const selectedCategory = categories[catIndex];               
             if (selectedCategory && selectedCategory.articles) {         
                 selectedCategory.articles.forEach(article => {           
@@ -957,8 +1047,7 @@ async function loadArticlesFromGit() {
             }
         });
 
-        // 4. Article 切換事件處理
-        articleSelect.addEventListener("change", (e) => {                
+        articleSelect.addEventListener("change", (e) => {        //  Article 切換事件處理            
             const selectedCatIndex = categorySelect.value;               
             const selectedId = e.target.value;                           
             
@@ -966,7 +1055,6 @@ async function loadArticlesFromGit() {
                 applyDefaultArticle();
                 return;                                                  
             }
-
             const currentArticles = categories[selectedCatIndex].articles || [];       
             const selectedArticle = currentArticles.find(a => a.id === selectedId);    
             
@@ -1003,8 +1091,7 @@ function handleStartCustomText() {
         setStatus("⚠️ 請輸入至少 5 個字元的文章內容！");                         
         return;                                                                
     }
-    
-    // 【修復】保留剛剛切換文章時選擇的 annotations
+        // 【修復】保留剛剛切換文章時選擇的 annotations
     const preservedAnnotations = (currentSelectedArticle && currentSelectedArticle.annotations) 
         ? currentSelectedArticle.annotations 
         : GameState.currentAnnotations;
@@ -1012,7 +1099,6 @@ function handleStartCustomText() {
     GameState.reset();                                                   
     GameState.pdfText = input;                                           
     GameState.currentAnnotations = preservedAnnotations || [];
-
     processTextToLevels(input);                                              
 }
 
@@ -1032,7 +1118,6 @@ async function handleAddAndDownload() {
         alert("請填寫標題與內容！");
         return;
     }
-
     const charsPerLevel = charsInput?.value ? parseInt(charsInput.value, 10) : CONFIG.CHARS_PER_LEVEL;
     const delimiter = delimiterInput?.value.trim() || undefined;
     
@@ -1053,7 +1138,6 @@ async function handleAddAndDownload() {
             return null;
         }).filter(Boolean);
     }
-
     let categories = [];         
     try {
         const res = await fetch("./articles.json");
@@ -1064,7 +1148,6 @@ async function handleAddAndDownload() {
     } catch (e) {
         console.warn("Could not load existing articles.json, creating new categories file.");
     }
-
     const newArticle = {            
         id: "art_" + Date.now(),
         title: title,
@@ -1073,7 +1156,6 @@ async function handleAddAndDownload() {
         content: content,
         ...(annotations.length > 0 && { annotations })
     };
-
     let targetCategory = categories.find(c => c.category === categoryName);    
     if (!targetCategory) {
         targetCategory = {
@@ -1097,7 +1179,6 @@ async function handleAddAndDownload() {
     if (charsInput) charsInput.value = "";
     if (delimiterInput) delimiterInput.value = "";
     if (annotationsInput) annotationsInput.value = "";
-    
     if (typeof loadArticlesFromGit === "function") {
         loadArticlesFromGit();
     }
@@ -1296,7 +1377,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
     }
-    
     initializeEventListeners();
     initializeWordClickDelegation();
     initializeFormToggle();
