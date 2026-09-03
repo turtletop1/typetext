@@ -13,7 +13,7 @@ const CONFIG = {
 
     DICTIONARY_API_URL: "https://freedictionaryapi.com/api/v1/entries/en",  // 線上英文字典 API（查唔到 article.json 註解時用嚟後備查詢）
     TRANSLATE_API_URL: "https://api.mymemory.translated.net/get",           // MyMemory 翻譯 API，用嚟將英文翻做中文
-    TRANSLATE_LANGPAIR: "en|zh-CN",                                        // 翻譯語言對：英文 -> 簡體中文（如想用繁體可改做 "en|zh-TW"）
+    TRANSLATE_LANGPAIR: "en|zh-TW",                                        // 翻譯語言對：英文 -> zh-CN（如想用繁體可改做 "en|zh-TW"）
 };
 
 // Global state to store current selected article object
@@ -723,6 +723,7 @@ function updateStats() {
         image.style.left = `${currentX}px`;                                                         
     }
 }
+
 function finishLevel() {
     GameState.gameFinished = true;                                                   
     const typingInput = DOM.typingInput();                                           
@@ -751,12 +752,14 @@ function navigateLevel(direction) {
         showLevel();                                                        
     }
 }
+
 function updateNavigationButtons() {
     const prevBtn = DOM.prevBtn();                                                                     
     const nextBtn = DOM.nextBtn();                                                                     
     if (prevBtn) prevBtn.disabled = GameState.currentLevel === 0;                                      
     if (nextBtn) nextBtn.disabled = GameState.currentLevel === GameState.getTotalLevels() - 1;         
 }
+
 function updateLevelSelect() {
     const levelSelect = DOM.levelSelect();                                                  
     if (!levelSelect || GameState.getTotalLevels() === 0) return;                           
@@ -849,10 +852,10 @@ async function lookupWordFromAPI(word, dictionaryContent) {      // 當 annotati
             </div>
         `;
     }
-    if (wordZh) {
+    if (wordZh) {           //中文解釋
         htmlContent += `
             <div style="font-size: 1.2em; color: #2c3e50; font-weight: bold; margin-bottom: 10px;">
-                中文：${wordZh}
+                ${wordZh}
             </div>
         `;
     }
@@ -918,7 +921,8 @@ async function lookupWord(word) {
         });
         if (matched) {
             const phoneticText = matched["dict-phonetic"] 
-            const contentText =  matched["dict-content"] || matched.note || "暫無詳細解釋";
+            const contentNote = matched.note;
+            const contentText =  matched["dict-content"] || "暫無詳細解釋";
             const imageUrl = matched["image"] || matched["dict-image"] || null;
 
             const container = document.createElement("div");
@@ -933,13 +937,22 @@ async function lookupWord(word) {
             }
             if (contentText) {
                 htmlContent += `
-                    <div style="font-size: 1.1em; color: #2c3e50; font-weight: bold; margin-bottom: 8px;">
-                        📌句子：
-                    </div>
-                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #3498db; font-size: 1em; line-height: 1.4; margin-bottom: 10px;">
-                        ${contentText}
+                    <div style="font-size: 1.2em; color: #2c3e50; font-weight: bold; margin-bottom: 10px;">
+                        ${contentNote}
                     </div>
                 `;
+                htmlContent += `
+                    <div style="font-size: 1.1em; color: #2c3e50; font-weight: bold; margin-bottom: 8px;">
+                        📌Example：
+                    </div>
+                `;
+                for (let x of contentText) {
+                    htmlContent += ` 
+                        <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #3498db; font-size: 1em; line-height: 1.4; margin-bottom: 10px;">
+                            ${x}
+                        </div>
+                  `;
+                }
             }
             if (imageUrl) {
                 htmlContent += `
@@ -1069,7 +1082,11 @@ async function loadArticlesFromGit() {
                 if (articleContainer) {                                     
                     articleContainer.innerHTML = `
                         <h3>${selectedArticle.title}</h3>
-                        <p>${displayContent.replace(/\n/g, "<br>")}</p>
+                        <p>
+                            ${displayContent.replaceAll(/\n/g, "<br>")}
+                            ${displayContent.replaceAll(/<b>/g, "<b>")}
+                            ${displayContent.replaceAll(/<\/b>/g, "<\/b>")}aa
+                        </p>
                     `;
                 }
                 if (customTextInput) {                                      
@@ -1373,6 +1390,7 @@ function getFileNameFromURL(url) {
 }
 
 // App Initialization Trigger  應用初始化觸發器
+
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof pdfjsLib !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
