@@ -1,6 +1,6 @@
 [
   {
-    "category": "基礎科技",
+    "category": "基礎科技-test",
     "articles": [
       {
         "id": "art_101",
@@ -11,8 +11,15 @@
         "annotations": [
           {
             "word": "Artificial",
-            "note": "人造的",
-            "dict-content": "掃描電子顯微鏡（簡稱 SEM)，利用電子束掃描樣品表面獲得高解析度 3D 影像 ",
+            "note": [
+              "人造",
+              "虛假的"
+            ],
+            "dict-content":[ 
+              "<b>人造的 </b>(adj) <br>clothes made of artificial fibres <br>人造纖維質地的服裝 ",
+              "<b>虛假的 </b>(adj) <br>Their cheerfulness seemed rather strained and artificial. <br>他們的高興表情看上去非常造作虛偽 "
+            ]
+          ,
             "image": "https://picsum.photos/200/300"
           },
           {
@@ -37,65 +44,10 @@
     ]
   },
   {
-    "category": "生物",
-    "articles": [
-      {
-        "id": "art_201",
-        "title": "1 Introducing biology",
-        "content": "Anatomy - the structure of organisms\nCytology - the basic unit of organisms — cells,\nEcology - interactions between organisms and their environment,\nGenetics - the ways in which characteristics of organisms are passed on from one generation to the next,\nGenetics - the basic unit of organisms — cells"
-      },
-      {
-        "id": "art_202",
-        "title": "2 The cell as the basic unit of life",
-        "delimiter": "[NEXT]",
-        "content": "Nitrate,Magnesium,Calcium,Iron\n\nBiomolecules\nCarbohydrates - Glucose, Starch, Cellulose\n\nLipids -Triglycerides, Phospholipids \n\nProteins - Structural proteins , Enzymes , Antibodies \n\nNucleic acids - Deoxyribonucleic acid , Ribonucleic acid\n[NEXT]\nLight microscope , Transmission , Electron microscope , Scanning electron microscope\n[NEXT]\nanimal cells - cell membrane-(Differentially permeable) ,cell cytoplasm ,  mitochondrion , nucleus ,rough endoplasmic reticulum , ribosome , vacuole , smooth endoplasmic reticulum \n\nplant cells - cell wall ,chloroplast\n[NEXT]\nProkaryotic , eukaryotic cells ,genetic material",
-        "annotations": [
-          {"word": "Nitrate","note": "硝酸鹽"},
-          {"word": "Magnesium","note": "鎂"},
-          {"word": "Calcium","note": "鈣"},
-          {"word": "Iron","note": "鐵"},
-          {"word": "Biomolecules","note": "生物分子"},
-          {"word": "Carbohydrates","note": "碳水化合物"},
-          {"word": "Glucose","note": "葡萄糖"},
-          {"word": "Starch","note": "澱粉"},
-          {"word": "Cellulose","note": "纖維素"},
-          {"word": "Lipids","note": "脂質"},
-          {"word": "Triglycerides","note": "甘油三酯"},
-          {"word": "Phospholipids","note": "磷脂"},
-          {"word": "Proteins","note": "蛋白質"},
-          {"word": "Structural proteins","note": "結構蛋白質"},
-          {"word": "Enzymes","note": "酶"},
-          {"word": "Antibodies","note": "抗體"},
-          {"word": "Nucleic acids","note": "核酸"},
-          {"word": "Deoxyribonucleic acid","note": "DNA脫氧核糖核酸"},
-          {"word": "Ribonucleic acid","note": "RNA 核糖"},
-          {"word": "Light microscope","note": "光學顯微鏡"},
-          {"word": "Transmission","note": "透射電子顯微鏡"},
-          {"word": "Electron microscope","note": "電子顯微鏡"},
-          {"word": "Scanning electron microscope","note": "掃描電子顯微鏡"},
-          {"word": "cell membrane","note": "細胞膜"},
-          {"word": "Differentially permeable","note": "差異透性的"},
-          {"word": "cell cytoplasm","note": "細胞質"},
-          {"word": "mitochondrion","note": "線粒體"},
-          {"word": "nucleus","note": "核"},
-          {"word": "rough endoplasmic reticulum","note": "粗糙內質網"},
-          {"word": "ribosome","note": "核糖體"},
-          {"word": "vacuole","note": "液泡"},
-          {"word": "smooth endoplasmic reticulum","note": "光滑內質網"},
-          {"word": "cell wall","note": "細胞壁"},
-          {"word": "chloroplast","note": "葉綠體"},
-          {"word": "Prokaryotic","note": "原核細胞"},
-          {"word": "eukaryotic cells","note": "真核細胞"},
-          {"word": "genetic material","note": "(DNA)遺傳物質"}
-        ]
-      }
-    ]
-  },
-  {
     "category": "English word",
     "articles": [
       {
-        "id": "art_1787754531858",
+        "id": "art_201",
         "title": "Transport",
         "charsPerLevel": 500,
         "delimiter": "[n]",
@@ -172,14 +124,63 @@
     ]
   },
   {
+    "category": "English sentence",
+    "articles": [
+      {
+        "id": "art_301",
+        "title": "Be it A or B",
+        "delimiter": "[NEXT]",
+        "content":[
+           "There is still no definitive answer to whether culling ,be it natural or human, is justified",
+           "In the course of fighting the SARS attack in 2003, our citizens have developed a keen sense of the importance of good hygiene ,be it personal, food of environmental.",
+            "It is a private matter and legal if one exchanges his own personal property with another person, be it in the physical world or on the Internet.",
+            "Getting excited of a festival, be it Chinese or foreign, should not be a subject to be blamed for.",
+            "Be it skin care products or plastic surgery, it all involves a drain on our financial resource."
+          ],
+        "annotations": [
+          {
+            "word": "culling",
+            "note": [
+              "捕殺",
+              "挑出"
+            ],
+            "dict-content":[
+              "對於殺戮，無論係自然定係人類，係咪合理，仍然冇一個確定嘅答案" ,
+              "<b>捕殺 </b>(v) <br>The plan to cull large numbers of baby seals has angered environmental groups<br>選擇性捕殺大量小海豹的計劃引起了環保組織的強烈憤慨",
+              "<b>挑出 </b>(v) <br>extracts culled from the best authors<br>從最佳作者作品中挑出的選段"
+            ],
+            "image": "https://picsum.photos/200/300"
+          },
+          {
+            "word": "In the course of",
+            "note": "向...過程中"
+          },
+          {
+            "word": "plastic surgery",
+            "note": "整容手術"
+          },
+          {
+            "word": "skin care products",
+            "note": "護膚品"
+          }
+        ]
+      },
+      {
+        "id": "art_102",
+        "title": "How Web Browsers Work",
+        "content": "A web browser takes you anywhere on the internet..."
+      }
+    ]
+  },
+  {
    "category": "Default",
     "articles": [
       {
         "id": "Default",
         "title": "Default Global Article",
         "content": [
-            "discharge",
-            "contaminate"
+            "discharge","contaminate","flora","overexploitation","perception of","enthusiastic","simultaneously","designate","mobilizes","intervene",
+            "immerse in","yield"
           ],
         "annotations": [
           {
@@ -201,13 +202,77 @@
             "dict-content": "Stone Age flora<br>石器時代植物群",
             "dict-phonetic":"flo·ra",
             "image": "https://raw.githubusercontent.com/googlefonts/noto-emoji/main/svg/emoji_u1f490.svg"
+          },{
+            "word": "curb",
+            "note": "抑制/控制",
+            "dict-content": "The government should act to curb tax evasion.<br>政府應該採取行動抑制逃稅",
+            "dict-phonetic":"curb",
+            "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzNpeOxb-qwPpPygEXNF-wfCW38HtjgkkPOmkigkiciwlpY0o2uPoeUfU&s=10"
           },
           {
             "word": "overexploitation",
             "note": "過度開發",
             "dict-content": "By protecting overexploited areas, we can preserve untouched environments and prevent species from becoming extinct. <br>透過保護過度開發嘅地區，我哋可以保留未受影響嘅環境，同埋防止物種絕種",
-            "dict-phonetic":"flo·ra",
+            "dict-phonetic":"overexploitation",
             "image": "https://www.gstatic.com/android/keyboard/emojikitchen/20251029/u1f3de-ufe0f/u1f3de-ufe0f_u1fab5.png"
+          },{
+            "word": "perception",
+            "note": "見解 / 觀念 / 看法 (n) , +of",
+            "dict-content":[ 
+                "We have to change the public's <b>perceptions</b> that money is being wasted.<br>大眾認為這是在浪費金錢，我們必須改變他們的這種<b>看法</b>",
+			          "These photographs will affect people's <b>perceptions</b> of war.<br>這些照片會影響人們對戰爭的<b>看法</b>"
+            ],
+            "dict-phonetic":"per·cep·tion",
+            "image": "https://www.gstatic.com/android/keyboard/emojikitchen/20260202/u1f914/u1f914_u1f422.png"
+          },{
+            "word": "enthusiastic",
+            "note": "熱誠既 (adj) ",
+            "dict-content":[ 
+			          "You don't seem very <b>enthusiastic</b> about the party - don't you want to go tonight?<br>你好像對這個派對不怎麽<b>熱衷</b>——你今晚不想去了嗎"
+            ],
+            "dict-phonetic":"en·thu·si·as·tic"
+          },{
+            "word": "simultaneously",
+            "note": "同時發生咁 (ad) ",
+            "dict-content":[ 
+                "Two children answered the teacher's question <b>simultaneously</b>.<br>兩個小朋友<b>同時</b>回答老師嘅問題",
+			          "The network was broadcasting four games <b>simultaneously</b> across the country.<br>當時呢個網絡喺全國<b>同時</b>播放緊四場比賽"
+            ],
+            "dict-phonetic":"si·mul·ta·ne·ous·ly"
+          },{
+            "word": "designate",
+            "note": "指定，選定;委派 (v) ",
+            "dict-content":[ 
+                "Traditionally, the president <b>designates</b> his or her successor.<br>按照傳統，總統要<b>選定</b>其接班人",
+			          "This area of the park has been specially <b>designates</b> for children.<br>公園的這個區域被<b>指定</b>為兒童活動區"
+            ],
+            "dict-phonetic":"des·ig·nate"
+          },{
+            "word": "mobilize",
+            "note": "組織；動員, 調動, 使..準備戰鬥 (v)",
+            "dict-content":[ 
+                "The government has <b>mobilized</b> several of the army's top combat units.<br>政府已<b>調動</b>了若干陸軍精銳作戰部隊",
+			          "Troops have been <b>mobilizing</b> for the past three weeks.<br>過去三個星期裡，部隊一直在<b>備戰</b>"
+            ],
+            "dict-phonetic":"mo·bi·lize"
+          },{
+            "word": "intervene",
+            "note": "干涉，干預；調停 (v)",
+            "dict-content":[ 
+                "The Central Bank <b>intervened</b> in the currency markets today to try to stabilize the exchange rate.<br>中央銀行今日對貨幣市場進行咗<b>干預</b>，試圖穩定匯率"
+            ],
+            "dict-phonetic":"in·ter·vene",
+            "image": "https://www.gstatic.com/android/keyboard/emojikitchen/20240530/u1f4c8/u1f4c8_u1f4b8.png"
+          },
+          ,{
+            "word": "immerse",
+            "note": "全神貫注, 沉浸 (v)",
+            "dict-content":[ 
+                "The best way to learn a language is to <b>be immersed in</b> the local culture.<br>學習一種語言最好嘅方法係<b>沉浸</b>喺當地文化入面",
+                "He was so <b>immersed in</b> his book that he didn't hear the doorbell ring.<br>佢讀書讀到好<b>入神</b>，連門鐘聲都聽唔到"
+            ],
+            "dict-phonetic":"im·merse",
+            "image": "https://www.gstatic.com/android/keyboard/emojikitchen/20260202/u1f4da/u1f4da_u1f99d.png"
           }
         ]
       }
