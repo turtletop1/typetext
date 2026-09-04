@@ -689,7 +689,7 @@ function updateStats() {
     if (!typingInput) return;                                                  
 
     const typed = typingInput.value;                                           
-    const target = GameState.getCurrentText();                                 
+    const target = GameState.getCurrentText();                                        
 
     let correct = 0;                                                                
     for (let i = 0; i < typed.length && i < target.length; i++) {                  
@@ -1264,7 +1264,7 @@ async function handleLoadURL() {
         
     } catch (error) {
         console.error("URL PDF Error:", error);
-        setStatus("❌ 無法載入 PDF。可能是 CORS 限制。");
+        setStatus("❌ 無法載入 PDF。可能是 CORS 限制");
     }
 }
 
@@ -1294,12 +1294,13 @@ async function handleApplyPageRange() {
 }
 
 
-function handleTyping(event) {              //打緊字時
+function handleTyping(event) {         //打緊字時
     if (GameState.gameFinished) return;
     
     const typed = event.target.value;
     const target = GameState.getCurrentText();
-    
+    const lastTypedIdx = typed.length - 1;      //取得最新輸入字元index位 (如打第1個字'a'時，index=0)
+
     if (GameState.startTime === null && typed.length > 0) {
         GameState.startTime = Date.now();
     }
@@ -1313,18 +1314,23 @@ function handleTyping(event) {              //打緊字時
     }
 
     if (GameState.autoSpeakEnabled && typed.length > 0) {    
-        const targetText = GameState.getCurrentText();
-        const lastTypedIdx = typed.length - 1;       
+
+        const lastTypedChar = typed[lastTypedIdx];   // 擷取使用者剛打出的字元，目標對應位置字元 使用者打字元(如: 'a')
+        const targetChar = target[lastTypedIdx];     // 目標對應的字元(如:'a')
+        const isCorrect = lastTypedChar === targetChar;     //判斷是否打對
+        if (isCorrect) {
+            AudioManager.speak(targetChar);
+        } 
         
-        const isDelimiter = /[\s,.!?;:]/.test(typed[lastTypedIdx]);    
-        const isEnd = typed.length === targetText.length;
+        const isDelimiter = /[\s,.!?;:]/.test(typed[lastTypedIdx]);    // 判斷是否遇到分隔符(空白、標點符號）或 打到文章結尾
+        const isEnd = typed.length === target.length;
         
         if (isDelimiter || isEnd) {
-            let searchIdx = isDelimiter ? lastTypedIdx - 1 : lastTypedIdx;   
+            let searchIdx = isDelimiter ? lastTypedIdx - 1 : lastTypedIdx;  // 往回找 剛完成單字 起始+結束位置 
             let word = "";
             
-            while (searchIdx >= 0 && /^[A-Za-z]$/.test(targetText[searchIdx])) {
-                word = targetText[searchIdx] + word;
+            while (searchIdx >= 0 && /^[A-Za-z]$/.test(target[searchIdx])) {    // 從 target 提取出剛完成英文字
+                word = target[searchIdx] + word;
                 searchIdx--;
             }
             const wordStartIndex = searchIdx + 1;   
@@ -1345,6 +1351,7 @@ function handleTyping(event) {              //打緊字時
         finishLevel();
     }
 }
+
 
 function handleLevelSelect(e) {
     const levelIndex = parseInt(e.target.value, 10);
