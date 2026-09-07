@@ -37,6 +37,7 @@ const GameState = {
     loadedPdfDoc: null,
 
     autoSpeakEnabled: false,    // 預設關閉自動發音
+    autoSpellEnabled : false,
     boldSettingEnabled :false,
     audioSelectValue : "audio1",
     
@@ -52,6 +53,7 @@ const GameState = {
         this.loadingState = "idle";		   // 將系統載入狀態恢復為閒置狀態（"idle"）
         this.currentAnnotations = [];		// 清空當前文章對應的中文註解與標註清單
         this.autoSpeakEnabled = false;
+        this.autoSpellEnabled = false;
         this.audioSelectValue = "audio1";
         this.boldSettingEnabled = false;
         this.lastSpokenWordIndex = -1;
@@ -129,6 +131,7 @@ const DOM = {
     newAnnotations: () => document.getElementById("newAnnotations"),
     addAndDownloadBtn: () => document.getElementById("addAndDownloadBtn"),
     autoSpeakCheckbox: () => document.getElementById("auto-speak-checkbox"),
+    autoSpellCheckbox: () => document.getElementById("auto-spell"),
     boldSetting: () => document.getElementById("bold-setting"),
     audioSelect: () => document.getElementById("audio-select"),
     
@@ -305,12 +308,14 @@ function initializeEventListeners() {
         [DOM.autoSpeakCheckbox(), "change", (e) => {
             GameState.autoSpeakEnabled = e.target.checked;
         }],
+        [DOM.autoSpellCheckbox(), "change", (e) => {
+            GameState.autoSpellEnabled = e.target.checked;
+        }],
         [DOM.boldSetting(), "change", (e) => {
             GameState.boldSettingEnabled = e.target.checked; 
         }]
     ]);
 }
-
 
 
 function initializeWordClickDelegation() {   		
@@ -1313,22 +1318,21 @@ function handleTyping(event) {         //打緊字時
         renderText(target, currentAnnotations);
     }
 
-    if (GameState.autoSpeakEnabled && typed.length > 0) {    
-
+    if (GameState.autoSpellEnabled && typed.length > 0) {    
         const lastTypedChar = typed[lastTypedIdx];   // 擷取使用者剛打出的字元，目標對應位置字元 使用者打字元(如: 'a')
         const targetChar = target[lastTypedIdx];     // 目標對應的字元(如:'a')
         const isCorrect = lastTypedChar === targetChar;     //判斷是否打對
         if (isCorrect) {
             AudioManager.speak(targetChar);
-        } 
-        
+        }
+    }  
+    if (GameState.autoSpeakEnabled && typed.length > 0) {    
         const isDelimiter = /[\s,.!?;:]/.test(typed[lastTypedIdx]);    // 判斷是否遇到分隔符(空白、標點符號）或 打到文章結尾
         const isEnd = typed.length === target.length;
         
         if (isDelimiter || isEnd) {
             let searchIdx = isDelimiter ? lastTypedIdx - 1 : lastTypedIdx;  // 往回找 剛完成單字 起始+結束位置 
             let word = "";
-            
             while (searchIdx >= 0 && /^[A-Za-z]$/.test(target[searchIdx])) {    // 從 target 提取出剛完成英文字
                 word = target[searchIdx] + word;
                 searchIdx--;
