@@ -1,0 +1,623 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Google Charts</title>
+
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+
+<body>
+
+<h2>Dynamic Google Charts</h2>
+
+<!-- 顯示圖表 -->
+<div id="myChart"
+     style="width:100%; max-width:800px; height:500px;">
+</div>
+
+<!-- 選擇圖表類型 -->
+<h3>Chart Type</h3>
+
+<select id="type_chart">
+    <option value="bar">Bar Chart</option>
+    <option value="pie">Pie Chart</option>
+</select>
+
+<!-- Pie Chart 選擇使用邊個數值欄 -->
+<label id="pieColumnLabel" style="display:none;">
+    Pie Value Column:
+</label>
+
+<select id="pieColumnSelect" style="display:none;"></select>
+
+
+<!-- 新增 Row -->
+<h3>Add Row</h3>
+
+<div id="rowInputs"></div>
+
+<button id="add_row">Add Row</button>
+
+
+<!-- 新增 Column -->
+<h3>Add Column</h3>
+
+<input type="text"
+       id="newColumnName"
+       placeholder="Column name">
+
+<input type="number"
+       id="newColumnValue"
+       placeholder="Default value"
+       value="0">
+
+<button id="add_column">Add Column</button>
+
+
+<!-- 刪除 Column -->
+<h3>Delete Column</h3>
+
+<select id="deleteColumnSelect"></select>
+
+<button id="delete_column">Delete Column</button>
+
+
+<!-- 修改表格標題及資料 -->
+<h3>Edit / Delete Rows</h3>
+
+<p>
+    You can edit column titles and row values directly.
+</p>
+
+<table border="1" cellpadding="6">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+</table>
+
+
+<script>
+
+// ========================================
+// Load Google Charts
+// ========================================
+
+google.charts.load('current', {
+    'packages': ['corechart']
+});
+
+google.charts.setOnLoadCallback(function () {
+    displayTable();
+    drawChart(typeChart.value);
+});
+
+
+// ========================================
+// Get HTML elements
+// ========================================
+
+const typeChart = document.getElementById("type_chart");
+
+const rowInputs = document.getElementById("rowInputs");
+const addRowButton = document.getElementById("add_row");
+
+const tableHead = document.getElementById("tableHead");
+const tableBody = document.getElementById("tableBody");
+
+const newColumnName = document.getElementById("newColumnName");
+const newColumnValue = document.getElementById("newColumnValue");
+
+const addColumnButton = document.getElementById("add_column");
+
+const deleteColumnSelect =
+    document.getElementById("deleteColumnSelect");
+
+const deleteColumnButton =
+    document.getElementById("delete_column");
+
+const pieColumnLabel =
+    document.getElementById("pieColumnLabel");
+
+const pieColumnSelect =
+    document.getElementById("pieColumnSelect");
+
+
+// ========================================
+// Initial Array
+// No default a or b columns
+// ========================================
+
+let chartData = [
+    ['Country'],
+    ['Italy'],
+    ['France'],
+    ['Spain'],
+    ['USA'],
+    ['Argentina']
+];
+
+
+// ========================================
+// Function 1: Draw Chart
+// ========================================
+
+function drawChart(type) {
+
+    const chartArea = document.getElementById("myChart");
+
+    // At least one numeric column is required
+    if (chartData[0].length < 2) {
+
+        chartArea.innerHTML =
+            "Please add a data column before drawing a chart.";
+
+        pieColumnLabel.style.display = "none";
+        pieColumnSelect.style.display = "none";
+
+        return;
+    }
+
+    let data;
+
+    // Bar Chart: use all columns
+    if (type == "bar") {
+
+        data = google.visualization.arrayToDataTable(chartData);
+
+        const chart = new google.visualization.ColumnChart(
+            chartArea
+        );
+
+        chart.draw(data, {
+            title: 'Chart Data',
+            height: 500
+        });
+
+        pieColumnLabel.style.display = "none";
+        pieColumnSelect.style.display = "none";
+
+    } else {
+
+        // Pie Chart: show one numeric column at a time
+        pieColumnLabel.style.display = "inline";
+        pieColumnSelect.style.display = "inline";
+
+        updatePieColumnOptions();
+
+        const selectedColumn = Number(pieColumnSelect.value);
+
+        // First row contains the labels for the Pie Chart
+        const pieData = [
+            [
+                chartData[0][0],
+                chartData[0][selectedColumn]
+            ]
+        ];
+
+        // Add each row's label and selected numeric value
+        for (let i = 1; i < chartData.length; i++) {
+
+            pieData.push([
+                String(chartData[i][0]),
+                Number(chartData[i][selectedColumn]) || 0
+            ]);
+        }
+
+        data = google.visualization.arrayToDataTable(pieData);
+
+        const chart = new google.visualization.PieChart(
+            chartArea
+        );
+
+        chart.draw(data, {
+            title: chartData[0][selectedColumn],
+            height: 500
+        });
+    }
+}
+
+
+// ========================================
+// Function 2: Create Add Row Inputs
+// Inputs change according to current columns
+// ========================================
+
+function displayRowInputs() {
+
+    rowInputs.innerHTML = "";
+
+    // Create one input for every column
+    for (let j = 0; j < chartData[0].length; j++) {
+
+        const input = document.createElement("input");
+
+        input.id = "newRowValue" + j;
+
+        // Use the column title as the placeholder
+        input.placeholder = chartData[0][j];
+
+        if (j == 0) {
+
+            // First column is a text label
+            input.type = "text";
+
+        } else {
+
+            // Other columns contain numbers
+            input.type = "number";
+            input.value = "0";
+        }
+
+        rowInputs.appendChild(input);
+    }
+}
+
+
+// ========================================
+// Function 3: Display Table
+// Create editable headers and rows
+// ========================================
+
+function displayTable() {
+
+    tableHead.innerHTML = "";
+    tableBody.innerHTML = "";
+
+    // Create the header row
+    const headerRow = document.createElement("tr");
+
+    for (let j = 0; j < chartData[0].length; j++) {
+
+        const th = document.createElement("th");
+        const input = document.createElement("input");
+
+        input.type = "text";
+        input.value = chartData[0][j];
+
+        input.title = "Edit column title";
+
+        // Edit a column title
+        input.addEventListener("change", function () {
+
+            const newTitle = input.value.trim();
+
+            if (newTitle == "") {
+
+                alert("Column title cannot be empty.");
+
+                input.value = chartData[0][j];
+
+                return;
+            }
+
+            // Check for duplicate column names
+            for (let k = 0; k < chartData[0].length; k++) {
+
+                if (
+                    k != j &&
+                    chartData[0][k].toLowerCase()
+                    == newTitle.toLowerCase()
+                ) {
+
+                    alert("This column title already exists.");
+
+                    input.value = chartData[0][j];
+
+                    return;
+                }
+            }
+
+            // Update the column title
+            chartData[0][j] = newTitle;
+
+            displayTable();
+            drawChart(typeChart.value);
+        });
+
+        th.appendChild(input);
+        headerRow.appendChild(th);
+    }
+
+    // Action column for deleting rows
+    const actionHeader = document.createElement("th");
+
+    actionHeader.textContent = "Action";
+
+    headerRow.appendChild(actionHeader);
+
+    tableHead.appendChild(headerRow);
+
+
+    // Display each data row
+    for (let i = 1; i < chartData.length; i++) {
+
+        const tr = document.createElement("tr");
+
+        for (let j = 0; j < chartData[i].length; j++) {
+
+            const td = document.createElement("td");
+            const input = document.createElement("input");
+
+            // First column is text; other columns are numbers
+            input.type = j == 0 ? "text" : "number";
+
+            input.value = chartData[i][j];
+
+            // Edit a cell
+            input.addEventListener("change", function () {
+
+                if (j == 0) {
+
+                    chartData[i][j] = input.value;
+
+                } else {
+
+                    chartData[i][j] = Number(input.value);
+                }
+
+                drawChart(typeChart.value);
+            });
+
+            td.appendChild(input);
+            tr.appendChild(td);
+        }
+
+        // Create Delete Row button
+        const actionTd = document.createElement("td");
+
+        const deleteButton = document.createElement("button");
+
+        deleteButton.textContent = "Delete";
+
+        deleteButton.addEventListener("click", function () {
+
+            // Remove one row from the Array
+            chartData.splice(i, 1);
+
+            displayTable();
+            drawChart(typeChart.value);
+        });
+
+        actionTd.appendChild(deleteButton);
+
+        tr.appendChild(actionTd);
+
+        tableBody.appendChild(tr);
+    }
+
+    // Refresh all dynamic controls
+    updateDeleteColumnOptions();
+
+    updatePieColumnOptions();
+
+    displayRowInputs();
+}
+
+
+// ========================================
+// Function 4: Update Delete Column Options
+// ========================================
+
+function updateDeleteColumnOptions() {
+
+    deleteColumnSelect.innerHTML = "";
+
+    // Start from 1 to protect the first label column
+    for (let j = 1; j < chartData[0].length; j++) {
+
+        const option = document.createElement("option");
+
+        option.value = j;
+        option.textContent = chartData[0][j];
+
+        deleteColumnSelect.appendChild(option);
+    }
+
+    // Disable if there are no numeric columns
+    deleteColumnButton.disabled =
+        chartData[0].length <= 1;
+}
+
+
+// ========================================
+// Function 5: Update Pie Column Options
+// ========================================
+
+function updatePieColumnOptions() {
+
+    const previousValue = pieColumnSelect.value;
+
+    pieColumnSelect.innerHTML = "";
+
+    // Add every numeric column to the dropdown
+    for (let j = 1; j < chartData[0].length; j++) {
+
+        const option = document.createElement("option");
+
+        option.value = j;
+        option.textContent = chartData[0][j];
+
+        pieColumnSelect.appendChild(option);
+    }
+
+    // Keep the previous selection if it still exists
+    if (
+        previousValue &&
+        Number(previousValue) < chartData[0].length
+    ) {
+
+        pieColumnSelect.value = previousValue;
+    }
+}
+
+
+// ========================================
+// Function 6: Add Row
+// Read all current dynamic inputs
+// ========================================
+
+addRowButton.addEventListener("click", function () {
+
+    const newRow = [];
+
+    // Read one input for each current column
+    for (let j = 0; j < chartData[0].length; j++) {
+
+        const input =
+            document.getElementById("newRowValue" + j);
+
+        if (j == 0) {
+
+            if (input.value.trim() == "") {
+
+                alert(
+                    "Please enter a value for "
+                    + chartData[0][0] + "."
+                );
+
+                return;
+            }
+
+            newRow.push(input.value.trim());
+
+        } else {
+
+            if (input.value == "") {
+
+                alert(
+                    "Please enter a number for "
+                    + chartData[0][j] + "."
+                );
+
+                return;
+            }
+
+            newRow.push(Number(input.value));
+        }
+    }
+
+    // Add the completed row
+    chartData.push(newRow);
+
+    displayTable();
+    drawChart(typeChart.value);
+});
+
+
+// ========================================
+// Function 7: Add Column
+// ========================================
+
+addColumnButton.addEventListener("click", function () {
+
+    const columnName = newColumnName.value.trim();
+
+    if (columnName == "") {
+
+        alert("Please enter a column name.");
+
+        return;
+    }
+
+    // Prevent duplicate column names
+    for (let j = 0; j < chartData[0].length; j++) {
+
+        if (
+            chartData[0][j].toLowerCase()
+            == columnName.toLowerCase()
+        ) {
+
+            alert("This column already exists.");
+
+            return;
+        }
+    }
+
+    // Add the new column title
+    chartData[0].push(columnName);
+
+    // Choose the default value for existing rows
+    const defaultValue =
+        newColumnValue.value == ""
+        ? 0
+        : Number(newColumnValue.value);
+
+    // Add the value to every existing row
+    for (let i = 1; i < chartData.length; i++) {
+
+        chartData[i].push(defaultValue);
+    }
+
+    newColumnName.value = "";
+    newColumnValue.value = "0";
+
+    displayTable();
+    drawChart(typeChart.value);
+});
+
+
+// ========================================
+// Function 8: Delete Column
+// ========================================
+
+deleteColumnButton.addEventListener("click", function () {
+
+    const columnIndex = Number(deleteColumnSelect.value);
+
+    // Protect the first label column
+    if (
+        columnIndex <= 0 ||
+        Number.isNaN(columnIndex)
+    ) {
+
+        alert("Please select a data column to delete.");
+
+        return;
+    }
+
+    const columnName = chartData[0][columnIndex];
+
+    // Ask the user to confirm
+    if (!confirm("Delete column '" + columnName + "'?")) {
+
+        return;
+    }
+
+    // Remove the selected column from every row
+    for (let i = 0; i < chartData.length; i++) {
+
+        chartData[i].splice(columnIndex, 1);
+    }
+
+    displayTable();
+    drawChart(typeChart.value);
+});
+
+
+// ========================================
+// Function 9: Switch Chart Type
+// ========================================
+
+typeChart.addEventListener("change", function () {
+
+    drawChart(typeChart.value);
+});
+
+
+// ========================================
+// Function 10: Change Pie Chart Column
+// ========================================
+
+pieColumnSelect.addEventListener("change", function () {
+
+    if (typeChart.value == "pie") {
+
+        drawChart("pie");
+    }
+});
+
+</script>
+
+</body>
+</html>
