@@ -24,6 +24,10 @@
     <select id="pieColumnSelect" style="display:none;"></select>
     <br><br>
 
+
+    <h3>title</h3>
+    <input type="text" id="chart_title" placeholder="chart title"><br><br>
+
     <h3>Add Row</h3>
     <div id="rowInputs"></div>
     <button id="add_row" class="primary-btn" >Add Row</button> <br><br>
@@ -59,10 +63,10 @@
 google.charts.load('current', {'packages': ['corechart']});
 google.charts.setOnLoadCallback(function () {
     displayTable();
-    drawChart(typeChart.value);
+    drawChart(typeChart.value,chart_title.value);
 });
 
-
+const chart_title = document.getElementById("chart_title")
 const typeChart = document.getElementById("type_chart");
 
 const rowInputs = document.getElementById("rowInputs");
@@ -96,7 +100,7 @@ let chartData = [
 
 //  1: Draw Chart
 
-function drawChart(type) {
+function drawChart(type,chart_title) {
 
     const chartArea = document.getElementById("myChart");
 
@@ -113,7 +117,7 @@ function drawChart(type) {
         const chart = new google.visualization.ColumnChart(chartArea);
         
         chart.draw(data, {
-            title: 'Chart Data',
+            title: chart_title,
             height: 500
         });
 
@@ -137,7 +141,6 @@ function drawChart(type) {
             ]
         ];
 
-        
         for (let i = 1; i < chartData.length; i++) {        // Add each row's label and selected numeric value
             pieData.push([
                 String(chartData[i][0]),
@@ -149,7 +152,7 @@ function drawChart(type) {
         const chart = new google.visualization.PieChart(chartArea);
 
         chart.draw(data, {
-            title: chartData[0][selectedColumn],
+            title: chart_title + "("+ chartData[0][selectedColumn] + ")",
             height: 500
         });
     }
@@ -215,7 +218,7 @@ function displayTable() {
             }
             chartData[0][j] = newTitle;          // Update the column title
             displayTable();
-            drawChart(typeChart.value);
+            drawChart(typeChart.value , chart_title.value);
         });
 
         th.appendChild(input);
@@ -249,7 +252,7 @@ function displayTable() {
                 } else {
                     chartData[i][j] = Number(input.value);
                 }
-                drawChart(typeChart.value);
+                drawChart(typeChart.value,chart_title.value);
             });
 
             td.appendChild(input);
@@ -263,7 +266,7 @@ function displayTable() {
         deleteButton.addEventListener("click", function () {
             chartData.splice(i, 1);                             // Remove one row from the Array
             displayTable();
-            drawChart(typeChart.value);
+            drawChart(typeChart.value, chart_title.value);
         });
 
         actionTd.appendChild(deleteButton);
@@ -349,7 +352,7 @@ addRowButton.addEventListener("click", function () {
     chartData.push(newRow);         // Add the completed row
 
     displayTable();
-    drawChart(typeChart.value);
+    drawChart(typeChart.value , chart_title.value);
 });
 
 
@@ -387,7 +390,7 @@ addColumnButton.addEventListener("click", function () {
     newColumnValue.value = "0";
 
     displayTable();
-    drawChart(typeChart.value);
+    drawChart(typeChart.value, chart_title.value);
 });
 
 
@@ -415,7 +418,7 @@ deleteColumnButton.addEventListener("click", function () {
     }
 
     displayTable();
-    drawChart(typeChart.value);
+    drawChart(typeChart.value, chart_title.value);
 });
 
 
@@ -424,7 +427,11 @@ deleteColumnButton.addEventListener("click", function () {
 // ========================================
 
 typeChart.addEventListener("change", function () {
-    drawChart(typeChart.value);
+    drawChart(typeChart.value, chart_title.value);
+});
+
+chart_title.addEventListener("change", function () {
+    drawChart(typeChart.value, chart_title.value);
 });
 
 // ========================================
@@ -433,7 +440,7 @@ typeChart.addEventListener("change", function () {
 
 pieColumnSelect.addEventListener("change", function () {
     if (typeChart.value == "pie") {
-        drawChart("pie");
+        drawChart("pie",chart_title.value);
     }
 });
 
