@@ -31,6 +31,17 @@ body {
         rgba(0,0,0,0.08);
 }
 
+.container select{
+    min-width: 200px;
+    background: #d9eafc;
+    border-radius: 10px;
+    border: none;
+    min-height: 30px;
+    padding: 2px;
+}
+
+
+
 .turtle-track {
           width: 100%;
           min-height: 90px;
@@ -153,7 +164,7 @@ button {
 .primary-btn {
     background: #3498db;
     color: white;
-    padding: 12px 20px;
+    padding: 8px 12px;
 }
 
 
